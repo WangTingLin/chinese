@@ -186,7 +186,7 @@ const LogoImage = ({ className = "" }) => {
 
   return (
     <img
-      src="logo.png"
+      src="logo.svg"
       alt="中文研究室 LOGO"
       className={`object-cover ${className}`}
       onError={() => setHasError(true)}
