@@ -693,6 +693,15 @@ export default function App() {
         .theme-text-secondary { color: var(--c-text-secondary); }
         .theme-heading { color: var(--c-primary-dark); }
         .theme-divider { border-color: color-mix(in srgb, var(--c-primary) 15%, transparent); }
+
+        /* ===== RWD 導覽列 ===== */
+        @media (max-width: 768px) {
+          .desktop-nav { display: none !important; }
+          .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; }
+        }
+        @media (min-width: 769px) {
+          .mobile-menu-btn { display: none !important; }
+        }
       `}} />
 
       {/* 背景光暈 */}
@@ -706,19 +715,61 @@ export default function App() {
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.3)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", transition: "all 500ms ease" }}>
         <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }} onClick={() => go("home")}>
+            {/* Logo */}
+            <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
               <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
               <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark, transition: "color 500ms ease" }}>中文研究室</span>
             </div>
-            <div style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
+
+            {/* 桌面版導覽（768px 以上顯示） */}
+            <div className="desktop-nav" style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
               {navItems.map((item) => (
                 <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>
                   {item.icon} {item.label}
                 </ThemedButton>
               ))}
             </div>
+
+            {/* 手機版漢堡按鈕（768px 以下顯示） */}
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              style={{ display: "none", padding: "0.5rem", background: "rgba(255,255,255,0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.5)", color: t.primaryDark, cursor: "pointer" }}
+            >
+              <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
+            </button>
           </div>
         </div>
+
+        {/* 手機版下拉選單 */}
+        {mobileOpen && (
+          <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.5)", boxShadow: "0 8px 24px rgba(0,0,0,0.08)", position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
+            <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => go(item.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    width: "100%", textAlign: "left",
+                    padding: "0.75rem 1rem", borderRadius: "0.75rem",
+                    fontSize: "1rem", fontWeight: 500,
+                    fontFamily: "'Noto Sans TC', sans-serif",
+                    border: "1px solid",
+                    cursor: "pointer",
+                    marginBottom: "0.25rem",
+                    transition: "all 200ms ease",
+                    background: currentPage === item.id ? "rgba(255,255,255,0.8)" : "transparent",
+                    borderColor: currentPage === item.id ? "rgba(255,255,255,0.9)" : "transparent",
+                    color: currentPage === item.id ? t.primaryDark : t.textSec,
+                  }}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
       <main style={{ flexGrow: 1, maxWidth: "72rem", margin: "0 auto", padding: "2rem 1.5rem", width: "100%" }}>
