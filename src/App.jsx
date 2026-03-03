@@ -368,15 +368,15 @@ const HomePage = ({ setPage }) => (
 
 /* ==================== 成員資料 ==================== */
 const members = [
-  { name: "王亭林", school: "臺灣師範大學", dept: "國文學系博士候選人", field: "春秋學" },
-  { name: "李宗祐", school: "臺灣師範大學", dept: "國文學系博士生", field: "先秦思想" },
-  { name: "林昱璋", school: "臺灣師範大學", dept: "國文學系碩士生", field: "易學" },
-  { name: "汪博潤", school: "臺灣大學", dept: "中國文學研究所博士生", field: "尚書學" },
-  { name: "吳賢愷", school: "臺灣大學", dept: "中國文學研究所博士生", field: "現代文學" },
-  { name: "嚴浩然", school: "成功大學", dept: "中國文學研究所博士生", field: "先秦思想" },
-  { name: "陳皓渝", school: "高雄師範大學", dept: "國文學系博士生", field: "文字學" },
-  { name: "王鈺堤", school: "國立中山大學", dept: "中國文學研究所博士生", field: "春秋學" },
-  { name: "夏卓浩", school: "復旦大學", dept: "哲學系博士生", field: "中國哲學" },
+  { name: "王亭林", school: "國立臺灣師範大學", dept: "國文學系博士研究生", field: "春秋學" },
+  { name: "李宗祐", school: "國立臺灣師範大學", dept: "國文學系博士研究生", field: "先秦思想" },
+  { name: "林昱璋", school: "國立臺灣師範大學", dept: "國文學系碩士研究生", field: "易學" },
+  { name: "汪博潤", school: "國立臺灣大學", dept: "中國文學研究所博士研究生", field: "尚書學" },
+  { name: "吳賢愷", school: "國立臺灣大學", dept: "中國文學研究所博士研究生", field: "現代文學" },
+  { name: "嚴浩然", school: "國立成功大學", dept: "中國文學研究所博士研究生", field: "先秦思想" },
+  { name: "陳皓渝", school: "國立高雄師範大學", dept: "國文學系博士研究生", field: "文字學" },
+  { name: "王鈺堤", school: "國立中山大學", dept: "中國文學研究所博士研究生", field: "春秋學" },
+  { name: "夏卓浩", school: "復旦大學", dept: "哲學系博士研究生", field: "中國哲學" },
 ];
 
 const fieldColors = {
@@ -702,6 +702,19 @@ export default function App() {
         @media (min-width: 769px) {
           .mobile-menu-btn { display: none !important; }
         }
+
+        /* ===== RWD 頁尾 ===== */
+        .footer-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+        }
+        @media (max-width: 768px) {
+          .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+        }
       `}} />
 
       {/* 背景光暈 */}
@@ -778,27 +791,39 @@ export default function App() {
 
       {/* 頁尾 */}
       <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
-        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.5rem", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2rem" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", color: "white", marginBottom: "1rem" }}>
-              <LogoImage className="w-8 h-8 mr-2 rounded-lg border border-white/30" />
-              <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif" }}>中文研究室</span>
+        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.5rem" }}>
+          <div className="footer-grid">
+            {/* Logo */}
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", color: "white", marginBottom: "0.5rem" }}>
+                <LogoImage className="w-8 h-8 mr-2 rounded-lg border border-white/30" />
+                <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif" }}>中文研究室</span>
+              </div>
+            </div>
+
+            {/* 快速連結 */}
+            <div>
+              <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>快速連結</h4>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "0.5rem 1.5rem", fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>
+                {navItems.map((n) => (
+                  <li key={n.id}>
+                    <button onClick={() => go(n.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0, fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>
+                      {n.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 聯絡資訊 */}
+            <div>
+              <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>聯絡資訊</h4>
+              <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>Email：zxc998775@gmail.com</p>
             </div>
           </div>
-          <div>
-            <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>快速連結</h4>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>
-              {navItems.map((n) => (
-                <li key={n.id}><button onClick={() => go(n.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0, fontSize: "0.875rem" }}>{n.label}</button></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>聯絡資訊</h4>
-            <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>Email：zxc998775@gmail.com</p>
-          </div>
         </div>
-        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "2rem 1.5rem 0", borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "2rem", textAlign: "center", fontSize: "0.875rem", color: "rgba(255,255,255,0.4)", fontFamily: "'Noto Sans TC', sans-serif" }}>
+
+        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "1.5rem 1.5rem 0", borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: "2rem", textAlign: "center", fontSize: "0.875rem", color: "rgba(255,255,255,0.4)", fontFamily: "'Noto Sans TC', sans-serif" }}>
           &copy; {new Date().getFullYear()} 中文研究室. All rights reserved.
         </div>
       </footer>
