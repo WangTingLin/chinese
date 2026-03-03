@@ -368,15 +368,15 @@ const HomePage = ({ setPage }) => (
 
 /* ==================== 成員資料 ==================== */
 const members = [
-  { name: "王亭林", school: "國立臺灣師範大學", dept: "國文學系博士研究生", field: "春秋學" },
-  { name: "李宗祐", school: "國立臺灣師範大學", dept: "國文學系博士研究生", field: "先秦思想" },
-  { name: "林昱璋", school: "國立臺灣師範大學", dept: "國文學系碩士研究生", field: "易學" },
-  { name: "汪博潤", school: "國立臺灣大學", dept: "中國文學研究所博士研究生", field: "尚書學" },
-  { name: "吳賢愷", school: "國立臺灣大學", dept: "中國文學研究所博士研究生", field: "現代文學" },
-  { name: "嚴浩然", school: "國立成功大學", dept: "中國文學研究所博士研究生", field: "先秦思想" },
-  { name: "陳皓渝", school: "國立高雄師範大學", dept: "國文學系博士研究生", field: "文字學" },
-  { name: "王鈺堤", school: "國立中山大學", dept: "中國文學研究所博士研究生", field: "春秋學" },
-  { name: "夏卓浩", school: "復旦大學", dept: "哲學系博士研究生", field: "中國哲學" },
+  { name: "王亭林", school: "臺灣師範大學", dept: "國文學系博士生", field: "春秋學" },
+  { name: "李宗祐", school: "臺灣師範大學", dept: "國文學系博士生", field: "先秦思想" },
+  { name: "林昱璋", school: "臺灣師範大學", dept: "國文學系碩士生", field: "易學" },
+  { name: "汪博潤", school: "臺灣大學", dept: "中國文學研究所博士生", field: "尚書學" },
+  { name: "吳賢愷", school: "臺灣大學", dept: "中國文學研究所博士生", field: "現代文學" },
+  { name: "嚴浩然", school: "成功大學", dept: "中國文學研究所博士生", field: "先秦思想" },
+  { name: "陳皓渝", school: "高雄師範大學", dept: "國文學系博士生", field: "文字學" },
+  { name: "王鈺堤", school: "國立中山大學", dept: "中國文學研究所博士生", field: "春秋學" },
+  { name: "夏卓浩", school: "復旦大學", dept: "哲學系博士生", field: "中國哲學" },
 ];
 
 const fieldColors = {
