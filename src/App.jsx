@@ -131,6 +131,12 @@ const Icon = ({ name, size = 24, className = "" }) => {
         <line x1="12" x2="12.01" y1="16" y2="16" />
       </>
     ),
+    Mail: (
+      <>
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </>
+    ),
   };
 
   return (
@@ -160,6 +166,7 @@ const LogoImage = ({ className = "" }) => (
     className={`object-cover ${className}`}
   />
 );
+
 
 /* ==================== 模擬資料 ==================== */
 const nextEvent = {
@@ -252,7 +259,7 @@ const researchArticles = [
     tags: ["易學", "王弼", "牟宗三"],
     status: "已發表",
     abstract:
-      "王弼《易》注「以傳解經」與「以老解易」兩個面向，自湯用彤以降遂成為諸多學者的共識。然而，經筆者耙梳，自古代以來對於王弼以老解易之批判，或多或少出自一定的意識形態，不論是政治立場或學術之爭，同時亦沒有根據文獻給出確切證據。",
+      "王弼《易》注「以傳解經」與「以老解易」兩個面向，自湯用彤以降遂成為諸多學者的共識。然而，經筆者耙梳，自古代以來對於王弼以老解易之批判，或多或少出自一定的意識形態，不論是政治立場或學術之爭，同時亦沒有根據文獻給出確切證據。而自牟宗三始，不但以「兩層存有論」分判儒釋道各家，更建構起王弼以老解易的面貌。然而，筆者以為若將牟宗三對於王弼《易》學的論述，置於其所提出的「兩層存有論」的架構下來看，反而有更加鮮明的儒家的影子，且從王弼《易》注諸多被討論有《老》學影子的原文來看，卻可以找到淵源於傳文之處。因此，筆者以為與其將王弼《易》學分為兩大面向，不如以「以傳解經」來作為王弼《易》學的代表。在不執著於王弼注《老》的淵源，而正面肯定王弼並非背離儒家《易》的傳統。",
   },
   {
     id: 4,
@@ -262,7 +269,7 @@ const researchArticles = [
     tags: ["禹貢錐指", "胡渭", "清初學術"],
     status: "已發表",
     abstract:
-      "胡渭《禹貢錐指》是清初學術的要籍之一。民初以來之學術史研究，常以「漢宋兼採」作為其學術定位的一個特點。",
+      "胡渭《禹貢錐指》是清初學術的要籍之一。民初以來之學術史研究，常以「漢宋兼採」作為其學術定位的一個特點。這緣於敘述者限於自身體例與旨趣的需要，有選擇性地接受清儒對《錐指》的評價。為此，本文綜合分析《錐指》涉及之傳注與胡渭之個人表述，論證為何「知古」與「知今」才是完整理解《錐指》不容偏廢的兩端。又根據對30 條〈略例〉、全書174 組傳文之系統性解讀與檢覈，嘗試指出胡渭具備的「水利與水患」思維，是解讀《錐指》、通貫其古今之說的核心線索。由此，建議將清初之河渠水道要籍，一併納入現行研究的比較視閾中。此舉將為後續審視清初〈禹貢〉學之發展、尋求《錐指》在學術史上之合適定位，提供基於經學與「地理之學」兩個層面之佐證。",
   },
   {
     id: 5,
@@ -281,7 +288,7 @@ const researchArticles = [
     tags: ["易學", "林鵞峰", "日本儒學"],
     status: "已發表",
     abstract:
-      "作為影響日本乃至東亞深遠的朱子學，之所以能在日本快速發展，可追溯至江戶初期受到幕府支持的弘文院。",
+      "作為影響日本乃至東亞深遠的朱子學，在日日本所以以 快速發展的原因，在可追溯至江戶初期受到幕府支持的弘文院，在 後世昌平黌的前身， 而有開創所功的林羅山，林林鵞峰父子，在二人的學說便成為理解江戶初期儒學的重要關鍵 由於二人直繼五經的治學傾向，在 ，《易》為五經所首，在 林家，《易》學實可作為重要的探索對向在因林鵞峰有專門性，《易》著傳世，在本文特以其為主要討論對象 其一系列，《易》著，在可中勾勒 出尊崇宋學在但持開放態度吸收新舊學說在且仔細區分程朱，《易》學的特色 實際中其以尊崇的程頤，《易傳》來看，在可以理理出其闡明與發揮程《傳》義理林引歷史證程《傳》與引典明辭義三個核心作法，在可以發先雖其有廣博的治學態度在但仍不免有體系紊亂所失 而日義理的勒 上在可以發現鵞峰日嚴別程朱的同時在仍把握二者以理與太極的共通性在其後才藉著二人對卜筮不同的態度，在應自己 身為日本儒者的時代關懷 可以發現在林鵞峰作為江戶初期的學者在保有開闊的態度以吸收勾國東傳所學在並 進一步將所作為應自己身時代課題的材料，在對於管窺江戶初期，《易》學在實為一值得關注的對象。",
   },
   {
     id: 7,
@@ -297,44 +304,6 @@ const researchArticles = [
 
 /* ==================== 文章全文 blocks ==================== */
 const article1Blocks = [
-  {
-    type: "para",
-    text:
-      "北大歷史的陳侃理教授與厲承祥博後研究員發表〈海昏漢簡《論語》分章初探〉，《文獻》第1期（2026年1月）。",
-  },
-
-  {
-    type: "para",
-    text:
-      "論文藉由海昏漢簡本、傳世本（張侯《論語》）的分章六處比較，發現海昏漢簡本對文本章句的分割較為零碎，從而提出海昏漢簡本《論語》歸屬於齊《論語》「章句頗多」的特徵。",
-  },
-
-  {
-    type: "para",
-    text:
-      "延而申之，陳、厲二氏指出海昏漢簡本可能還未建立起系統化的經學取向。經學取向就是將《論語》當作有機整體，對文本進行改寫，以期內部意義的統一。",
-  },
-
-  {
-    type: "para",
-    text:
-      "如果此說成立的話，代表在西漢時人對於《論語》的認知更加接近朱子所謂「每日零碎問」的「真‧語錄」形式，且可能尚未通入經學，而不是像現今看到《論語》諸註疏一般，將之納入經學的章句傳統之中。",
-  },
-
-  {
-    type: "para",
-    text:
-      "然而，張侯《論語》成書大約是在西漢末，而海昏侯則是在武帝之後，昭宣之間，兩者大概隔了約50年左右。要說短短幾十年間，對於《論語》的文本意識有這麼明顯的轉換，似乎有些言之過簡。",
-  },
-
-  {
-    type: "para",
-    text:
-      "論文雖然提出自夏侯建以來就有類似的詮釋方法，且頗為風尚，但我認為仍然有些武斷；或許這個部分，是值得繼續深掘的。",
-  },
-];
-
-const article2Blocks = [
   {
     type: "heading",
     text: "前言",
@@ -353,7 +322,7 @@ const article2Blocks = [
   },
   {
     type: "para",
-    text: "由此可見，當今研究主要仍是在《詩序》中「〈有瞽〉為大武樂章之初成」的前提下開展論述。本文試圖跳脫《詩序》的窠臼，而著眼於詩中之景，透過詩中之「瞽」與《周禮》樂制下的官職、樂備分析，由此辨明詩中所述「有瞽」究竟為何，並釐清〈有瞽〉中陳備的樂器與演奏之樂官，藉以發掘本詩之場景與人物。",
+    text: "由此可見，當當今研究主要仍是在《詩序》中「〈有瞽〉為大武樂章之初成」的前提下開展論述。本文試圖跳脫《詩序》的窠臼，而著眼於詩中之景，透過詩中之「瞽」與《周禮》樂制下的官職、樂備分析，由此辨明詩中所述「有瞽」究竟為何，並釐清〈有瞽〉中陳備的樂器與演奏之樂官，藉以發掘本詩之場景與人物。",
   },
     {
     type: "heading",
@@ -495,7 +464,7 @@ const article2Blocks = [
   },
   {
     type: "para",
-    text: "從中可見有雷鼓、雷鼗、靈鼓、靈鼗、路鼓、路鼗，按《樂律全書》曰：「建鼓繪以雲雷，則謂之雷鼓。繪以四靈、飛鷺，則謂之靈鼓、路鼓。」將雷、靈、路之分別歸於鼗、鼓身之畫紋，同屬於晉鼓之列。",
+    text: "從中可見有雷鼓、雷鼗、靈鼓、靈鼗、路鼓、路鼗，按《樂律全書》曰：「建鼓繪以雲雷，則謂之雷鼓. 繪以四靈、飛鷺，則謂之靈鼓、路鼓。」將雷、靈、路之分別歸於鼗、鼓身之畫紋，同屬於晉鼓之列。",
   },
   {
     type: "para",
@@ -561,7 +530,7 @@ const article2Blocks = [
   }, 
   {
     type: "para",
-    text: "塤為土音，由泥燒製成，此概無疑論。另有說土鼓為土音，因土鼓以瓦製成，為籥章所掌，《周禮‧籥章》：「籥章，掌土鼓豳籥。中春晝擊土鼓，龡《豳詩》以逆暑。中秋夜迎寒，亦如之。凡國祈年于田祖，龡《豳雅》，擊土鼓，以樂田畯。國祭蜡，則龡《豳頌》，擊土鼓，以息老物。」可以見土鼓之使用僅限於奏豳風之詩所用，並從文中可以見土鼓一般為農業祈年等民生所用，與鼗鼓可用於祭儀之鼓概不相同。",
+    text: "塤為土音，由泥燒製成，此概無疑論。另有說土鼓為土音，因土鼓以瓦製成，為籥章所掌，《周禮‧籥章》：「籥章，掌土鼓豳籥。中春晝擊土鼓，龡《豳詩》以逆暑。中秋夜迎寒，亦如之. 凡國祈年于田祖，龡《豳雅》，擊土鼓，以樂田畯。國祭蜡，則龡《豳頌》，擊土鼓，以息老物。」可以見土鼓之使用僅限於奏豳風之詩所用，並從文中可以見土鼓一般為農業祈年等民生所用，與鼗鼓可用於祭儀之鼓概不相同。",
   },
   {
     type: "list",
@@ -646,34 +615,351 @@ const article2Blocks = [
   {
     type: "para",
     text: "然而，透過〈有瞽〉並不能完整的考察出周初樂制的全貌，正如《詩序》言：「始作樂而合乎祖」，學界概信〈有瞽〉之詩所述場景可能僅是初始作樂而在祖廟練習試奏而已，並非是完整儀典，如此，便需仰賴更多文獻材料輔助，方能一窺周初樂制之全豹。 ",
-  }
+  },  
 ];
 
+const article2Blocks = [
+  {
+    type: "heading",
+    text: "前言",
+  },
+  {
+    type: "para",
+    text:
+      "義堂周信（1325-1388），日本土佐國高岡郡人，俗姓平氏，法號周信，道號義堂，師從臨濟宗禪僧夢窗疏石（1275-1351），和同宗師弟絕海中津（1334-1405）並稱「五山文學雙璧」，為五山文學重要的代表人物之一。",
+  },
+  {
+    type: "para",
+    text:
+      "康永元年（1342），義堂周信年十八，欲往中國江南求法，但因遇風雨患病，最終無法成行。後隨侍夢窗疏石於天龍寺，直至觀應2年（1351）夢窗疏石圓寂，受春屋妙葩（1311-1388）所請，乃應關東管領足利基氏（1340-1367）聘，往鐮倉圓覺寺、善福寺、瑞泉寺等地住持。康歷2年（1380），應幕府大將軍足利義滿（1358-1408）之召，於京都講授中國經典，同時住持建仁寺。嘉慶2年（1388）4月，義堂周信於南禪寺圓寂，世壽64歲。",
+  },
+
+  {
+    type: "para",
+    text:
+      "義堂周信著有漢詩文集《空華集》，據蔭木英雄統計，《空華集》納其詩作總計1900首，其中七言絕句1008首，七言律詩601首，五言律詩193首，五言絕句56首，四言詩17首，六言絕句11首，古詩7首，歌3首，五言排律2首，七言排律與楚辭各1首， 其詩作數量非常可觀，為學者研究五山文學前期漢詩創作之重要參考文獻。",
+  },
+
+  {
+    type: "para",
+    text:
+      "《空華集》之漢詩於義堂周信《空華日用工夫略集》中多有提及，以赴華歸日的僧侶與義堂的口語中得知，中國亦有文士對其詩的喜愛與推崇，如永和2年（1376）4月20日條：「比在中國，多見公所作詩文，唐人皆稱道。」言義堂詩作足可比擬中國之詩。又應安2年（1369）7月14日條：",
+  },
+  {
+    type: "quote",
+    text: "余十五年前，在京之西山，作〈送藝上人歸九州〉詩曰：「海上仙山即九州，平生有意踏鯨游。秋窓一夜閑欹枕，望看靈槎犯斗牛。」今日上人來謁，且云以此詩及所記五六首，擧似唐人，唐人皆云疑是大唐人作也。",
+  },
+  {
+    type: "para",
+    text:
+      "從其年代已屆明朝洪武年間，若按文中所述15年前之事因屬元朝之事，並由義堂周信所載，其所作之詩被疑為「大唐人」所作，可見其詩之風格應近似於唐朝詩作，但從文中並未能知當時漢人如何認為義堂之詩作近於唐詩。又應安8年（1375）3月18日條：",
+  },
+  {
+    type: "quote",
+    text: "淨智無聞聰知客來，問其本貫，乃薩州（薩摩國）人，話曰：「嘗入江南，與端侍者會于楚石會中，會中而多見公所作之詩章，楚石謂是入唐者所作也，鄕人皆曰不然，楚石不信，乃再三，乃曰不謂日本國有此郞耶！」",
+  },
+  {
+    type: "para",
+    text:
+      "文中曰楚石者，應為中國禪僧梵琦（1296-1370），字楚石，楚石觀其詩作，語發其詩為曾遊覽過中國的日人所作，還原語境，楚石應是在日本僧人聚會中，故楚石當已事先知曉該詩章非中國人之作，其所讚嘆，吾人可知以其詩作的意象和詩法或與中國詩人相似。",
+  },
+  {
+    type: "para",
+    text:
+      "現代兩岸學者多將五山文學作為一個整體研究，針對義堂周信《空華集》詩文的研究較少，而目前研究亦多就與杜甫（712-770）詩作的連結為討論中心，以下列略舉研究五山文學兼及義堂詩作或專論《空華集》之研究論文為例：",
+  },
+  {
+    type: "list",
+    items: [
+      "尚永亮〈論前期五山文學對杜詩的接受與嬗變──以義堂周信對杜甫的受容為中心〉"
+    ],
+  },  
+  {
+    type: "para",
+    text:
+      "該文考義堂詩對杜詩章法、句式、字詞的襲用與轉化，發現義堂詩在五律上更多的受益於杜甫，並整理義堂學杜的手法有三：（一）直接襲用杜詩字詞；（二）用其句法和詩意；（三）用其章法及變易次序，雖提及義堂七律詩更偏向晚唐詩、宋詩詩風，然受限於題旨，未有深論。",
+  },
+  {
+    type: "list",
+    items: [
+      "曹逸梅《日本五山禪林的典範選擇與詩歌創作》"
+    ],
+  },
+  {
+    type: "para",
+    text:
+      "曹氏認為五山禪僧詩歌創作風格受蘇軾（1037-1101）、黃庭堅（1045-1105）、杜甫三人影響最大，並進一步將義堂詩文中的杜甫形象整理分為三類：杜詩成就的評價、杜甫君臣節義、憂國憂民的道德標舉、杜甫重視人情的表現，逐步構成在日本視域下獨有的杜甫形象。亦論及五山詩文對蘇門酬唱及江西詩派詩法的承繼與轉化，從字法、用事、句法三個層面展開論述。",
+  },
+  {
+    type: "list",
+    items: [
+      "汪磊《義堂周信《空華集》及《空華日用工夫略集》研究》"
+    ],
+  },
+  {
+    type: "para",
+    text:
+      "以義堂對杜詩的借化用提出「化舊詞出新意」與「借舊句出新意」的手法，雖論義堂詩與杜詩名貿實易，然究其論述，則稍嫌武斷，如以義堂〈讀李杜詩戱酬空谷應侍者〉「太白飄零子美窮」比附杜甫〈不見〉「飄零酒一杯」，以「飄零」稱李白（701-762），便直以義堂書太白「飄零」化自杜甫。實則杜甫亦有以「飄零」自況，如〈通泉驛南去通全縣十五里山水作》「我生苦飄零」句。 或如義堂〈天龍火後，化緣四州，山行有作〉「摩挲淚滿襟」比附杜甫〈蜀相〉「常使英雄淚滿襟」，「淚滿襟」此意象並非杜甫獨創獨有，亦多見於其他詩人。",
+  },
+  {
+    type: "list",
+    items: [
+      "胡睿慈《『空華集』中的中國詩文受容—「夢」的表現》"
+    ],
+  },
+  {
+    type: "para",
+    text:
+      "其搜集《空華集》中提及「夢」與「山」的意象比較，認為義堂詩的「夢」與「山」意義相近，以嶄新的視角解析義堂詩，跳脫比附杜詩的窠臼。",
+  },
+  {
+    type: "list",
+    items: [
+      "馬蕙穎《義堂周信《空華集》漢詩研究》"
+    ],
+  },
+  {
+    type: "para",
+    text:
+      "針對義堂詩的內容提出六個特色：（一）「日用之境」的禪境；（二）富有「理」的詩意；（三）枯淡閑靜的超脫詩趣；（四）融合禪的悠遠詩境；（五）幽國傷時的沉重詩風；（六）數量眾多的用典。惜雖論義堂之詩風、詩法，指出義堂漢詩之特色，限於論文主題，並未深論。",
+  },
+  {
+    type: "para",
+    text:
+      "由此筆者整理《空華日用工夫略集》之義堂論詩條目及1973年思文閣出版《五山文學全集》第二卷所收《空華集》卷一至卷十所錄詩作試分析之， 發現義堂詩對中國詩文的擷取可謂頻繁，且義堂善於將中國的詩作中的人物、意象多次襲用，或融中國的逸事於其中，其對於中國的典故、逸事及意象信手拈來，說明詩人對於中國文化有極深的了解，以下先論義堂之詩風與詩法，後整理《空華集》中對中國詩文意象的擷取，進一步分析其用典出處及義堂對於中國典故的使用與轉化。",
+  },
+  {
+    type: "heading",
+    text: "脫俗弊之詩風與重音律之詩法",
+  },
+  {
+    type: "para",
+    text:
+      "義堂周信在《空華日用工夫略集》對於當時詩人應當如何作詩分以詩風與詩法二個層面提出主張：",
+  },
+  {
+    type: "list",
+    items: [
+      "詩風"
+    ],
+  },
+  {
+    type: "para",
+    text:
+      "義堂以作詩需有「脫俗」氣象，而不可淪於一般俗套。應安三年（1370）2月23日條：「今時學詩者，專以俗樣而為習，是可戒也。」以當時詩人學習作詩的典範仍以俗為範， 在義堂看來非常不妥，足以為戒，而何為俗？在應安三年8月4日條有解：",
+  },
+  {
+    type: "quote",
+    text: "今時僧詩皆俗樣也，學高僧詩最好。今僧詩例學士大夫之體，尤可笑也。官樣富貴、金玉文章、衣冠高名崇位等，弊尤多，弊則必跡生，跡生則必改，復古高僧之風可也。",
+  },
+  {
+    type: "para",
+    text:
+      "義堂認為學詩者最好的學習高僧詩偈，然而其時作詩多流於腐弊的仕宦生活、追名逐利，則弊俗橫生，如要改正，應該回歸古時高僧之詩風。在應安五年（1372）2月11日條：「今時禪子作偈，變爲俗人秀才花鳥之詞，是可痛惜也。假令作詩，當學禪祖之體云云。」揭示在義堂之時， 禪僧作偈語多已脫離佛教世界，而淪為俗世花鳥風月之語，而作詩應從禪祖慧能的詩偈，詩既平易，又能蘊藏妙悟。於康曆二年（1380）5月18日條即有義堂周信於聚會上制止唱和之舉：「宗椿侍者乞題，集諸兄弟作頌，以化青絹扇子而爲題，奮例以物爲賭，余制而令止之，蓋破俗弊也。」即說明義堂將禪林詩作主題僅談花論月的現象視為俗弊。",
+  },
+  {
+    type: "para",
+    text:
+      "在中國，黃庭堅亦反對詩文「俗氣」，而山谷之「俗」與義堂之「俗」不盡相同，義堂之「俗」多在於詩人選題之上多選擇花鳥風月、玩物娛情的事物進而使得詩文空洞，言之無物，又無法內蘊禪理。而山谷之「俗」則在詩法及個人精神修養之上，〈題意可詩後〉有云：「寧律不諧而不使句弱，用字不工不使語俗。」提及作詩寧可格律不諧、用字不工，寧可破格，也不可使詩句氣弱語俗， 又於〈與黨伯舟帖七〉談詩作：「詩頌要得出塵拔俗，有遠韻而語平易。」在立意上不可流於俗套，還應當詩語平易近人，但又富含高遠的風韻。在立身上，山谷同樣以「不可俗」為處世標準：",
+  },
+  {
+    type: "quote",
+    text: "士大夫處世可以百為，唯不可俗，俗遍不可醫也。或問不俗之狀，老夫曰難言也。視其平居無以異於俗人，臨大節而不可奪，此不俗人也。平居終日如含瓦石，臨事一籌不畫，此俗人也。",
+  },
+  {
+    type: "para",
+    text:
+      "於黃雅莉先生〈杜甫對江西詩派內涵風格的影響〉中提及，江西詩派的詩風反對流俗的精神特質，便指詩歌風骨高峻，即在樸拙剛健的藝術特徵中體現高潔的人格修養。",
+  },
+  {
+    type: "para",
+    text:
+      "據曹逸梅《日本五山禪林的典範選擇與詩歌創作》論黃庭堅深厚的禪學修養、詩偈、藝術等方面極深的境界，成為五山禪林學習的典範， 而相較山谷推崇積極入世的高潔人格，義堂將「非俗」轉化為禪宗清淨修道的出世精神。黃詩既為五山的典範，會有如此差異，依筆者臆測，其因有三：",
+  },
+  {
+    type: "para",
+    text:
+      "1.	政治因素：義堂周信雖受幕府器重，入世甚深，但其本質既為貴族，又為禪僧，身分清貴，而黃庭堅為仕宦，深受儒家經世思想薰陶，用行舍藏，縱使禪學素養極高，卻未跳脫中國士人使命的窠臼。",
+  },
+  {
+    type: "para",
+    text:
+      "2.	環境因素：日本雖值室町幕府前期，後醍醐天皇於奈良開南朝，與光明天皇北朝相對，戰亂頻仍，然義堂既為禪僧，社會階級較高，生活閒適，此亦體現在其詩作主題上，除了少數悲傷戰事、南征之詩外，大多為僧門間的酬唱次和、歌詠景物之作。黃庭堅值北宋末年，時局動盪，又陷於新舊黨爭，生活顛沛。",
+  },
+  {
+    type: "para",
+    text:
+      "3.	文化因素：「禪」與「詩」的分限在宋時便已逐漸模糊，嚴羽《滄浪詩話》有「論詩如論禪」之說，在王熙元先生〈從「以禪喻詩」論嚴羽的妙悟說〉提及，近體詩絕句的體式與偈頌相合，又受唐詩比興、文采的風格影響，原本不講押韻的偈語逐漸轉變為亦偈亦詩的新體，蘇、黃詩亦有創發禪悟的境界，江西詩派更主張「悟」詩的重要性。",
+  },
+  {
+    type: "para",
+    text:
+      "從義堂周信，吾輩亦可觀察五山禪僧對於中國詩文、詩法的擷取從不全面，這個現象在義堂周信的詩法特色中更是明顯可見。",
+  },
+  {
+    type: "list",
+    items: [
+      "詩法"
+    ],
+  },
+  {
+    type: "para",
+    text:
+      "義堂重音律，於《空華日用工夫略集》中見他人來問作詩之法，或探討中國詩人聲律謬誤之言，如應安元年（1368）追抄月未詳11日條：「張翰當日憶鱸魚，改作季鷹，蓋翰字本平聲，老杜作仄用，自爾詩家遂作仄聲，所謂捨祖而取孫也。」解「翰」字音律，認為杜甫破格作仄聲，而後世作詩皆以為仄聲，此法尤不可取。又永和二年9月6日條：",
+  },
+  {
+    type: "quote",
+    text: "爲安藏主改近作數字，曰：「釣竿東掣長鯨罷，貝葉西駄瘦馬歸。」，安曰：「駄字恐是去聲。」，余曰：「平聲。李白『十五吳姬細馬駄』（按：應作「吳姬十五細馬馱」）、東坡詩『二八佳人細馬駄』、山谷詩曰『宗文提轡宗武扶，落日寒驢駄醉起』（按：應作「宗文守家宗武扶，落日蹇驢馱醉起」）皆作平聲用。」",
+  },
+  {
+    type: "para",
+    text:
+      "「駄」通「馱」，義堂以李白〈對酒〉、蘇軾〈李鈴轄座上分題戴花〉、〈老杜浣花溪圖引〉三首詩為安藏主講解聲韻，依義堂之時代，考於《洪武正韻》，馱有平聲之唐何切（駝小韻）與去聲之杜臥切（惰小韻）。海藏主之所以認為是仄聲，直將駄作杜臥切，依其詞性，釣竿對應貝葉為名詞；東對應西為副詞，掣對應駄為動詞，駄即表達背負一動作，則應獨作唐何切。",
+  },
+  {
+    type: "para",
+    text:
+      "除了格調音律之外，義堂追求詩之用字須平易，且應字字有來處。應安三年8月13日條：「師姪梵芳上人來自東勝，出近作數首，一則歸田詠，一百五十六韻，效古詩體，艱澁用奇字，往往不可讀也。」說明作詩不應一味追求語詞、用字之險峻。又應安二年3月5日條：「雲壑求改詩，詩曰不吹松，余疑，不吹松者何義。又有謂言二字，於律詩不可用也。」解「不吹松」從未有典故，不能知其義，又解「謂言」雖曾見於元稹詩〈青雲驛〉，但不可用於律詩。",
+  },
+  {
+    type: "para",
+    text:
+      "此外，義堂講詩常為學者講述詩文典故，如講唐僧皎然詩「虎落犀渠」典出《漢書‧晁錯傳》：「爲諸子講高僧皎然詩畢，詩中有虎落犀渠四字，出自前漢《晁錯傳》，謂外蕃竹柵之類。犀渠乃犀革甲也。」。又或是用典錯誤而記，如弓詩錯引「杯弓蛇影」，被義堂所哂：「龍門至，求改弓詩，詩多用盃蛇事，可笑，姑點一二首而還之。」",
+  },
+  {
+    type: "para",
+    text:
+      "綜觀義堂周信的詩法，過於講求用韻的嚴謹，由此，詩人為求合韻而自創許多怪詞強附，如「怪哉蟲」、「萬簇峰」、「嚼頻」等詞，後世研究者多無以解其義，只得強行比附。",
+  },
+  {
+    type: "heading",
+    text: "對中國典故的受容",
+  },
+  {
+    type: "para",
+    text:
+      "在曹逸梅《日本五山禪林的典範選擇與詩歌創作》認為五山禪林已承繼宋代詩人提倡以才學為詩，「資書以為詩」的特點，此和禪僧透過引用典故來展示博學，並從五山禪僧對於使用典故的討論中，可以發現黃庭堅用事觀念對此的重要影響。",
+  },
+  {
+    type: "para",
+    text:
+      "在義堂詩作中亦有不少用典的情形，筆者粗略整理義堂有提及中國詩人或使用中國典故之詩作73首，表列於後，從義堂使用的中國典故來源豐富，可以看出詩人本身學識之博深，然礙於筆者能力有限，此絕非義堂詩使用中國典故之全貌。",
+  },
+  {
+    type: "para",
+    text:
+      "從詩文中觀察，義堂周信詩中對中國詩文的受容主要針對中國詩人及中國詩文意象、典故使用的轉化，其中許多典故的使用在中國詩人筆中並不會如此使用，如〈因修菊笆謝人惠竹〉將修剪菊花園籬笆的困難比喻為「趙氏孤兒」一般困難。",
+  },
+  {
+    type: "para",
+    text:
+      "義堂詩善將人物故事融入詩作之中，如〈陪大喜師觀櫻花次有作〉：「海棠不入杜陵篇，流落巴雲蜀水遊。幸是櫻花無此恨，開顏得近法王筵。」直接明舉杜甫從未寫過歌詠海棠之詩作，此後杜甫流落四川，藉以起興，歌詠櫻花與大喜師二者相互成趣。",
+  },
+  {
+    type: "para",
+    text:
+      "〈次韻贈益友石〉：「賛公不負杜陵知，來往風流笻一枝。想見高齋投宿夕，焚香欸欸話幽期。」以杜甫詩文中的贊公意象入詩，由此歌詠友人。",
+  },
+  {
+    type: "para",
+    text:
+      "在義堂詩文中大多使用此法，由於其臨濟宗的法統傳承，詩中除了常見的李白、杜甫、陶淵明外，義堂也常使用中國禪宗或佛教中的典故，如〈送友知容二首〉之二：「見說家山有竹房，歸來整頓舊門牆。但看圓悟居昭覺，從此兒孫遍大唐。」引用宋代知名臨濟宗僧人圓悟克勤禪師及其住持四川昭覺寺的典故。",
+  },
+  {
+    type: "para",
+    text:
+      "〈別源和尚遣偈語拆成四首贈龍侍者〉之三：「拚身窮到龍淵底，心苦分明甘如醴。黃蘗當年老婆心，痛棒三度打臨濟。」以唐代知名禪宗僧人黃檗希運禪師及其徒弟開創臨濟宗的臨濟義玄禪師之典故入詩。",
+  },
+  {
+    type: "para",
+    text:
+      "〈扇面雪江獨釣〉：「江上群山雪打圍，分明寫出柳州詩。漁翁不解催詩思，只愛江魚上釣絲。」藉雪、江、釣翁的意象直指柳宗元〈江雪〉詩，並明白點出眼前景色就是柳宗元筆下詩景。",
+  },
+  {
+    type: "para",
+    text:
+      "義堂亦有直接將詩文化用，納入詩句之中，如〈又和答少室兼簡芳庭三首〉之三：「教外兼將通教內，雌黃賢首與天台。禪餘對客揮談塵，不盡長江袞袞來。」直接將杜甫〈登高〉「不盡長江袞袞來」詩句寫入，絲毫未有擴寫或化用。",
+  },
+  {
+    type: "para",
+    text:
+      "而〈讀李杜詩戱酬空谷應侍者〉中則將詩句奪胎：「太白飄零子美窮，也知國亂血流紅。酒酣鯨背天非遠，詩罷鷗邊日過中。渭北年年春樹老，江東處處暮雲空。唐風廢矣無人繼，欲寫憂心擬草蟲。」化用杜甫〈春日憶李白〉「渭北春天樹，江東日暮雲」句，由此處可以推知，義堂應以接觸江西詩派的詩法理論，但其奪胎換骨、點鐵成金等詩法的運用，則於義堂詩中並沒有辦法觀察出頻繁、系統性的使用。",
+  },
+  {
+    type: "para",
+    text:
+      "另一種引用則是將詩題直接引入詩作，透過所引詩之詩意帶領詩作。如〈予以詩卷贈伊大圓乃作二詩見謝和以為戱二首〉之一：「少年已受空王印，誰復區區學俗儒。書籍送歸天祿閣，缽盂擎向上方廚。欲吟伐木酬諸友，難把雕蟲謁壯夫。想爾禪餘揮玉塵，清風斖斖講唐虞。」將多典融入一詩，其中引《詩經‧小雅之什‧鹿鳴‧伐木》一篇，〈毛詩序〉：「〈伐木〉，燕朋友故舊也」說明詩意為宴饗朋友，呼應詩作以〈伐木〉戲酬友人之意。",
+  },
+  {
+    type: "para",
+    text:
+      "此外，義堂詩也使用一些中國詩文中並未有的意象加入詩中，如：〈因修菊笆謝人惠竹〉：「炎天種菊趂秋期，保育難如立趙兒。多謝此君知此意，碎身粉骨護東籬。」在中國詩人中並不會將「趙氏孤兒」此一意象和修剪圍籬的艱苦合併。",
+  },
+  {
+    type: "para",
+    text:
+      "〈中輔題雪求和，迅筆和之〉：「每憶神光立雪庭，曾將趙璧換秦城。童兒只愛團為塔，不解齊腰到天明。」以友人以雪為題，讓義堂和之，將「雪」與「和氏璧」兩種截然不同的意象相合，此在中國詩人中未有所聞。",
+  },
+  {
+    type: "heading",
+    text: "結語",
+  },
+  {
+    type: "para",
+    text:
+      "透過對義堂周信漢詩的整理與觀察，可以發現其使用典故的範疇不僅止於對於杜甫詩文的受容與意象擷取，針對許多漢籍典故皆有使用，同時，從義堂的詩風與詩法中可以看出宋詩詩法理論的影響，由此，針對義堂周信的漢詩，以其深度與廣度二種研究方向，筆者認為值得探討，礙於筆力有限，相關專題有伺後人研究：",
+  },
+  {
+    type: "list",
+    items: [
+      "深度：以江西詩派對義堂周信漢詩創作的影響"
+    ], 
+  },
+  {
+    type: "para",
+    text:
+      "以黃庭堅為代表的江西詩派主張「點鐵成金」、「奪胎換骨」，提倡煉字、抝句的詩法理論，我們已可從粗略的觀察中發現義堂詩針對某些特定理論的揚棄，在大部分的詩作中，義堂仍維持傳統唐詩「四三」、「二二三」句式，但在格律上的表現卻常出現抝字的情形。",
+  },
+  {
+    type: "list",
+    items: [
+      "廣度：整理義堂周信漢詩對中國典故的接受"
+    ], 
+  },
+  {
+    type: "para",
+    text:
+      "義堂不僅使用中國詩人及其詩文的意象，更兼顧《詩經》、《左傳》、《楚辭》等中國經典，甚者有以稗官野談入詩，說明詩人對於中國的了解非常深刻，透過更全面的整理，或可得詩人引用典故、意象的內在邏輯或日本對於中國詩文意象的轉化和新意。",
+  },
+];
+
+
 /* ==================== 文章專欄資料 ==================== */
-const FIXED_CATEGORIES = ["全部", "學術隨筆", "讀書會紀錄"];
+const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書會紀錄"];
 
 const columnArticles = [
   {
     id: 1,
-    title: "海昏漢簡《論語》的新資訊",
+    title: "《詩經‧有瞽》中「瞽」與周初樂制的考察",
     author: "王亭林",
-    affiliation: "臺灣師範大學國文學系",
+    affiliation: "臺灣師範大學國文學系博士候選人",
+    contact: "zxc998775@gmail.com",
     date: "2026-03-04",
-    category: "學術隨筆",
-    tags: ["海昏漢簡", "論語", "經學", "西漢"],
-    summary:
-    "短文整理陳侃理、厲承祥〈海昏漢簡《論語》分章初探〉的要點，並就「經學取向在數十年間快速成形」一說提出保留與後續可深掘之處。",
+    category: "學術筆記",
+    tags: ["詩經", "有瞽", "周禮", "樂制"],
+    summary: "〈有瞽〉作為《詩經‧周頌》之一首，《詩序》解釋「始作樂而合乎祖」，詩即描寫周初制禮作樂成而奏之於祖廟的情景。歷代研究多貼合《詩序》辨義，直至現代，方始關注本詩陳備的樂器與周朝初年樂事之關聯。本文主要透過《周禮》考察〈有瞽〉詩中「瞽」的意義及其由來以及瞽與詩中出現的樂器彼此的關聯，藉以還原詩中之景。由此辨明「瞽」作為盲人樂師，源出於商代之學，並在〈有瞽〉詩中並非僅有「瞽」為演奏者，且非所有樂器皆可由「瞽」所奏，是以詩中的「有瞽」實作為樂工之通稱，並非單指盲人樂師。",
     blocks: article1Blocks,
   },
   {
     id: 2,
-    title: "《詩經‧有瞽》中「瞽」與周初樂制的考察",
+    title: "淺談義堂周信漢詩特色",
     author: "王亭林",
-    affiliation: "臺灣師範大學國文學系",
+    affiliation: "臺灣師範大學國文學系博士候選人",
+    contact: "zxc998775@gmail.com",
     date: "2026-03-04",
-    category: "學術隨筆",
-    tags: ["詩經", "有瞽", "周禮", "樂制"],
-    summary: "〈有瞽〉作為《詩經‧周頌》之一首，《詩序》解釋「始作樂而合乎祖」，詩即描寫周初制禮作樂成而奏之於祖廟的情景。歷代研究多貼合《詩序》辨義，直至現代，方始關注本詩陳備的樂器與周朝初年樂事之關聯。本文主要透過《周禮》考察〈有瞽〉詩中「瞽」的意義及其由來以及瞽與詩中出現的樂器彼此的關聯，藉以還原詩中之景。由此辨明「瞽」作為盲人樂師，源出於商代之學，並在〈有瞽〉詩中並非僅有「瞽」為演奏者，且非所有樂器皆可由「瞽」所奏，是以詩中的「有瞽」實作為樂工之通稱，並非單指盲人樂師。",
+    category: "學術筆記",
+    tags: ["義堂周信", "空華集", "空華日用工夫略集", "黃庭堅"],
+    summary: "義堂周信為日本五山時代前期重要的禪僧，其與同宗師弟絕海中津並稱為「五山文學雙璧」，同時著有個人漢文日記輯錄《空華日用工夫略集》，漢詩文集《空華集》傳世，收錄其漢詩1739首，為學者研究五山文學前期詩文風氣的重要文獻。目前兩岸三地學者對義堂周信漢詩文的研究主要以其對杜甫詩文的受容及個人形象，或將五山文學作為一個整體研究，並未深入分析詩作。本文以《空華日用工夫略集》整理記錄義堂周信的詩風及詩法，並分析《空華集》中的漢詩，整理其對中國典故、意象的使用，企圖分析義堂周信詩文創作的脈絡與特色。",
     blocks: article2Blocks,
   },
 ];
@@ -709,53 +995,78 @@ const PageHeader = ({ title }) => (
 );
 
 /* ==================== 頁面：首頁 ==================== */
-const HomePage = ({ setPage }) => (
-  <div className="space-y-12 animate-fade-in relative z-10">
-    <section className="relative rounded-3xl overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel">
-      <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-widest font-sans theme-heading">
-        中文研究室
-      </h1>
-      <p className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-serif content-justify theme-text-secondary" style={{ textAlignLast: "center" }}>
-        「獨學而無友，則孤陋而寡聞。」
-        <br />
-        ──《禮記‧學記》
-      </p>
-      <button
-        onClick={() => setPage("about")}
-        className="text-white px-8 py-3 rounded-full font-medium shadow-lg flex items-center gap-2 mx-auto spring-transition hover:scale-105 active:scale-95 border"
-        style={{ background: "var(--c-nav-active-bg)", borderColor: "var(--c-nav-active-border)" }}
-      >
-        探索研究室 <Icon name="ChevronRight" size={20} />
-      </button>
-    </section>
+const HomePage = ({ setPage }) => {
+  return (
+    <div className="space-y-12 animate-fade-in relative z-10">
+      {/* 頂部主視覺 */}
+      <section className="relative rounded-3xl overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent pointer-events-none"></div>
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-widest font-sans theme-heading relative z-10">
+          中文研究室
+        </h1>
+        <p className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-serif content-justify theme-text-secondary relative z-10" style={{ textAlignLast: "center" }}>
+          「獨學而無友，則孤陋而寡聞。」
+          <br />
+          ──《禮記‧學記》
+        </p>
 
-    <section className="rounded-3xl p-8 md:p-12 glass-panel glass-card-hover">
-      <div
-        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4 backdrop-blur-sm font-sans border"
-        style={{ background: "var(--c-badge-bg)", color: "var(--c-badge-text)", borderColor: "var(--c-badge-border)" }}
-      >
-        <Icon name="Calendar" size={16} /> 近期研討
-      </div>
-      <h2 className="text-3xl font-bold mb-4 font-sans theme-heading">三月讀書會</h2>
-      <div className="space-y-4 bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
-        {[["時間", nextEvent.date], ["地點", nextEvent.location], ["主題", nextEvent.topic]].map(([l, v]) => (
-          <p key={l} className="flex items-start gap-3 theme-text">
-            <strong className="min-w-16 font-sans shrink-0">{l}：</strong>
-            <span>{v}</span>
-          </p>
+        <button
+          onClick={() => setPage("about")}
+          className="text-white px-8 py-3 rounded-full font-medium shadow-lg flex items-center gap-2 mx-auto spring-transition hover:scale-105 active:scale-95 border relative z-10"
+          style={{ background: "var(--c-nav-active-bg)", borderColor: "var(--c-nav-active-border)" }}
+        >
+          探索研究室 <Icon name="ChevronRight" size={20} />
+        </button>
+      </section>
+
+      {/* 互動式快速導覽卡片 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { title: "文章專欄", icon: "PenLine", target: "articles" },
+          { title: "討論進度", icon: "ClipboardList", target: "columns" },
+          { title: "資訊分享", icon: "Library", target: "books" }
+        ].map((item, i) => (
+          <div key={i} onClick={() => setPage(item.target)} className="p-8 rounded-3xl glass-panel glass-card-hover cursor-pointer group flex flex-col items-center text-center border transition-all duration-500 hover:-translate-y-2 hover:shadow-xl">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[10deg] shadow-sm" style={{ background: "var(--c-badge-bg)", color: "var(--c-primary)" }}>
+              <Icon name={item.icon} size={28} />
+            </div>
+            <h3 className="text-xl font-bold font-sans theme-heading transition-colors duration-300 group-hover:text-[var(--c-accent)]">{item.title}</h3>
+          </div>
         ))}
-        <div className="flex items-start gap-3 theme-text">
-          <strong className="min-w-16 font-sans shrink-0">論文：</strong>
-          <ul className="space-y-2">
-            {nextEvent.papers.map((p, i) => (
-              <li key={i} className="leading-relaxed">{p}</li>
-            ))}
-          </ul>
-        </div>
       </div>
-    </section>
-  </div>
-);
+
+      {/* 近期研討區塊 */}
+      <section className="rounded-3xl p-8 md:p-12 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl hover:bg-white/50">
+        <div
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-4 backdrop-blur-sm font-sans border"
+          style={{ background: "var(--c-badge-bg)", color: "var(--c-badge-text)", borderColor: "var(--c-badge-border)" }}
+        >
+          <Icon name="Calendar" size={16} /> 近期研討
+        </div>
+        <h2 className="text-3xl font-bold mb-4 font-sans theme-heading">三月讀書會</h2>
+        <div className="space-y-4 bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm transition-colors hover:bg-white/70">
+          {[["時間", nextEvent.date], ["地點", nextEvent.location], ["主題", nextEvent.topic]].map(([l, v]) => (
+            <p key={l} className="flex items-start gap-3 theme-text">
+              <strong className="min-w-16 font-sans shrink-0">{l}：</strong>
+              <span>{v}</span>
+            </p>
+          ))}
+          <div className="flex items-start gap-3 theme-text">
+            <strong className="min-w-16 font-sans shrink-0">論文：</strong>
+            <ul className="space-y-2">
+              {nextEvent.papers.map((p, i) => (
+                <li key={i} className="leading-relaxed relative pl-4">
+                  <span className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--c-accent)" }}></span>
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
 
 /* ==================== 成員資料 ==================== */
 const members = [
@@ -803,7 +1114,7 @@ const AboutPage = () => (
         ))}
       </div>
       <div className="mt-10 pt-8 theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}>
-        <h3 className="text-2xl font-bold mb-8 font-sans text-center theme-heading">研究室具體實踐</h3>
+        <h3 className="text-2xl font-bold mb-8 font-sans text-center theme-heading">具體實踐</h3>
         <div className="grid md:grid-cols-2 gap-6">
           {[
             { icon: "ClipboardList", n: 1, t: "建立學術討論的期程表", d: "計畫伊始，即排定每位成員的發表次序與時段，要求發表人須於會議前一週提交論文初稿。旨在模擬學術期刊或研討會的審稿流程，給予研究生學術寫作的「儀式感」與「責任心」。" },
@@ -1154,13 +1465,20 @@ const ArticlesPage = () => {
                   <h3 className="text-2xl md:text-3xl font-bold font-sans theme-heading mb-3 leading-tight transition-colors">
                     {a.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-sm theme-text-secondary mb-6 font-sans">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: "var(--c-primary)" }}>
-                      {a.author[0]}
-                    </span>
-                    <span className="font-medium">{a.author}</span>
-                    <span className="opacity-50">｜</span>
-                    <span className="opacity-80">{a.affiliation}</span>
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-1.5">
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: "var(--c-primary)" }}>
+                        {a.author[0]}
+                      </span>
+                      <span className="font-medium text-base">{a.author}</span>
+                      <span className="opacity-50">｜</span>
+                      <span className="opacity-80">{a.affiliation}</span>
+                    </div>
+                    {a.contact && (
+                      <div className="flex items-center gap-1.5 text-xs font-mono theme-text-secondary opacity-60 ml-8">
+                        <Icon name="Mail" size={12} /> {a.contact}
+                      </div>
+                    )}
                   </div>
 
                   {/* 標籤 */}
@@ -1193,7 +1511,7 @@ const ArticlesPage = () => {
                 {/* 完整內容區塊（展開時顯示） */}
                 <div className={`grid spring-transition ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                   <div className="overflow-hidden">
-                    <div className="px-8 pb-10 pt-4">
+                    <div className="px-8 pb-20 pt-4"> {/* 增加 pb-20 提供緩衝空間 */}
                       <div className="theme-divider pt-8 mb-8" style={{ borderTopWidth: "2px", borderTopStyle: "dashed" }}></div>
                       
                       {/* 文章內容渲染 */}
@@ -1208,7 +1526,7 @@ const ArticlesPage = () => {
                       </div>
 
                       {/* 收合按鈕 */}
-                      <div className="mt-12 flex justify-center pb-4">
+                      <div className="mt-16 flex justify-center pb-8"> {/* 增加 mt-16 與 pb-8 */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1396,7 +1714,8 @@ export default function App() {
         )}
       </nav>
 
-      <main style={{ flexGrow: 1, maxWidth: "72rem", margin: "0 auto", padding: "2rem 1.5rem", width: "100%" }}>
+      {/* 調整主容器底部 Padding 確保手機版不會被遮擋 */}
+      <main style={{ flexGrow: 1, maxWidth: "72rem", margin: "0 auto", padding: "2rem 1.5rem 6rem", width: "100%" }}>
         {page}
       </main>
 
