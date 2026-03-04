@@ -1593,7 +1593,7 @@ const SubmissionPage = () => (
           <Icon name="PenLine" size={24} style={{ color: "var(--c-accent)" }} /> 徵稿範圍
         </h3>
         <p className="text-lg font-serif content-justify theme-text-secondary leading-loose">
-          本專欄歡迎屬於中文學科的相關領域的學術筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
+          本專欄歡迎中文學科及跨領域的學術筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
         </p>
       </section>
 
