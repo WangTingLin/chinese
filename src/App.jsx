@@ -1428,7 +1428,7 @@ const ArticlesPage = () => {
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in relative z-10">
       <PageHeader title="文章專欄" />
 
-      {/* 分類篩選（套用專屬顏色） */}
+      {/* 分類篩選 */}
       <div className="flex flex-wrap gap-2 justify-center">
         {categories.map(cat => {
           const isActive = filterCat === cat;
@@ -1464,10 +1464,9 @@ const ArticlesPage = () => {
           <p>尚無文章，敬請期待。</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
           {filtered.map((a) => {
             const open = expandedId === a.id;
-            // 取得對應的分類顏色，若無對應則使用預設主題顏色
             const catColor = categoryColors[a.category] || { bg: "var(--c-badge-bg)", color: "var(--c-badge-text)", border: "var(--c-badge-border)" };
 
             return (
@@ -1477,46 +1476,50 @@ const ArticlesPage = () => {
               >
                 {/* 預覽區塊（點擊展開/收合） */}
                 <div
-                  className="p-8 relative"
+                  className="p-5 md:p-8 relative"
                   onClick={() => setExpandedId(open ? null : a.id)}
                 >
                   {/* 分類與日期標籤 */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
                       style={{ background: catColor.bg, color: catColor.color, borderColor: catColor.border }}>
                       <Icon name="Folder" size={14} className="opacity-70" /> {a.category}
                     </span>
-                    <span className="text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
+                    <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
                       <Icon name="Calendar" size={14} /> {a.date}
                     </span>
                   </div>
 
                   {/* 標題與作者 */}
-                  <h3 className="text-2xl md:text-3xl font-bold font-sans theme-heading mb-3 leading-tight transition-colors">
+                  <h3 className="text-xl md:text-3xl font-bold font-sans theme-heading mb-4 leading-tight transition-colors">
                     {a.title}
                   </h3>
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-1.5">
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: catColor.color, opacity: 0.9 }}>
-                        {a.author[0]}
-                      </span>
-                      <span className="font-medium text-base">{a.author}</span>
-                      <span className="opacity-50">｜</span>
-                      <span className="opacity-80">{a.affiliation}</span>
+                  
+                  {/* 響應式作者資訊區塊（修復手機跑版） */}
+                  <div className="mb-5 flex flex-col gap-1.5">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm theme-text-secondary font-sans">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: catColor.color, opacity: 0.9 }}>
+                          {a.author[0]}
+                        </span>
+                        <span className="font-medium text-base whitespace-nowrap">{a.author}</span>
+                        <span className="opacity-50 hidden md:inline">｜</span>
+                      </div>
+                      <span className="opacity-80 w-full md:w-auto ml-8 md:ml-0 text-xs md:text-sm leading-relaxed">{a.affiliation}</span>
                     </div>
                     {a.contact && (
                       <div className="flex items-center gap-1.5 text-xs font-mono theme-text-secondary opacity-60 ml-8">
-                        <Icon name="Mail" size={12} /> {a.contact}
+                        <Icon name="Mail" size={12} className="shrink-0" /> <span className="break-all">{a.contact}</span>
                       </div>
                     )}
                   </div>
 
-                  {/* 標籤（套用分類專屬顏色） */}
-                  <div className="flex flex-wrap gap-2 mb-6">
+                  {/* 標籤 */}
+                  <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
                     {a.tags.map((tag, i) => (
                       <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full border transition-colors hover:brightness-95"
                         style={{ background: catColor.bg, color: catColor.color, borderColor: catColor.border }}>
-                        <Icon name="Tag" size={12} className="opacity-60" /> {tag}
+                        <Icon name="Tag" size={12} className="opacity-60 shrink-0" /> {tag}
                       </span>
                     ))}
                   </div>
@@ -1525,7 +1528,7 @@ const ArticlesPage = () => {
                   <div className={`grid spring-transition ${open ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"}`}>
                     <div className="overflow-hidden">
                       {a.summary && (
-                        <p className="text-base leading-relaxed font-serif content-justify theme-text-secondary mb-4 p-4 rounded-2xl bg-white/30 border border-white/40 shadow-inner">
+                        <p className="text-sm md:text-base leading-relaxed font-serif content-justify theme-text-secondary mb-4 p-4 rounded-2xl bg-white/30 border border-white/40 shadow-inner">
                           {a.summary}
                         </p>
                       )}
@@ -1542,11 +1545,11 @@ const ArticlesPage = () => {
                 {/* 完整內容區塊（展開時顯示） */}
                 <div className={`grid spring-transition ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                   <div className="overflow-hidden">
-                    <div className="px-8 pb-20 pt-4"> 
-                      <div className="theme-divider pt-8 mb-8" style={{ borderTopWidth: "2px", borderTopStyle: "dashed" }}></div>
+                    <div className="px-5 md:px-8 pb-16 md:pb-20 pt-2 md:pt-4"> 
+                      <div className="theme-divider pt-6 md:pt-8 mb-6 md:mb-8" style={{ borderTopWidth: "2px", borderTopStyle: "dashed" }}></div>
                       
                       {/* 文章內容渲染 */}
-                      <div className="space-y-6 font-serif text-lg leading-loose content-justify theme-text">
+                      <div className="space-y-6 font-serif text-[1.05rem] md:text-lg leading-loose content-justify theme-text">
                         {(a.blocks || []).length === 0 ? (
                           <div className="text-center opacity-60 text-base py-10 bg-white/30 rounded-2xl border border-white/40">
                             （此文尚未填入全文內容）
@@ -1556,8 +1559,8 @@ const ArticlesPage = () => {
                         )}
                       </div>
 
-                      {/* 收合按鈕（套用分類專屬顏色） */}
-                      <div className="mt-16 flex justify-center pb-8"> 
+                      {/* 收合按鈕 */}
+                      <div className="mt-12 md:mt-16 flex justify-center pb-4 md:pb-8"> 
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1586,31 +1589,31 @@ const ArticlesPage = () => {
 const SubmissionPage = () => (
   <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
     <PageHeader title="投稿須知" />
-    <div className="p-8 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text">
+    <div className="p-6 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text">
       
       <section>
-        <h3 className="text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
+        <h3 className="text-xl md:text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
           <Icon name="PenLine" size={24} style={{ color: "var(--c-accent)" }} /> 徵稿範圍
         </h3>
-        <p className="text-lg font-serif content-justify theme-text-secondary leading-loose">
-          本專欄歡迎中文學科及跨領域的學術筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
+        <p className="text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
+          本專欄歡迎屬於中文學科的相關領域的學術筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
         </p>
       </section>
 
       <div className="theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "dashed" }}></div>
 
       <section>
-        <h3 className="text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
+        <h3 className="text-xl md:text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
           <Icon name="ClipboardList" size={24} style={{ color: "var(--c-accent)" }} /> 撰文規範
         </h3>
-        <ul className="space-y-4 text-lg font-serif content-justify theme-text-secondary leading-loose">
+        <ul className="space-y-4 text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
           <li className="flex items-start gap-3">
             <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
             <span>因本專欄僅為學術成果展示、交流所用，文章請全部以「正文」書寫，<strong>刪去註解、參考文獻</strong>。</span>
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
-            <span>本專欄即投稿即刊登，<strong>沒有審查機制，如為已發表之文章，請完整揭露發表情形，亦請作者自負學術責任。</strong></span>
+            <span>本專欄即投稿即刊登，<strong>沒有審查機制，亦請作者自負學術責任</strong>。</span>
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
@@ -1618,7 +1621,7 @@ const SubmissionPage = () => (
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
-            <span>若內文有特殊排版需求（如：圖片、獨立引文、表格、小標題），請於稿件中明確標示。</span>
+            <span>若內文有特殊排版需求（如：獨立引文、表格、小標題），請於稿件中明確標示。</span>
           </li>
         </ul>
       </section>
@@ -1626,15 +1629,22 @@ const SubmissionPage = () => (
       <div className="theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "dashed" }}></div>
 
       <section>
-        <h3 className="text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
+        <h3 className="text-xl md:text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
           <Icon name="Send" size={24} style={{ color: "var(--c-accent)" }} /> 投稿方式
         </h3>
-        <p className="text-lg font-serif content-justify theme-text-secondary leading-loose">
-          請將您的稿件（Word 或 txt 格式）寄至本室信箱：
-          <a href="mailto:zxc998775@gmail.com" className="inline-flex items-center gap-1.5 mx-2 px-4 py-1.5 bg-white/60 rounded-xl hover:-translate-y-0.5 transition-all shadow-sm font-sans text-base font-bold border border-white/60" style={{ color: "var(--c-primary)" }}>
+        <p className="text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
+          請將您的稿件（Word 或 PDF 格式）寄至本室信箱：
+        </p>
+        
+        {/* 信箱按鈕獨立一行，避免在手機版折行時跑版 */}
+        <div className="my-5 flex md:block justify-center">
+          <a href="mailto:zxc998775@gmail.com" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white/60 rounded-xl hover:-translate-y-0.5 transition-all shadow-sm font-sans text-base font-bold border border-white/60" style={{ color: "var(--c-primary)" }}>
             <Icon name="Mail" size={18} /> zxc998775@gmail.com
           </a>
-          <br className="hidden md:block" />信件主旨請註明「中文研究室」字樣，並於信件內附上您的<strong>姓名（或筆名）、服務／就讀單位與稱謂、聯繫方式</strong>（以便網頁建檔）。約於收件後一至五日上架！
+        </div>
+
+        <p className="text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
+          信件主旨請註明「投稿中文研究室─[您的姓名]」，並於信件內附上您的<strong>真實姓名、所屬單位與職稱</strong>（以便網頁建檔）。我們將在收到後盡快回覆並為您上架！
         </p>
       </section>
 
