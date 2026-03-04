@@ -1596,7 +1596,7 @@ const SubmissionPage = () => (
           <Icon name="PenLine" size={24} style={{ color: "var(--c-accent)" }} /> 徵稿範圍
         </h3>
         <p className="text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
-          本專欄歡迎屬於中文學科的相關領域的學術筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
+          本專欄歡迎中文學科及相關領域的筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
         </p>
       </section>
 
@@ -1613,7 +1613,7 @@ const SubmissionPage = () => (
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
-            <span>本專欄即投稿即刊登，<strong>沒有審查機制，亦請作者自負學術責任</strong>。</span>
+            <span>本專欄即投稿即刊登，<strong>沒有審查機制，如有必要，請充分揭露文章的發表情形，亦請作者自負學術責任</strong>。</span>
           </li>
           <li className="flex items-start gap-3">
             <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
@@ -1633,7 +1633,7 @@ const SubmissionPage = () => (
           <Icon name="Send" size={24} style={{ color: "var(--c-accent)" }} /> 投稿方式
         </h3>
         <p className="text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
-          請將您的稿件（Word 或 PDF 格式）寄至本室信箱：
+          請將您的稿件（Word 或 txt 格式）寄至本室信箱：
         </p>
         
         {/* 信箱按鈕獨立一行，避免在手機版折行時跑版 */}
@@ -1644,7 +1644,7 @@ const SubmissionPage = () => (
         </div>
 
         <p className="text-base md:text-lg font-serif content-justify theme-text-secondary leading-loose">
-          信件主旨請註明「投稿中文研究室─[您的姓名]」，並於信件內附上您的<strong>真實姓名、所屬單位與職稱</strong>（以便網頁建檔）。我們將在收到後盡快回覆並為您上架！
+          信件主旨請註明「投稿中文研究室─[您的姓名]」，並於信件內附上您的<strong>真實姓名（或筆名）、所屬單位與職稱</strong>（以便網頁建檔）。我們將在收到後盡快回覆並為您上架！
         </p>
       </section>
 
