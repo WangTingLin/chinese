@@ -137,6 +137,12 @@ const Icon = ({ name, size = 24, className = "" }) => {
         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
       </>
     ),
+    Send: (
+      <>
+        <path d="m22 2-7 20-4-9-9-4Z" />
+        <path d="M22 2 11 13" />
+      </>
+    ),
   };
 
   return (
@@ -935,7 +941,7 @@ const article2Blocks = [
 
 
 /* ==================== 文章專欄資料 ==================== */
-const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書會紀錄"];
+const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書會紀錄", "文學創作"];
 
 const columnArticles = [
   {
@@ -1403,6 +1409,14 @@ const BlockRenderer = ({ block }) => {
   }
 };
 
+/* ==================== 分類專屬顏色設定 ==================== */
+const categoryColors = {
+  "學術筆記": { bg: "rgba(59,130,246,0.12)", color: "#1e40af", border: "rgba(59,130,246,0.3)" }, // 藍色系
+  "學術隨筆": { bg: "rgba(59,130,246,0.12)", color: "#1e40af", border: "rgba(59,130,246,0.3)" }, // 藍色系 (相容設定)
+  "讀書會紀錄": { bg: "rgba(34,197,94,0.12)", color: "#166534", border: "rgba(34,197,94,0.3)" },  // 綠色系
+  "文學創作": { bg: "rgba(244,63,94,0.12)", color: "#9f1239", border: "rgba(244,63,94,0.3)" },   // 玫瑰紅色系
+};
+
 const ArticlesPage = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [filterCat, setFilterCat] = useState("全部");
@@ -1414,20 +1428,34 @@ const ArticlesPage = () => {
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in relative z-10">
       <PageHeader title="文章專欄" />
 
-      {/* 分類篩選 */}
+      {/* 分類篩選（套用專屬顏色） */}
       <div className="flex flex-wrap gap-2 justify-center">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setFilterCat(cat)}
-            className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
-            style={filterCat === cat
-              ? { background: "var(--c-nav-active-bg)", color: "#fff", borderColor: "var(--c-nav-active-border)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }
-              : { background: "rgba(255,255,255,0.4)", borderColor: "rgba(255,255,255,0.6)", color: "var(--c-text-secondary)" }}
-          >
-            {cat}
-          </button>
-        ))}
+        {categories.map(cat => {
+          const isActive = filterCat === cat;
+          const catColor = categoryColors[cat];
+
+          return (
+            <button
+              key={cat}
+              onClick={() => setFilterCat(cat)}
+              className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
+              style={isActive
+                ? { 
+                    background: cat === "全部" ? "var(--c-nav-active-bg)" : catColor?.color || "var(--c-primary)", 
+                    color: "#fff", 
+                    borderColor: cat === "全部" ? "var(--c-nav-active-border)" : catColor?.color || "var(--c-primary)", 
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)" 
+                  }
+                : { 
+                    background: "rgba(255,255,255,0.4)", 
+                    borderColor: "rgba(255,255,255,0.6)", 
+                    color: "var(--c-text-secondary)" 
+                  }}
+            >
+              {cat}
+            </button>
+          )
+        })}
       </div>
 
       {filtered.length === 0 ? (
@@ -1439,6 +1467,8 @@ const ArticlesPage = () => {
         <div className="space-y-8">
           {filtered.map((a) => {
             const open = expandedId === a.id;
+            // 取得對應的分類顏色，若無對應則使用預設主題顏色
+            const catColor = categoryColors[a.category] || { bg: "var(--c-badge-bg)", color: "var(--c-badge-text)", border: "var(--c-badge-border)" };
 
             return (
               <article
@@ -1453,7 +1483,7 @@ const ArticlesPage = () => {
                   {/* 分類與日期標籤 */}
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
-                      style={{ background: "var(--c-badge-bg)", color: "var(--c-badge-text)", borderColor: "var(--c-badge-border)" }}>
+                      style={{ background: catColor.bg, color: catColor.color, borderColor: catColor.border }}>
                       <Icon name="Folder" size={14} className="opacity-70" /> {a.category}
                     </span>
                     <span className="text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
@@ -1467,7 +1497,7 @@ const ArticlesPage = () => {
                   </h3>
                   <div className="mb-6">
                     <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-1.5">
-                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: "var(--c-primary)" }}>
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: catColor.color, opacity: 0.9 }}>
                         {a.author[0]}
                       </span>
                       <span className="font-medium text-base">{a.author}</span>
@@ -1481,10 +1511,11 @@ const ArticlesPage = () => {
                     )}
                   </div>
 
-                  {/* 標籤 */}
+                  {/* 標籤（套用分類專屬顏色） */}
                   <div className="flex flex-wrap gap-2 mb-6">
                     {a.tags.map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full bg-white/50 border border-white/60 theme-text-secondary transition-colors hover:bg-white/80">
+                      <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full border transition-colors hover:brightness-95"
+                        style={{ background: catColor.bg, color: catColor.color, borderColor: catColor.border }}>
                         <Icon name="Tag" size={12} className="opacity-60" /> {tag}
                       </span>
                     ))}
@@ -1499,7 +1530,7 @@ const ArticlesPage = () => {
                         </p>
                       )}
                       <div className="flex justify-center mt-2">
-                        <span className="inline-flex items-center justify-center gap-1 text-sm font-medium font-sans px-4 py-2 rounded-full" style={{ color: "var(--c-primary)", background: "var(--c-badge-bg)" }}>
+                        <span className="inline-flex items-center justify-center gap-1 text-sm font-medium font-sans px-4 py-2 rounded-full shadow-sm border" style={{ color: "white", background: catColor.color, borderColor: catColor.color }}>
                           <span className="leading-none pt-[1px]">閱讀全文</span>
                           <div className="flex items-center justify-center h-4 w-4 ml-0.5"><Icon name="ChevronDown" size={16} className="animate-bounce" /></div>
                         </span>
@@ -1511,7 +1542,7 @@ const ArticlesPage = () => {
                 {/* 完整內容區塊（展開時顯示） */}
                 <div className={`grid spring-transition ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                   <div className="overflow-hidden">
-                    <div className="px-8 pb-20 pt-4"> {/* 增加 pb-20 提供緩衝空間 */}
+                    <div className="px-8 pb-20 pt-4"> 
                       <div className="theme-divider pt-8 mb-8" style={{ borderTopWidth: "2px", borderTopStyle: "dashed" }}></div>
                       
                       {/* 文章內容渲染 */}
@@ -1525,15 +1556,15 @@ const ArticlesPage = () => {
                         )}
                       </div>
 
-                      {/* 收合按鈕 */}
-                      <div className="mt-16 flex justify-center pb-8"> {/* 增加 mt-16 與 pb-8 */}
+                      {/* 收合按鈕（套用分類專屬顏色） */}
+                      <div className="mt-16 flex justify-center pb-8"> 
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setExpandedId(null);
                           }}
                           className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-full text-sm font-bold font-sans transition-all hover:-translate-y-1 shadow-md border"
-                          style={{ background: "var(--c-primary)", color: "white", borderColor: "var(--c-primary-dark)" }}
+                          style={{ background: catColor.color, color: "white", borderColor: catColor.color }}
                         >
                           <Icon name="ChevronUp" size={18} />
                           <span className="leading-none pt-[1px]">收合文章</span>
@@ -1551,6 +1582,65 @@ const ArticlesPage = () => {
   );
 };
 
+/* ==================== 頁面：投稿須知 ==================== */
+const SubmissionPage = () => (
+  <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
+    <PageHeader title="投稿須知" />
+    <div className="p-8 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text">
+      
+      <section>
+        <h3 className="text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
+          <Icon name="PenLine" size={24} style={{ color: "var(--c-accent)" }} /> 徵稿範圍
+        </h3>
+        <p className="text-lg font-serif content-justify theme-text-secondary leading-loose">
+          本專欄歡迎屬於中文學科的相關領域的學術筆記、書評、文學創作或學術論文。期盼透過文字交流，促進中文人的對話與思想碰撞。
+        </p>
+      </section>
+
+      <div className="theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "dashed" }}></div>
+
+      <section>
+        <h3 className="text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
+          <Icon name="ClipboardList" size={24} style={{ color: "var(--c-accent)" }} /> 撰文規範
+        </h3>
+        <ul className="space-y-4 text-lg font-serif content-justify theme-text-secondary leading-loose">
+          <li className="flex items-start gap-3">
+            <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
+            <span>因本專欄僅為學術成果展示、交流所用，文章請全部以「正文」書寫，<strong>刪去註解、參考文獻</strong>。</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
+            <span>本專欄即投稿即刊登，<strong>沒有審查機制，如為已發表之文章，請完整揭露發表情形，亦請作者自負學術責任。</strong></span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
+            <span>建議字數以 1,000 至 20,000 字為佳，以適應網頁閱讀體驗。</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="mt-2.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--c-primary)" }}></span>
+            <span>若內文有特殊排版需求（如：圖片、獨立引文、表格、小標題），請於稿件中明確標示。</span>
+          </li>
+        </ul>
+      </section>
+
+      <div className="theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "dashed" }}></div>
+
+      <section>
+        <h3 className="text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
+          <Icon name="Send" size={24} style={{ color: "var(--c-accent)" }} /> 投稿方式
+        </h3>
+        <p className="text-lg font-serif content-justify theme-text-secondary leading-loose">
+          請將您的稿件（Word 或 txt 格式）寄至本室信箱：
+          <a href="mailto:zxc998775@gmail.com" className="inline-flex items-center gap-1.5 mx-2 px-4 py-1.5 bg-white/60 rounded-xl hover:-translate-y-0.5 transition-all shadow-sm font-sans text-base font-bold border border-white/60" style={{ color: "var(--c-primary)" }}>
+            <Icon name="Mail" size={18} /> zxc998775@gmail.com
+          </a>
+          <br className="hidden md:block" />信件主旨請註明「中文研究室」字樣，並於信件內附上您的<strong>姓名（或筆名）、服務／就讀單位與稱謂、聯繫方式</strong>（以便網頁建檔）。約於收件後一至五日上架！
+        </p>
+      </section>
+
+    </div>
+  </div>
+);
 
 /* ==================== 主應用程式 ==================== */
 export default function App() {
@@ -1564,6 +1654,7 @@ export default function App() {
     { id: "events", label: "近期活動", icon: <Icon name="Calendar" size={18} /> },
     { id: "columns", label: "討論進度", icon: <Icon name="PenLine" size={18} /> },
     { id: "articles", label: "文章專欄", icon: <Icon name="BookOpen" size={18} /> },
+    { id: "submission", label: "投稿須知", icon: <Icon name="Send" size={18} /> },
   ];
 
   const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
@@ -1576,6 +1667,7 @@ export default function App() {
       case "events": return <EventsPage />;
       case "columns": return <ColumnsPage />;
       case "articles": return <ArticlesPage />;
+      case "submission": return <SubmissionPage />;
       default: return <HomePage setPage={setCurrentPage} />;
     }
   })();
@@ -1585,8 +1677,12 @@ export default function App() {
     about: { primary: "#8c6240", primaryDark: "#5e3d24", accent: "#c4935a", accentLight: "#fdf0e0", text: "#3d2414", textSec: "#7a5a3e", blob1: "rgba(196,147,90,0.22)", blob2: "rgba(140,98,64,0.18)", blob3: "rgba(220,180,140,0.2)", footer: "rgba(61,36,20,0.85)", navBg: "rgba(140,98,64,0.9)", navBorder: "rgba(196,147,90,0.5)", badgeBg: "rgba(196,147,90,0.2)", badgeText: "#5e3d24", badgeBorder: "rgba(196,147,90,0.3)" },
     books: { primary: "#8a7a2e", primaryDark: "#5c5218", accent: "#b89a38", accentLight: "#fdf8e8", text: "#3a3410", textSec: "#6b6330", blob1: "rgba(184,154,56,0.22)", blob2: "rgba(138,122,46,0.18)", blob3: "rgba(210,195,120,0.2)", footer: "rgba(58,52,16,0.85)", navBg: "rgba(138,122,46,0.9)", navBorder: "rgba(184,154,56,0.5)", badgeBg: "rgba(184,154,56,0.2)", badgeText: "#5c5218", badgeBorder: "rgba(184,154,56,0.3)" },
     events: { primary: "#3d6878", primaryDark: "#264350", accent: "#6ba0b4", accentLight: "#eaf4f8", text: "#1a3540", textSec: "#4a7080", blob1: "rgba(61,104,120,0.22)", blob2: "rgba(107,160,180,0.18)", blob3: "rgba(80,130,160,0.2)", footer: "rgba(26,53,64,0.85)", navBg: "rgba(61,104,120,0.9)", navBorder: "rgba(107,160,180,0.5)", badgeBg: "rgba(107,160,180,0.2)", badgeText: "#264350", badgeBorder: "rgba(107,160,180,0.3)" },
-    articles: { primary: "#6b4a7a", primaryDark: "#3d2050", accent: "#a07abf", accentLight: "#f5eefa", text: "#2d1040", textSec: "#6b4a7a", blob1: "rgba(160,122,191,0.22)", blob2: "rgba(107,74,122,0.18)", blob3: "rgba(200,170,220,0.2)", footer: "rgba(45,16,64,0.85)", navBg: "rgba(107,74,122,0.9)", navBorder: "rgba(160,122,191,0.5)", badgeBg: "rgba(160,122,191,0.2)", badgeText: "#3d2050", badgeBorder: "rgba(160,122,191,0.3)" },
+    
+    /* 更新：將文章專欄的主色調改為沉穩的板岩灰 (Slate) 以包容多色的分類標籤 */
+    articles: { primary: "#475569", primaryDark: "#1e293b", accent: "#94a3b8", accentLight: "#f1f5f9", text: "#0f172a", textSec: "#334155", blob1: "rgba(71,85,105,0.22)", blob2: "rgba(100,116,139,0.18)", blob3: "rgba(30,41,59,0.2)", footer: "rgba(15,23,42,0.85)", navBg: "rgba(30,41,59,0.9)", navBorder: "rgba(100,116,139,0.5)", badgeBg: "rgba(100,116,139,0.2)", badgeText: "#1e293b", badgeBorder: "rgba(100,116,139,0.3)" },
+    
     columns: { primary: "#4a6a50", primaryDark: "#2e4432", accent: "#8aaa60", accentLight: "#f2f7ec", text: "#1e3322", textSec: "#506a54", blob1: "rgba(74,106,80,0.22)", blob2: "rgba(138,170,96,0.18)", blob3: "rgba(100,150,110,0.2)", footer: "rgba(30,51,34,0.85)", navBg: "rgba(74,106,80,0.9)", navBorder: "rgba(138,170,96,0.5)", badgeBg: "rgba(138,170,96,0.2)", badgeText: "#2e4432", badgeBorder: "rgba(138,170,96,0.3)" },
+    submission: { primary: "#b45309", primaryDark: "#7c2d12", accent: "#f59e0b", accentLight: "#ffedd5", text: "#431407", textSec: "#9a3412", blob1: "rgba(180,83,9,0.22)", blob2: "rgba(124,45,18,0.18)", blob3: "rgba(245,158,11,0.2)", footer: "rgba(67,20,7,0.85)", navBg: "rgba(124,45,18,0.9)", navBorder: "rgba(180,83,9,0.5)", badgeBg: "rgba(180,83,9,0.2)", badgeText: "#7c2d12", badgeBorder: "rgba(180,83,9,0.3)" },
   };
 
   const t = themes[currentPage] || themes.home;
