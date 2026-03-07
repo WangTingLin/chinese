@@ -17,8 +17,17 @@ export default function ActivitiesPage({ isDarkMode }) {
   });
   
   const promoColors = getPromoColors(isDarkMode);
-  const filteredEvents = promoEvents.filter(ev => filterCat === "全部" || ev.category === filterCat);
-
+const filteredEvents = promoEvents
+  .filter(ev => filterCat === "全部" || ev.category === filterCat)
+  .sort((a, b) => {
+    const getStartTime = (ev) => {
+      const dateStr = ev.date.split("-")[0].includes(":")
+        ? ev.date.split("-")[0]
+        : ev.date.split(" ")[0] + " " + (ev.date.split(" ")[1]?.split("-")[0] || "00:00");
+      return new Date(dateStr.replace(",", ""));
+    };
+    return getStartTime(b) - getStartTime(a); // 晚的排前面
+  });
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
       <PageHeader title="近期活動" />
