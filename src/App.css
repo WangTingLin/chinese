@@ -4,7 +4,21 @@
   padding: 2rem;
   text-align: center;
 }
+.hero{
+  text-align:center;
+  margin-bottom:60px;
+}
 
+.hero-title{
+  font-size:44px;
+  letter-spacing:8px;
+  margin-bottom:10px;
+}
+
+.hero-quote{
+  font-size:18px;
+  color:#64748b;
+}
 .logo {
   height: 6em;
   padding: 1.5em;
