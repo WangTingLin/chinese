@@ -503,4 +503,23 @@ export const promoEvents = [
     description: "以「忠孝節義」四維為靈魂的文化復興運動，旨在透過現代影視特效與精緻戲曲美學，重塑傳統倫理的當代價值，達成「老戲薪傳、跨代共鳴、導正人心」的核心使命。",
     link:"https://www.cong-meng.org/activity/bf8004f2ef6c11f08a6e0242ac120002",
 },
+{
+    id: 52,
+    title: "第十一屆「子衿論衡：中文青年學者論壇」",
+    category: "研討會／工作坊",
+    date: "2026-03-21 09:00-16:20",
+    location: "中正大學文學院144國際會議廳",
+    organizer: "中正大學中文系",
+    link:"https://sites.google.com/view/ccuclzijin2019/%E9%A6%96%E9%A0%81/%E7%AC%AC%E5%8D%81%E4%B8%80%E5%B1%86-%E5%AD%90%E8%A1%BF%E8%AB%96%E8%A1%A1%E4%B8%AD%E6%96%87%E9%9D%92%E5%B9%B4%E5%AD%B8%E8%80%85%E8%AB%96%E5%A3%87",
+},
+{
+    id: 53,
+    title: "第二屆臺灣中文學會青年學者卓越論壇",
+    category: "研討會／工作坊",
+    date: "2026-03-21 10:00-16:45",
+    location: "臺大文學院會議室",
+    organizer: "臺灣中文學會",
+    link:"https://sites.google.com/view/tacs201110/%E6%9C%80%E6%96%B0%E6%B6%88%E6%81%AF/%E5%AD%B8%E6%9C%83%E5%85%AC%E5%91%8A",
+},
+
 ];
