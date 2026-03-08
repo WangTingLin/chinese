@@ -380,10 +380,19 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const navItems = [
     { id: "home", label: "研究室首頁", icon: <Icon name="Home" size={18} /> },
-    { id: "promotions", label: "活動宣傳", icon: <Icon name="Megaphone" size={18} /> },
+    { id: "activities", label: "近期活動", icon: <Icon name="Megaphone" size={18} /> },
     { id: "books", label: "資訊分享", icon: <Icon name="Library" size={18} /> },
     { id: "about", label: "關於讀書會", icon: <Icon name="Info" size={18} /> },
     { id: "events", label: "研討進度", icon: <Icon name="Calendar" size={18} /> },
@@ -391,7 +400,7 @@ export default function App() {
     { id: "submission", label: "投稿須知", icon: <Icon name="Send" size={18} /> },
   ];
 
-  const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
+  const go = (id) => { setCurrentPage(id); setMobileOpen(false); scrollToTop(); };
 
   const pageProps = { setPage: setCurrentPage, isDarkMode };
   const page = (() => {
@@ -401,7 +410,7 @@ export default function App() {
       case "books": return <BooksPage {...pageProps} />;
       case "events": return <EventsPage {...pageProps} />;
       case "articles": return <ArticlesPage {...pageProps} />;
-      case "promotions": return <PromotionsPage {...pageProps} />;
+      case "activities": return <ActivitiesPage {...pageProps} />;
       case "submission": return <SubmissionPage {...pageProps} />;
       default: return <HomePage {...pageProps} />;
     }
@@ -414,13 +423,11 @@ export default function App() {
     events: { primary: "#3d6878", primaryDark: "#264350", accent: "#6ba0b4", accentLight: "#eaf4f8", text: "#1a3540", textSec: "#4a7080", blob1: "rgba(61,104,120,0.22)", blob2: "rgba(107,160,180,0.18)", blob3: "rgba(80,130,160,0.2)", footer: "rgba(26,53,64,0.85)", navBg: "rgba(61,104,120,0.9)", navBorder: "rgba(107,160,180,0.5)", badgeBg: "rgba(107,160,180,0.2)", badgeText: "#264350", badgeBorder: "rgba(107,160,180,0.3)" },
     articles: { primary: "#475569", primaryDark: "#1e293b", accent: "#94a3b8", accentLight: "#f1f5f9", text: "#0f172a", textSec: "#334155", blob1: "rgba(71,85,105,0.22)", blob2: "rgba(100,116,139,0.18)", blob3: "rgba(30,41,59,0.2)", footer: "rgba(15,23,42,0.85)", navBg: "rgba(30,41,59,0.9)", navBorder: "rgba(100,116,139,0.5)", badgeBg: "rgba(100,116,139,0.2)", badgeText: "#1e293b", badgeBorder: "rgba(100,116,139,0.3)" },
     columns: { primary: "#4a6a50", primaryDark: "#2e4432", accent: "#8aaa60", accentLight: "#f2f7ec", text: "#1e3322", textSec: "#506a54", blob1: "rgba(74,106,80,0.22)", blob2: "rgba(138,170,96,0.18)", blob3: "rgba(100,150,110,0.2)", footer: "rgba(30,51,34,0.85)", navBg: "rgba(74,106,80,0.9)", navBorder: "rgba(138,170,96,0.5)", badgeBg: "rgba(138,170,96,0.2)", badgeText: "#2e4432", badgeBorder: "rgba(138,170,96,0.3)" },
-    promotions: { primary: "#7c3aed", primaryDark: "#4c1d95", accent: "#a78bfa", accentLight: "#f5f3ff", text: "#2e1065", textSec: "#5b21b6", blob1: "rgba(124,58,237,0.22)", blob2: "rgba(76,29,149,0.18)", blob3: "rgba(167,139,250,0.2)", footer: "rgba(46,16,101,0.85)", navBg: "rgba(76,29,149,0.9)", navBorder: "rgba(124,58,237,0.5)", badgeBg: "rgba(124,58,237,0.2)", badgeText: "#4c1d95", badgeBorder: "rgba(124,58,237,0.3)" },
+    activities: { primary: "#0284c7", primaryDark: "#0369a1", accent: "#38bdf8", accentLight: "#e0f2fe", text: "#0c4a6e", textSec: "#0369a1", blob1: "rgba(2,132,199,0.22)", blob2: "rgba(56,189,248,0.18)", blob3: "rgba(3,105,161,0.2)", footer: "rgba(8,47,73,0.85)", navBg: "rgba(3,105,161,0.9)", navBorder: "rgba(2,132,199,0.5)", badgeBg: "rgba(2,132,199,0.2)", badgeText: "#0369a1", badgeBorder: "rgba(2,132,199,0.3)" },
     submission: { primary: "#b45309", primaryDark: "#7c2d12", accent: "#f59e0b", accentLight: "#ffedd5", text: "#431407", textSec: "#9a3412", blob1: "rgba(180,83,9,0.22)", blob2: "rgba(124,45,18,0.18)", blob3: "rgba(245,158,11,0.2)", footer: "rgba(67,20,7,0.85)", navBg: "rgba(124,45,18,0.9)", navBorder: "rgba(180,83,9,0.5)", badgeBg: "rgba(180,83,9,0.2)", badgeText: "#7c2d12", badgeBorder: "rgba(180,83,9,0.3)" },
   };
 
   const bTheme = baseThemes[currentPage] || baseThemes.home;
-  
-  /* 動態計算亮/暗模式的變數值 */
   const t = {
     ...bTheme,
     primaryDark: isDarkMode ? "#f8fafc" : bTheme.primaryDark,
@@ -436,58 +443,28 @@ export default function App() {
 
   return (
     <div style={{
-      "--c-primary": t.primary, 
-      "--c-primary-dark": t.primaryDark, 
-      "--c-accent": t.accent,
-      "--c-accent-light": t.accentLight, 
-      "--c-text": t.text, 
-      "--c-text-secondary": t.textSec,
-      "--c-blob-1": t.blob1, 
-      "--c-blob-2": t.blob2, 
-      "--c-blob-3": t.blob3,
-      "--c-footer": t.footer, 
-      "--c-nav-active-bg": t.navBg, 
-      "--c-nav-active-border": t.navBorder,
-      "--c-badge-bg": t.badgeBg, 
-      "--c-badge-text": t.badgeText, 
-      "--c-badge-border": t.badgeBorder,
-      "--c-selection": `${t.accent}4D`,
+      "--c-primary": t.primary, "--c-primary-dark": t.primaryDark, "--c-accent": t.accent, "--c-accent-light": t.accentLight, 
+      "--c-text": t.text, "--c-text-secondary": t.textSec,
+      "--c-blob-1": t.blob1, "--c-blob-2": t.blob2, "--c-blob-3": t.blob3,
+      "--c-footer": t.footer, "--c-nav-active-bg": t.navBg, "--c-nav-active-border": t.navBorder,
+      "--c-badge-bg": t.badgeBg, "--c-badge-text": t.badgeText, "--c-badge-border": t.badgeBorder,
       "--c-panel-rgb": isDarkMode ? "30, 41, 59" : "255, 255, 255",
       "--c-border-rgb": isDarkMode ? "148, 163, 184" : "255, 255, 255",
       backgroundColor: isDarkMode ? "#0f172a" : "#f9fafb",
-      color: t.text, 
-      fontFamily: "'Noto Serif TC', serif", 
-      minHeight: "100vh", 
-      display: "flex", 
-      flexDirection: "column",
+      color: t.text, fontFamily: "'Noto Serif TC', serif", minHeight: "100vh", display: "flex", flexDirection: "column",
       transition: "background-color 500ms ease, color 500ms ease",
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
         @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
+        @keyframes fadeInUp { 0% { opacity:0; transform:translateY(20px) scale(0.98);} 100% { opacity:1; transform:translateY(0) scale(1);} }
         .animate-fade-in { animation: fadeIn 0.5s ease-out both; }
+        .animate-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
         
-        /* ===== 動態流體背景動畫 (超明顯版) ===== */
-        @keyframes blobMove1 {
-          0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
-          50% { transform: translate(45vw, 25vh) scale(1.8) rotate(45deg) skew(-10deg, 10deg); opacity: 1; }
-          100% { transform: translate(-20vw, 40vh) scale(0.9) rotate(90deg); opacity: 0.6; }
-        }
-        @keyframes blobMove2 {
-          0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.8; }
-          50% { transform: translate(-45vw, 30vh) scale(2) rotate(-45deg) skew(10deg, -10deg); opacity: 1; }
-          100% { transform: translate(35vw, -30vh) scale(0.9) rotate(-90deg); opacity: 0.7; }
-        }
-        @keyframes blobMove3 {
-          0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
-          50% { transform: translate(35vw, -45vh) scale(1.7) rotate(45deg) skew(-10deg, -10deg); opacity: 1; }
-          100% { transform: translate(-40vw, 25vh) scale(1.2) rotate(90deg); opacity: 0.6; }
-        }
-        
-        .blob-1 { animation: blobMove1 10s infinite alternate ease-in-out; }
-        .blob-2 { animation: blobMove2 12s infinite alternate ease-in-out; }
-        .blob-3 { animation: blobMove3 14s infinite alternate ease-in-out; }
-        /* ========================== */
+        @keyframes blobMove1 { 0% { transform: translate(0,0) scale(1) rotate(0deg); opacity: 0.7; } 50% { transform: translate(45vw, 25vh) scale(1.8) rotate(45deg) skew(-10deg, 10deg); opacity: 1; } 100% { transform: translate(-20vw, 40vh) scale(0.9) rotate(90deg); opacity: 0.6; } }
+        @keyframes blobMove2 { 0% { transform: translate(0,0) scale(1) rotate(0deg); opacity: 0.8; } 50% { transform: translate(-45vw, 30vh) scale(2) rotate(-45deg) skew(10deg, -10deg); opacity: 1; } 100% { transform: translate(35vw, -30vh) scale(0.9) rotate(-90deg); opacity: 0.7; } }
+        @keyframes blobMove3 { 0% { transform: translate(0,0) scale(1) rotate(0deg); opacity: 0.7; } 50% { transform: translate(35vw, -45vh) scale(1.7) rotate(45deg) skew(-10deg, -10deg); opacity: 1; } 100% { transform: translate(-40vw, 25vh) scale(1.2) rotate(90deg); opacity: 0.6; } }
+        .blob-1 { animation: blobMove1 10s infinite alternate ease-in-out; } .blob-2 { animation: blobMove2 12s infinite alternate ease-in-out; } .blob-3 { animation: blobMove3 14s infinite alternate ease-in-out; }
 
         .font-sans { font-family: 'Noto Sans TC', sans-serif !important; }
         .font-serif { font-family: 'Noto Serif TC', serif !important; }
@@ -499,49 +476,31 @@ export default function App() {
         .theme-heading { color: var(--c-primary-dark); transition: color 500ms ease; }
         .theme-divider { border-color: color-mix(in srgb, var(--c-primary) 15%, transparent); }
 
-        /* ===== 全域覆寫 Tailwind 背景/框線供玻璃擬態使用 ===== */
-        .glass-panel { background: rgba(var(--c-panel-rgb), 0.4) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'}); transition: all 500ms ease; }
+        .glass-panel { background: rgba(var(--c-panel-rgb), 0.4) !important; backdrop-filter: blur(20px); border: 1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'}); transition: all 500ms ease; }
         .glass-panel:hover { background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.6'}) !important; }
         .glass-card-hover { transition: all 300ms ease; }
         .glass-card-hover:hover { background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.5' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.4' : '0.1'}) !important; }
         
         .bg-white { background-color: rgba(var(--c-panel-rgb), 1) !important; transition: background-color 500ms ease; }
-        .bg-white\\/30 { background-color: rgba(var(--c-panel-rgb), 0.3) !important; transition: background-color 500ms ease; }
-        .bg-white\\/40 { background-color: rgba(var(--c-panel-rgb), 0.4) !important; transition: background-color 500ms ease; }
-        .bg-white\\/50 { background-color: rgba(var(--c-panel-rgb), 0.5) !important; transition: background-color 500ms ease; }
-        .bg-white\\/60 { background-color: rgba(var(--c-panel-rgb), 0.6) !important; transition: background-color 500ms ease; }
-        .bg-white\\/70 { background-color: rgba(var(--c-panel-rgb), 0.7) !important; transition: background-color 500ms ease; }
-        .bg-white\\/80 { background-color: rgba(var(--c-panel-rgb), 0.8) !important; transition: background-color 500ms ease; }
+        .bg-white\\/30 { background-color: rgba(var(--c-panel-rgb), 0.3) !important; }
+        .bg-white\\/40 { background-color: rgba(var(--c-panel-rgb), 0.4) !important; }
+        .bg-white\\/50 { background-color: rgba(var(--c-panel-rgb), 0.5) !important; }
+        .bg-white\\/60 { background-color: rgba(var(--c-panel-rgb), 0.6) !important; }
+        .bg-white\\/70 { background-color: rgba(var(--c-panel-rgb), 0.7) !important; }
+        .bg-white\\/80 { background-color: rgba(var(--c-panel-rgb), 0.8) !important; }
         
         .border-white\\/30 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.3'}) !important; transition: border-color 500ms ease; }
         .border-white\\/40 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.4'}) !important; transition: border-color 500ms ease; }
         .border-white\\/50 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.25' : '0.5'}) !important; transition: border-color 500ms ease; }
         .border-white\\/60 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.6'}) !important; transition: border-color 500ms ease; }
-        .border-white\\/80 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.4' : '0.8'}) !important; transition: border-color 500ms ease; }
-
-        .hover-bg-surface:hover { background-color: rgba(var(--c-panel-rgb), 0.3) !important; }
-
-        /* ===== RWD 導覽列 ===== */
+        
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; }
+          .footer-grid { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
         }
-        @media (min-width: 769px) {
-          .mobile-menu-btn { display: none !important; }
-        }
-
-        /* ===== RWD 頁尾 ===== */
-        .footer-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2rem;
-        }
-        @media (max-width: 768px) {
-          .footer-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-          }
-        }
+        @media (min-width: 769px) { .mobile-menu-btn { display: none !important; } }
+        .footer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
       `}} />
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
@@ -561,32 +520,13 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <div className="desktop-nav" style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
                 {navItems.map((item) => (
-                  <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>
-                    {item.icon} {item.label}
-                  </ThemedButton>
+                  <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>{item.icon} {item.label}</ThemedButton>
                 ))}
               </div>
-              
-              {/* 日/月 模式切換按鈕 */}
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95 flex items-center justify-center"
-                style={{
-                  background: "rgba(var(--c-panel-rgb), 0.4)",
-                  borderColor: `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
-                  color: "var(--c-primary-dark)",
-                  boxShadow: `0 2px 8px rgba(0,0,0,${isDarkMode ? '0.2' : '0.05'})`
-                }}
-                title={isDarkMode ? "切換至亮色模式" : "切換至暗色模式"}
-              >
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95 flex items-center justify-center" style={{ background: "rgba(var(--c-panel-rgb), 0.4)", borderColor: `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: "var(--c-primary-dark)", boxShadow: `0 2px 8px rgba(0,0,0,${isDarkMode ? '0.2' : '0.05'})` }} title={isDarkMode ? "切換至亮色模式" : "切換至暗色模式"}>
                 <Icon name={isDarkMode ? "Sun" : "Moon"} size={20} />
               </button>
-
-              <button
-                className="mobile-menu-btn"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                style={{ display: "none", padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}
-              >
+              <button className="mobile-menu-btn" onClick={() => setMobileOpen(!mobileOpen)} style={{ padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}>
                 <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
               </button>
             </div>
@@ -594,27 +534,10 @@ export default function App() {
         </div>
 
         {mobileOpen && (
-          <div style={{ background: "rgba(var(--c-panel-rgb), 1)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.15'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
+          <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.95' : '0.85'})`, backdropFilter: "blur(20px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
             <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
               {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => go(item.id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "0.75rem",
-                    width: "100%", textAlign: "left",
-                    padding: "0.75rem 1rem", borderRadius: "0.75rem",
-                    fontSize: "1rem", fontWeight: 500,
-                    fontFamily: "'Noto Sans TC', sans-serif",
-                    border: "1px solid",
-                    cursor: "pointer",
-                    marginBottom: "0.25rem",
-                    transition: "all 200ms ease",
-                    background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent",
-                    borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent",
-                    color: currentPage === item.id ? t.primaryDark : t.textSec,
-                  }}
-                >
+                <button key={item.id} onClick={() => go(item.id)} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", textAlign: "left", padding: "0.75rem 1rem", borderRadius: "0.75rem", fontSize: "1rem", fontWeight: 500, fontFamily: "'Noto Sans TC', sans-serif", border: "1px solid", cursor: "pointer", marginBottom: "0.25rem", transition: "all 200ms ease", background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent", borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent", color: currentPage === item.id ? t.primaryDark : t.textSec }}>
                   {item.icon} {item.label}
                 </button>
               ))}
@@ -624,39 +547,29 @@ export default function App() {
       </nav>
 
       <main style={{ flexGrow: 1, maxWidth: "72rem", margin: "0 auto", padding: "2rem 1.5rem 6rem", width: "100%" }}>
-        {page}
+        <div key={currentPage} className="animate-fade-in-up">{page}</div>
       </main>
+
+      <button onClick={scrollToTop} className="fixed bottom-6 right-6 md:bottom-10 md:right-10 p-3.5 rounded-full shadow-2xl spring-transition z-50 flex items-center justify-center border hover:-translate-y-2 hover:shadow-[0_10px_40px_rgba(0,0,0,0.3)] active:scale-95" style={{ background: "var(--c-primary)", color: "white", borderColor: "var(--c-primary-dark)", opacity: showScrollTop ? 1 : 0, transform: showScrollTop ? "translateY(0) scale(1)" : "translateY(20px) scale(0.8)", pointerEvents: showScrollTop ? "auto" : "none" }} aria-label="回到頂部">
+        <Icon name="ArrowUp" size={24} />
+      </button>
 
       <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
         <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.5rem" }}>
           <div className="footer-grid">
-            <div style={{ marginBottom: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", color: "white", marginBottom: "0.5rem" }}>
-                <LogoImage className="w-8 h-8 mr-2 rounded-lg border border-white/30" />
-                <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif" }}>中文研究室</span>
-              </div>
-            </div>
-
+            <div style={{ marginBottom: "1rem" }}><div style={{ display: "flex", alignItems: "center", color: "white", marginBottom: "0.5rem" }}><LogoImage className="w-8 h-8 mr-2 rounded-lg border border-white/30" /><span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif" }}>中文研究室</span></div></div>
             <div>
               <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>快速連結</h4>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "0.5rem 1.5rem", fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>
-                {navItems.map((n) => (
-                  <li key={n.id}>
-                    <button onClick={() => go(n.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0, fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", transition: "color 300ms" }} className="hover:text-white">
-                      {n.label}
-                    </button>
-                  </li>
-                ))}
+                {navItems.map((n) => <li key={n.id}><button onClick={() => go(n.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0, fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", transition: "color 300ms" }} className="hover:text-white">{n.label}</button></li>)}
               </ul>
             </div>
-
             <div>
               <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>聯絡資訊</h4>
               <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>Email：zxc998775@gmail.com</p>
             </div>
           </div>
         </div>
-
         <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "1.5rem 1.5rem 0", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "2rem", textAlign: "center", fontSize: "0.875rem", color: "rgba(255,255,255,0.3)", fontFamily: "'Noto Sans TC', sans-serif" }}>
           &copy; {new Date().getFullYear()} 中文研究室. All rights reserved.
         </div>
