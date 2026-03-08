@@ -228,12 +228,7 @@ const ThemedButton = ({ active, children, onClick, className = "" }) => (
     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border font-sans spring-transition hover:scale-105 active:scale-95 ${className}`}
     style={
       active
-        ? {
-            background: "var(--c-nav-active-bg)",
-            color: "#fff",
-            borderColor: "var(--c-nav-active-border)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          }
+        ? { background: "var(--c-nav-active-bg)", color: "#fff", borderColor: "var(--c-nav-active-border)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }
         : { borderColor: "transparent", color: "var(--c-text-secondary)" }
     }
   >
@@ -241,137 +236,79 @@ const ThemedButton = ({ active, children, onClick, className = "" }) => (
   </button>
 );
 
-export const PageHeader = ({ title }) => (
+const PageHeader = ({ title }) => (
   <div className="text-center space-y-4">
     <h2 className="text-3xl font-bold font-sans theme-heading">{title}</h2>
-    <div
-      className="w-16 h-1 mx-auto rounded-full"
-      style={{ background: "var(--c-accent)" }}
-    />
+    <div className="w-16 h-1 mx-auto rounded-full" style={{ background: "var(--c-accent)" }} />
   </div>
 );
 
-export const BlockRenderer = ({ block, index, articleId }) => {
+const BlockRenderer = ({ block, index, articleId }) => {
   if (!block) return null;
-
   switch (block.type) {
-    case "heading":
-      return (
-        <h4 id={`article-${articleId}-heading-${index}`} className="text-xl md:text-2xl font-bold theme-heading mt-10 mb-5 flex items-center gap-3" style={{ scrollMarginTop: "120px" }}>
-          <span style={{ width: "5px", height: "1.2em", background: "var(--c-accent)", borderRadius: "4px" }}></span>
-          {block.text}
-        </h4>
-      );
-
-    case "table":
-      return (
-        <div className="my-8 overflow-x-auto rounded-xl border glass-panel shadow-sm font-sans">
-          <table className="w-full text-left border-collapse min-w-[500px]">
-            {block.caption && (
-              <caption className="py-3 px-4 text-sm font-bold theme-heading bg-white/50 border-b border-white/60">
-                {block.caption}
-              </caption>
-            )}
-            <thead className="bg-white/40 theme-heading text-sm border-b border-white/40">
-              <tr>
-                {block.headers.map((h, i) => (
-                  <th key={i} className="py-3 px-5 font-bold whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y theme-text-secondary text-sm border-white/30">
-              {block.rows.map((row, rIdx) => (
-                <tr key={rIdx} className="hover-bg-surface transition-colors">
-                  {row.map((cell, cIdx) => (
-                    <td key={cIdx} className="py-3 px-5">{cell}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-
-    case "quote":
-      return (
-        <blockquote className="my-8 pl-5 py-4 border-l-4 font-kai leading-relaxed theme-text-secondary bg-white/40 rounded-r-xl shadow-sm" style={{ borderColor: "var(--c-accent)" }}>
-          {block.text}
-        </blockquote>
-      );
-
-    case "para":
-      return (
-        <p className="leading-relaxed theme-text-secondary mb-4" style={{ textIndent: "2em" }}>
-          {block.text}
-        </p>
-      );
-
-    case "list":
-      return (
-        <ul className="space-y-3 my-6 px-4 md:px-8 theme-text-secondary">
-          {(block.items || []).map((item, idx) => (
-            <li key={idx} className="leading-relaxed relative pl-6">
-              <span className="absolute left-0 top-2.5 w-2 h-2 rounded-full" style={{ background: "var(--c-accent)", opacity: 0.8 }}></span>
-              {item}
-            </li>
-          ))}
-        </ul>
-      );
-
-    default:
-      return null;
+    case "heading": return (
+      <h4 id={`article-${articleId}-heading-${index}`} className="text-xl md:text-2xl font-bold theme-heading mt-10 mb-5 flex items-center gap-3" style={{ scrollMarginTop: "120px" }}>
+        <span style={{ width: "5px", height: "1.2em", background: "var(--c-accent)", borderRadius: "4px" }}></span>{block.text}
+      </h4>
+    );
+    case "table": return (
+      <div className="my-8 overflow-x-auto rounded-xl border glass-panel shadow-sm font-sans">
+        <table className="w-full text-left border-collapse min-w-[500px]">
+          {block.caption && <caption className="py-3 px-4 text-sm font-bold theme-heading bg-white/50 border-b border-white/60">{block.caption}</caption>}
+          <thead className="bg-white/40 theme-heading text-sm border-b border-white/40">
+            <tr>{block.headers.map((h, i) => <th key={i} className="py-3 px-5 font-bold whitespace-nowrap">{h}</th>)}</tr>
+          </thead>
+          <tbody className="divide-y theme-text-secondary text-sm border-white/30">
+            {block.rows.map((row, rIdx) => <tr key={rIdx} className="hover-bg-surface transition-colors">{row.map((cell, cIdx) => <td key={cIdx} className="py-3 px-5">{cell}</td>)}</tr>)}
+          </tbody>
+        </table>
+      </div>
+    );
+    case "quote": return (
+      <blockquote className="my-8 pl-5 py-4 border-l-4 font-kai leading-relaxed theme-text-secondary bg-white/40 rounded-r-xl shadow-sm" style={{ borderColor: "var(--c-accent)" }}>
+        {block.text}
+      </blockquote>
+    );
+    case "para": return <p className="leading-relaxed theme-text-secondary mb-4" style={{ textIndent: "2em" }}>{block.text}</p>;
+    case "list": return (
+      <ul className="space-y-3 my-6 px-4 md:px-8 theme-text-secondary">
+        {(block.items || []).map((item, idx) => (
+          <li key={idx} className="leading-relaxed relative pl-6">
+            <span className="absolute left-0 top-2.5 w-2 h-2 rounded-full" style={{ background: "var(--c-accent)", opacity: 0.8 }}></span>{item}
+          </li>
+        ))}
+      </ul>
+    );
+    default: return null;
   }
 };
 
-export const ReadingProgress = ({ targetRef, color, isDarkMode }) => {
+const ReadingProgress = ({ targetRef, color, isDarkMode }) => {
   const [progress, setProgress] = useState(0);
-
   useEffect(() => {
     const handleScroll = () => {
       if (!targetRef.current) return;
       const rect = targetRef.current.getBoundingClientRect();
-      
       const offsetTop = 80;
       const scrollableHeight = rect.height - window.innerHeight + offsetTop;
-      
-      if (scrollableHeight <= 0) {
-        setProgress(0);
-        return;
-      }
-      
+      if (scrollableHeight <= 0) { setProgress(0); return; }
       const scrolled = offsetTop - rect.top;
-      let currentProgress = (scrolled / scrollableHeight) * 100;
-      
-      currentProgress = Math.max(0, Math.min(100, currentProgress));
-      setProgress(currentProgress);
+      setProgress(Math.max(0, Math.min(100, (scrolled / scrollableHeight) * 100)));
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleScroll);
-    
     const timer = setTimeout(handleScroll, 500);
     handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-      clearTimeout(timer);
-    };
+    return () => { window.removeEventListener("scroll", handleScroll); window.removeEventListener("resize", handleScroll); clearTimeout(timer); };
   }, [targetRef]);
 
   return (
     <div className="fixed top-0 left-0 w-full h-1.5 z-[9999] backdrop-blur-sm" style={{ background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', pointerEvents: 'none' }}>
-      <div 
-        className="h-full shadow-sm"
-        style={{ 
-          width: `${progress}%`, 
-          backgroundColor: color,
-          transition: 'width 100ms ease-out'
-        }}
-      />
+      <div className="h-full shadow-sm" style={{ width: `${progress}%`, backgroundColor: color, transition: 'width 100ms ease-out' }} />
     </div>
   );
 };
+
 
 
 /* ==================== 主應用程式 ==================== */
