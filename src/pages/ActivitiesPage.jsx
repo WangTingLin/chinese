@@ -29,32 +29,133 @@ export default function ActivitiesPage({ isDarkMode }) {
     },
   });
 
+  const promoColors = getPromoColors(isDarkMode);
+
   const parseEventDate = (dateStr) => {
     if (!dateStr) return new Date(0);
 
     const trimmed = dateStr.trim();
 
-    // 支援 ~、～、,、， 等區間格式，只取開始日期
+    // 支援 ~、～、,、， 等多日格式，只取開始日
     const firstPart = trimmed.split(/[~,～，,]/)[0].trim();
-
     const [datePart, timePart] = firstPart.split(" ");
 
     if (!datePart) return new Date(0);
 
-    // 若有時間區間，例如 15:00-17:00，只取開始時間
     const startTime = timePart ? timePart.split("-")[0] : "00:00";
 
-    return new Date(`${datePart}T${startTime}`);
+    return new Date(`${datePart}T${startTime}:00`);
   };
 
-  const promoColors = getPromoColors(isDarkMode);
+  const getEventEndDate = (dateStr) => {
+    if (!dateStr) return new Date(0);
+
+    const trimmed = dateStr.trim();
+
+    // 區間格式：2026-03-13～2026-03-15
+    if (trimmed.includes("～") || trimmed.includes("~")) {
+      const parts = trimmed.split(/[～~]/).map(s => s.trim());
+      const endPart = parts[parts.length - 1];
+      return new Date(`${endPart}T23:59:59`);
+    }
+
+    // 多日簡寫：2026-03-23,24 或 2026-03-23，24
+    if (/^\d{4}-\d{2}-\d{2}[，,]\d{1,2}$/.test(trimmed)) {
+      const [fullDate, dayText] = trimmed.split(/[，,]/);
+      const yearMonth = fullDate.slice(0, 8); // 2026-03-
+      const endDate = `${yearMonth}${dayText.padStart(2, "0")}`;
+      return new Date(`${endDate}T23:59:59`);
+    }
+
+    // 單日但有時間區間：2026-03-10 09:10-12:00
+    const [datePart, timePart] = trimmed.split(" ");
+    if (!datePart) return new Date(0);
+
+    if (timePart && timePart.includes("-")) {
+      const endTime = timePart.split("-")[1];
+      return new Date(`${datePart}T${endTime}:00`);
+    }
+
+    // 單日但只有開始時間：2026-03-18 15:30
+    if (timePart) {
+      return new Date(`${datePart}T23:59:59`);
+    }
+
+    // 只有日期
+    return new Date(`${datePart}T23:59:59`);
+  };
+
+  const isSameDay = (a, b) => {
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  };
+
+  const getDayDiff = (targetDate, baseDate = new Date()) => {
+    const startOfBase = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+    const startOfTarget = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const diffMs = startOfTarget - startOfBase;
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+  };
+
+  const getEventStatus = (ev) => {
+    const now = new Date();
+    const startDate = parseEventDate(ev.date);
+    const endDate = getEventEndDate(ev.date);
+
+    if (endDate < now) {
+      return "past";
+    }
+
+    if (isSameDay(startDate, now)) {
+      return "today";
+    }
+
+    const diffDays = getDayDiff(startDate, now);
+
+    if (diffDays > 0 && diffDays <= 3) {
+      return "upcoming";
+    }
+
+    return "normal";
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "today":
+        return {
+          label: "今日",
+          bg: "rgba(59,130,246,0.16)",
+          color: "#2563eb",
+          border: "rgba(59,130,246,0.35)"
+        };
+      case "upcoming":
+        return {
+          label: "即將舉行",
+          bg: "rgba(34,197,94,0.16)",
+          color: "#15803d",
+          border: "rgba(34,197,94,0.35)"
+        };
+      case "past":
+        return {
+          label: "已結束",
+          bg: "rgba(107,114,128,0.16)",
+          color: "#6b7280",
+          border: "rgba(107,114,128,0.3)"
+        };
+      default:
+        return null;
+    }
+  };
 
   const filteredEvents = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
 
     return [...promoEvents]
-      .filter((ev) => filterCat === "全部" || ev.category === filterCat)
-      .filter((ev) => {
+      .filter(ev => filterCat === "全部" || ev.category === filterCat)
+      .filter(ev => {
         if (!keyword) return true;
 
         const searchTarget = [
@@ -147,7 +248,7 @@ export default function ActivitiesPage({ isDarkMode }) {
             <Icon name="Megaphone" size={40} className="mx-auto mb-4 opacity-30" />
             <p className="mb-2">查無符合條件的活動資訊。</p>
             <p className="text-sm opacity-70">
-              目前分類：{filterCat}　{searchText ? `｜搜尋：${searchText}` : ""}
+              目前分類：{filterCat}{searchText ? `｜搜尋：${searchText}` : ""}
             </p>
           </div>
         ) : (
@@ -158,10 +259,19 @@ export default function ActivitiesPage({ isDarkMode }) {
               border: "var(--c-badge-border)"
             };
 
+            const status = getEventStatus(ev);
+            const statusBadge = getStatusBadge(status);
+            const isPast = status === "past";
+
             return (
               <article
                 key={ev.id}
                 className="rounded-3xl glass-panel overflow-hidden glass-card-hover border border-white/60 p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start"
+                style={{
+                  opacity: isPast ? 0.52 : 1,
+                  filter: isPast ? "grayscale(45%)" : "none",
+                  transition: "opacity 300ms ease, filter 300ms ease"
+                }}
               >
                 <div className="flex-1 min-w-0 w-full">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -175,6 +285,20 @@ export default function ActivitiesPage({ isDarkMode }) {
                     >
                       {ev.category}
                     </span>
+
+                    {statusBadge && (
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
+                        style={{
+                          background: statusBadge.bg,
+                          color: statusBadge.color,
+                          borderColor: statusBadge.border
+                        }}
+                      >
+                        {statusBadge.label}
+                      </span>
+                    )}
+
                     <span className="text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
                       <Icon name="Calendar" size={14} /> {ev.date}
                     </span>
@@ -219,9 +343,9 @@ export default function ActivitiesPage({ isDarkMode }) {
                     rel="noopener noreferrer"
                     className="shrink-0 w-full md:w-auto mt-2 md:mt-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold font-sans shadow-sm hover:-translate-y-0.5 transition-all border"
                     style={{
-                      background: cColor.color,
+                      background: isPast ? "rgba(107,114,128,0.85)" : cColor.color,
                       color: "#fff",
-                      borderColor: cColor.color
+                      borderColor: isPast ? "rgba(107,114,128,0.85)" : cColor.color
                     }}
                   >
                     查看詳情 <Icon name="ExternalLink" size={16} />
