@@ -326,6 +326,63 @@ export const BlockRenderer = ({ block, index, articleId }) => {
 export const ReadingProgress = ({ targetRef, color, isDarkMode }) => {
   const [progress, setProgress] = useState(0);
 
+const BackToTopButton = ({ isDarkMode }) => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setVisible(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <button
+      onClick={scrollToTop}
+      aria-label="回到頂部"
+      title="回到頂部"
+      className="spring-transition"
+      style={{
+        position: "fixed",
+        right: "1.5rem",
+        bottom: "1.5rem",
+        zIndex: 120,
+        width: "3rem",
+        height: "3rem",
+        borderRadius: "9999px",
+        border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? "0.3" : "0.6"})`,
+        background: `rgba(var(--c-panel-rgb), ${isDarkMode ? "0.65" : "0.75"})`,
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        color: "var(--c-primary-dark)",
+        boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? "0.35" : "0.12"})`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(12px)",
+        pointerEvents: visible ? "auto" : "none",
+        transition: "opacity 250ms ease, transform 250ms ease, background 300ms ease",
+      }}
+    >
+      <Icon name="ChevronUp" size={20} />
+    </button>
+  );
+};
+
+
   useEffect(() => {
     const handleScroll = () => {
       if (!targetRef.current) return;
@@ -642,6 +699,8 @@ export default function App() {
           &copy; {new Date().getFullYear()} 中文研究室. All rights reserved.
         </div>
       </footer>
+    <BackToTopButton isDarkMode={isDarkMode} />
+
     </div>
   );
   
