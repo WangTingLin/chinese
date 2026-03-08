@@ -1,5 +1,5 @@
 // 檔案路徑：src/pages/ActivitiesPage.jsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 // 💡 匯入活動資料
 import { promoEvents } from '../data/activitiesData';
@@ -8,8 +8,9 @@ import { Icon, PageHeader } from '../App';
 
 export default function ActivitiesPage({ isDarkMode }) {
   const [filterCat, setFilterCat] = useState("全部");
+  const [searchText, setSearchText] = useState("");
   const categories = ["全部", "學術講座", "研討會／工作坊", "徵稿資訊"];
-  
+
   const getPromoColors = (isDark) => ({
     "學術講座": {
       bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)",
@@ -33,8 +34,8 @@ export default function ActivitiesPage({ isDarkMode }) {
 
     const trimmed = dateStr.trim();
 
-    // 取第一天：例如 2026-03-23,24 / 2026-03-13~15
-    const firstPart = trimmed.split(/[~,，]/)[0].trim();
+    // 支援 ~、～、,、， 等區間格式，只取開始日期
+    const firstPart = trimmed.split(/[~,～，,]/)[0].trim();
 
     const [datePart, timePart] = firstPart.split(" ");
 
@@ -45,57 +46,109 @@ export default function ActivitiesPage({ isDarkMode }) {
 
     return new Date(`${datePart}T${startTime}`);
   };
-  
+
   const promoColors = getPromoColors(isDarkMode);
 
-  const filteredEvents = [...promoEvents]
-    .filter(ev => filterCat === "全部" || ev.category === filterCat)
-    .sort((a, b) => parseEventDate(b.date) - parseEventDate(a.date));
+  const filteredEvents = useMemo(() => {
+    const keyword = searchText.trim().toLowerCase();
+
+    return [...promoEvents]
+      .filter((ev) => filterCat === "全部" || ev.category === filterCat)
+      .filter((ev) => {
+        if (!keyword) return true;
+
+        const searchTarget = [
+          ev.title,
+          ev.speaker,
+          ev.organizer,
+          ev.location,
+          ev.description,
+          ev.category,
+          ev.date
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return searchTarget.includes(keyword);
+      })
+      .sort((a, b) => parseEventDate(b.date) - parseEventDate(a.date));
+  }, [filterCat, searchText]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
       <PageHeader title="近期活動" />
-      
-      <div className="flex flex-wrap gap-2 justify-center mb-8">
-        {categories.map(cat => {
-          const isActive = filterCat === cat;
-          const cColor = promoColors[cat];
 
-          return (
+      <div className="space-y-5">
+        <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3 border border-white/60">
+          <Icon name="List" size={18} className="opacity-60 theme-text-secondary" />
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="搜尋活動名稱、講者、主辦單位、地點、徵稿資訊⋯⋯"
+            className="w-full bg-transparent outline-none font-sans text-sm md:text-base theme-text placeholder:opacity-50"
+            style={{ color: "var(--c-text)" }}
+          />
+          {searchText && (
             <button
-              key={cat}
-              onClick={() => setFilterCat(cat)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
-              style={
-                isActive
-                  ? { 
-                      background: cat === "全部"
-                        ? "var(--c-nav-active-bg)"
-                        : cColor?.color || "var(--c-primary)",
-                      color: "#fff",
-                      borderColor: cat === "全部"
-                        ? "var(--c-nav-active-border)"
-                        : cColor?.color || "var(--c-primary)",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
-                    }
-                  : { 
-                      background: "rgba(var(--c-panel-rgb), 0.4)",
-                      borderColor: "rgba(var(--c-border-rgb), 0.6)",
-                      color: "var(--c-text-secondary)"
-                    }
-              }
+              onClick={() => setSearchText("")}
+              className="shrink-0 px-3 py-1 rounded-full text-xs font-sans border spring-transition hover:scale-105 active:scale-95"
+              style={{
+                background: "rgba(var(--c-panel-rgb), 0.5)",
+                borderColor: "rgba(var(--c-border-rgb), 0.6)",
+                color: "var(--c-text-secondary)"
+              }}
             >
-              {cat}
+              清除
             </button>
-          );
-        })}
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2 justify-center">
+          {categories.map(cat => {
+            const isActive = filterCat === cat;
+            const cColor = promoColors[cat];
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilterCat(cat)}
+                className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
+                style={
+                  isActive
+                    ? {
+                        background: cat === "全部"
+                          ? "var(--c-nav-active-bg)"
+                          : cColor?.color || "var(--c-primary)",
+                        color: "#fff",
+                        borderColor: cat === "全部"
+                          ? "var(--c-nav-active-border)"
+                          : cColor?.color || "var(--c-primary)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                      }
+                    : {
+                        background: "rgba(var(--c-panel-rgb), 0.4)",
+                        borderColor: "rgba(var(--c-border-rgb), 0.6)",
+                        color: "var(--c-text-secondary)"
+                      }
+                }
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="space-y-6 md:space-y-8">
         {filteredEvents.length === 0 ? (
           <div className="text-center py-16 glass-panel rounded-3xl theme-text-secondary font-sans">
             <Icon name="Megaphone" size={40} className="mx-auto mb-4 opacity-30" />
-            <p>近期暫無「{filterCat}」的相關活動資訊。</p>
+            <p className="mb-2">查無符合條件的活動資訊。</p>
+            <p className="text-sm opacity-70">
+              目前分類：{filterCat}　{searchText ? `｜搜尋：${searchText}` : ""}
+            </p>
           </div>
         ) : (
           filteredEvents.map((ev) => {
@@ -138,14 +191,18 @@ export default function ActivitiesPage({ isDarkMode }) {
                         講者：{ev.speaker}
                       </span>
                     )}
-                    <span className="flex items-center gap-2">
-                      <Icon name="Info" size={16} className="opacity-60" />
-                      主辦：{ev.organizer}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Icon name="MapPin" size={16} className="opacity-60" />
-                      地點：{ev.location}
-                    </span>
+                    {ev.organizer && (
+                      <span className="flex items-center gap-2">
+                        <Icon name="Info" size={16} className="opacity-60" />
+                        主辦：{ev.organizer}
+                      </span>
+                    )}
+                    {ev.location && (
+                      <span className="flex items-center gap-2">
+                        <Icon name="MapPin" size={16} className="opacity-60" />
+                        地點：{ev.location}
+                      </span>
+                    )}
                   </div>
 
                   {ev.description && (
