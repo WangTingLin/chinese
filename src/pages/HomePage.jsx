@@ -125,7 +125,7 @@ export default function HomePage({ setPage, isDarkMode }) {
         {[
           { title: "文章專欄", icon: "BookOpen", target: "articles" },
           { title: "研討進度", icon: "Calendar", target: "events" },
-          { title: "資訊分享", icon: "Library", target: "books" }
+          { title: "資源分享", icon: "Library", target: "books" }
         ].map((item, i) => (
           <div
             key={i}
