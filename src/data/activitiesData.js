@@ -419,16 +419,6 @@ export const promoEvents = [
     link:"https://www.ith.sinica.edu.tw/academic_look.php?l=c&no=3&id=1462",
 },
 {
-    id: 43,
-    title: "臺灣史與數位資料庫的應用",
-    category: "學術講座",
-    date: "2026-04-08 14:00-16:00",
-    speaker:"許蕙玟（國立暨南國際大學通識教育中心兼任助理教授）",
-    location: "中研院臺史所8樓817會議室(人文社會科學館北棟８樓）",
-    organizer: "中研院臺史所",
-    link:"https://www.ith.sinica.edu.tw/academic_look.php?l=c&no=3&id=1462",
-},
-{
     id: 44,
     title: "戰後海外臺灣人運動研究經驗談",
     category: "學術講座",
