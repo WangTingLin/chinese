@@ -103,7 +103,10 @@ export default function HomePage({ setPage, isDarkMode }) {
         <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-widest font-sans theme-heading relative z-10">
           中文研究室
         </h1>
-        <p className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-serif content-justify theme-text-secondary relative z-10" style={{ textAlignLast: "center" }}>
+        <p
+          className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-serif content-justify theme-text-secondary relative z-10"
+          style={{ textAlignLast: "center" }}
+        >
           「獨學而無友，則孤陋而寡聞。」
           <br />
           ──《禮記‧學記》
@@ -142,6 +145,84 @@ export default function HomePage({ setPage, isDarkMode }) {
         ))}
       </div>
 
+      <section
+        className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer"
+        onClick={() => setPage("activities")}
+      >
+        <div className="flex justify-between items-start mb-6">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
+            style={{
+              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
+              color: isDarkMode ? "#7dd3fc" : "#0369a1",
+              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)"
+            }}
+          >
+            <Icon name="Megaphone" size={16} /> 即將舉辦活動
+          </div>
+          <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
+            查看全部 <Icon name="ChevronRight" size={16} />
+          </span>
+        </div>
+
+        {upcomingActivities.length === 0 ? (
+          <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
+            <p className="theme-text-secondary font-sans text-center">目前暫無即將舉辦的活動。</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {upcomingActivities.map((ev) => {
+              const badge = getActivityBadgeColor(ev.category);
+
+              return (
+                <div
+                  key={ev.id}
+                  className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white/60 shadow-sm transition-all duration-300 hover:bg-white/70 hover:-translate-y-1 flex flex-col h-full"
+                >
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
+                      style={{
+                        background: badge.bg,
+                        color: badge.color,
+                        borderColor: badge.border
+                      }}
+                    >
+                      {ev.category}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg md:text-xl font-bold font-sans theme-heading leading-snug mb-4 line-clamp-2">
+                    {ev.title}
+                  </h3>
+
+                  <div className="space-y-2.5 text-sm theme-text-secondary font-sans mt-auto">
+                    <div className="flex items-start gap-2">
+                      <Icon name="Calendar" size={15} className="opacity-60 mt-0.5 shrink-0" />
+                      <span>{ev.date}</span>
+                    </div>
+
+                    {ev.location && (
+                      <div className="flex items-start gap-2">
+                        <Icon name="MapPin" size={15} className="opacity-60 mt-0.5 shrink-0" />
+                        <span className="line-clamp-2">{ev.location}</span>
+                      </div>
+                    )}
+
+                    {ev.organizer && (
+                      <div className="flex items-start gap-2">
+                        <Icon name="Info" size={15} className="opacity-60 mt-0.5 shrink-0" />
+                        <span className="line-clamp-2">{ev.organizer}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         <section className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col">
           <div className="flex justify-between items-start mb-5">
@@ -173,7 +254,10 @@ export default function HomePage({ setPage, isDarkMode }) {
                 <ul className="space-y-2">
                   {nextEvent.papers.map((p, i) => (
                     <li key={i} className="leading-relaxed relative pl-4">
-                      <span className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--c-accent)" }}></span>
+                      <span
+                        className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
+                        style={{ background: "var(--c-accent)" }}
+                      ></span>
                       {p}
                     </li>
                   ))}
@@ -191,7 +275,11 @@ export default function HomePage({ setPage, isDarkMode }) {
             <div className="flex justify-between items-start mb-5">
               <div
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
-                style={{ background: isDarkMode ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.1)", color: isDarkMode ? "#fda4af" : "#e11d48", borderColor: isDarkMode ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.2)" }}
+                style={{
+                  background: isDarkMode ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.1)",
+                  color: isDarkMode ? "#fda4af" : "#e11d48",
+                  borderColor: isDarkMode ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.2)"
+                }}
               >
                 <Icon name="PenLine" size={16} /> 最新上架
               </div>
@@ -236,84 +324,6 @@ export default function HomePage({ setPage, isDarkMode }) {
           </section>
         )}
       </div>
-
-      <section
-        className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer"
-        onClick={() => setPage("activities")}
-      >
-        <div className="flex justify-between items-start mb-5">
-          <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
-            style={{
-              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
-              color: isDarkMode ? "#7dd3fc" : "#0369a1",
-              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)"
-            }}
-          >
-            <Icon name="Megaphone" size={16} /> 即將舉辦活動
-          </div>
-          <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
-            查看全部 <Icon name="ChevronRight" size={16} />
-          </span>
-        </div>
-
-        {upcomingActivities.length === 0 ? (
-          <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
-            <p className="theme-text-secondary font-sans text-center">目前暫無即將舉辦的活動。</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {upcomingActivities.map((ev) => {
-              const badge = getActivityBadgeColor(ev.category);
-
-              return (
-                <div
-                  key={ev.id}
-                  className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white/60 shadow-sm transition-colors hover:bg-white/70 flex flex-col h-full"
-                >
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <span
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
-                      style={{
-                        background: badge.bg,
-                        color: badge.color,
-                        borderColor: badge.border
-                      }}
-                    >
-                      {ev.category}
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-bold font-sans theme-heading leading-snug mb-3 line-clamp-2">
-                    {ev.title}
-                  </h3>
-
-                  <div className="space-y-2 text-sm theme-text-secondary font-sans mt-auto">
-                    <div className="flex items-start gap-2">
-                      <Icon name="Calendar" size={15} className="opacity-60 mt-0.5 shrink-0" />
-                      <span>{ev.date}</span>
-                    </div>
-
-                    {ev.location && (
-                      <div className="flex items-start gap-2">
-                        <Icon name="MapPin" size={15} className="opacity-60 mt-0.5 shrink-0" />
-                        <span className="line-clamp-2">{ev.location}</span>
-                      </div>
-                    )}
-
-                    {ev.organizer && (
-                      <div className="flex items-start gap-2">
-                        <Icon name="Info" size={15} className="opacity-60 mt-0.5 shrink-0" />
-                        <span className="line-clamp-2">{ev.organizer}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
