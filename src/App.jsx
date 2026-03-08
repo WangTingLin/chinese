@@ -413,43 +413,6 @@ export default function App() {
   ];
 
   const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
-
-  // 假分頁組件 (因為使用者將外部引入的組件移除了，這邊用簡單的 div 代替顯示，讓程式不報錯)
-  const HomePage = () => <div className="text-center py-20 text-2xl font-bold">研究室首頁載入中...</div>;
-  const AboutPage = () => <div className="text-center py-20 text-2xl font-bold">關於讀書會載入中...</div>;
-  const BooksPage = () => <div className="text-center py-20 text-2xl font-bold">資訊分享載入中...</div>;
-  const EventsPage = () => <div className="text-center py-20 text-2xl font-bold">研討進度載入中...</div>;
-  const ArticlesPage = () => <div className="text-center py-20 text-2xl font-bold">文章專欄載入中...</div>;
-  const PromotionsPage = () => <div className="text-center py-20 text-2xl font-bold">活動宣傳載入中...</div>;
-  const SubmissionPage = () => <div className="text-center py-20 text-2xl font-bold">投稿須知載入中...</div>;
-
-
-  const pageProps = { setPage: setCurrentPage, isDarkMode };
-  const page = (() => {
-    switch (currentPage) {
-      case "home": return <HomePage {...pageProps} />;
-      case "about": return <AboutPage {...pageProps} />;
-      case "books": return <BooksPage {...pageProps} />;
-      case "events": return <EventsPage {...pageProps} />;
-      case "articles": return <ArticlesPage {...pageProps} />;
-      case "promotions": return <PromotionsPage {...pageProps} />;
-      case "submission": return <SubmissionPage {...pageProps} />;
-      default: return <HomePage {...pageProps} />;
-    }
-  })();
-
-  const baseThemes = {
-    home: { primary: "#2d6a6a", primaryDark: "#1a4f4f", accent: "#d4a24e", accentLight: "#fef3d8", text: "#0f3d3d", textSec: "#3a6b6b", blob1: "rgba(77,160,160,0.25)", blob2: "rgba(212,162,78,0.18)", blob3: "rgba(140,190,210,0.18)", footer: "rgba(15,61,61,0.85)", navBg: "rgba(45,106,106,0.9)", navBorder: "rgba(77,160,160,0.5)", badgeBg: "rgba(212,162,78,0.2)", badgeText: "#7a5c1a", badgeBorder: "rgba(212,162,78,0.3)" },
-    about: { primary: "#8c6240", primaryDark: "#5e3d24", accent: "#c4935a", accentLight: "#fdf0e0", text: "#3d2414", textSec: "#7a5a3e", blob1: "rgba(196,147,90,0.22)", blob2: "rgba(140,98,64,0.18)", blob3: "rgba(220,180,140,0.2)", footer: "rgba(61,36,20,0.85)", navBg: "rgba(140,98,64,0.9)", navBorder: "rgba(196,147,90,0.5)", badgeBg: "rgba(196,147,90,0.2)", badgeText: "#5e3d24", badgeBorder: "rgba(196,147,90,0.3)" },
-    books: { primary: "#8a7a2e", primaryDark: "#5c5218", accent: "#b89a38", accentLight: "#fdf8e8", text: "#3a3410", textSec: "#6b6330", blob1: "rgba(184,154,56,0.22)", blob2: "rgba(138,122,46,0.18)", blob3: "rgba(210,195,120,0.2)", footer: "rgba(58,52,16,0.85)", navBg: "rgba(138,122,46,0.9)", navBorder: "rgba(184,154,56,0.5)", badgeBg: "rgba(184,154,56,0.2)", badgeText: "#5c5218", badgeBorder: "rgba(184,154,56,0.3)" },
-    events: { primary: "#3d6878", primaryDark: "#264350", accent: "#6ba0b4", accentLight: "#eaf4f8", text: "#1a3540", textSec: "#4a7080", blob1: "rgba(61,104,120,0.22)", blob2: "rgba(107,160,180,0.18)", blob3: "rgba(80,130,160,0.2)", footer: "rgba(26,53,64,0.85)", navBg: "rgba(61,104,120,0.9)", navBorder: "rgba(107,160,180,0.5)", badgeBg: "rgba(107,160,180,0.2)", badgeText: "#264350", badgeBorder: "rgba(107,160,180,0.3)" },
-    articles: { primary: "#475569", primaryDark: "#1e293b", accent: "#94a3b8", accentLight: "#f1f5f9", text: "#0f172a", textSec: "#334155", blob1: "rgba(71,85,105,0.22)", blob2: "rgba(100,116,139,0.18)", blob3: "rgba(30,41,59,0.2)", footer: "rgba(15,23,42,0.85)", navBg: "rgba(30,41,59,0.9)", navBorder: "rgba(100,116,139,0.5)", badgeBg: "rgba(100,116,139,0.2)", badgeText: "#1e293b", badgeBorder: "rgba(100,116,139,0.3)" },
-    columns: { primary: "#4a6a50", primaryDark: "#2e4432", accent: "#8aaa60", accentLight: "#f2f7ec", text: "#1e3322", textSec: "#506a54", blob1: "rgba(74,106,80,0.22)", blob2: "rgba(138,170,96,0.18)", blob3: "rgba(100,150,110,0.2)", footer: "rgba(30,51,34,0.85)", navBg: "rgba(74,106,80,0.9)", navBorder: "rgba(138,170,96,0.5)", badgeBg: "rgba(138,170,96,0.2)", badgeText: "#2e4432", badgeBorder: "rgba(138,170,96,0.3)" },
-    promotions: { primary: "#7c3aed", primaryDark: "#4c1d95", accent: "#a78bfa", accentLight: "#f5f3ff", text: "#2e1065", textSec: "#5b21b6", blob1: "rgba(124,58,237,0.22)", blob2: "rgba(76,29,149,0.18)", blob3: "rgba(167,139,250,0.2)", footer: "rgba(46,16,101,0.85)", navBg: "rgba(76,29,149,0.9)", navBorder: "rgba(124,58,237,0.5)", badgeBg: "rgba(124,58,237,0.2)", badgeText: "#4c1d95", badgeBorder: "rgba(124,58,237,0.3)" },
-    submission: { primary: "#b45309", primaryDark: "#7c2d12", accent: "#f59e0b", accentLight: "#ffedd5", text: "#431407", textSec: "#9a3412", blob1: "rgba(180,83,9,0.22)", blob2: "rgba(124,45,18,0.18)", blob3: "rgba(245,158,11,0.2)", footer: "rgba(67,20,7,0.85)", navBg: "rgba(124,45,18,0.9)", navBorder: "rgba(180,83,9,0.5)", badgeBg: "rgba(180,83,9,0.2)", badgeText: "#7c2d12", badgeBorder: "rgba(180,83,9,0.3)" },
-  };
-
-  const bTheme = baseThemes[currentPage] || baseThemes.home;
   
   /* 動態計算亮/暗模式的變數值 */
   const t = {
