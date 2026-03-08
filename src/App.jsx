@@ -382,11 +382,11 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const navItems = [
-    { id: "home", label: "首頁", icon: <Icon name="Home" size={18} /> },
+    { id: "home", label: "研究室首頁", icon: <Icon name="Home" size={18} /> },
+    { id: "promotions", label: "活動宣傳", icon: <Icon name="Megaphone" size={18} /> },
+    { id: "books", label: "資訊分享", icon: <Icon name="Library" size={18} /> },
     { id: "about", label: "關於讀書會", icon: <Icon name="Info" size={18} /> },
-    { id: "books", label: "資源分享", icon: <Icon name="Library" size={18} /> },
     { id: "events", label: "研討進度", icon: <Icon name="Calendar" size={18} /> },
-    { id: "activities", label: "近期活動", icon: <Icon name="Megaphone" size={18} /> },
     { id: "articles", label: "文章專欄", icon: <Icon name="BookOpen" size={18} /> },
     { id: "submission", label: "投稿須知", icon: <Icon name="Send" size={18} /> },
   ];
@@ -400,8 +400,8 @@ export default function App() {
       case "about": return <AboutPage {...pageProps} />;
       case "books": return <BooksPage {...pageProps} />;
       case "events": return <EventsPage {...pageProps} />;
-      case "activities": return <ActivitiesPage {...pageProps} />;
       case "articles": return <ArticlesPage {...pageProps} />;
+      case "promotions": return <PromotionsPage {...pageProps} />;
       case "submission": return <SubmissionPage {...pageProps} />;
       default: return <HomePage {...pageProps} />;
     }
@@ -412,9 +412,9 @@ export default function App() {
     about: { primary: "#8c6240", primaryDark: "#5e3d24", accent: "#c4935a", accentLight: "#fdf0e0", text: "#3d2414", textSec: "#7a5a3e", blob1: "rgba(196,147,90,0.22)", blob2: "rgba(140,98,64,0.18)", blob3: "rgba(220,180,140,0.2)", footer: "rgba(61,36,20,0.85)", navBg: "rgba(140,98,64,0.9)", navBorder: "rgba(196,147,90,0.5)", badgeBg: "rgba(196,147,90,0.2)", badgeText: "#5e3d24", badgeBorder: "rgba(196,147,90,0.3)" },
     books: { primary: "#8a7a2e", primaryDark: "#5c5218", accent: "#b89a38", accentLight: "#fdf8e8", text: "#3a3410", textSec: "#6b6330", blob1: "rgba(184,154,56,0.22)", blob2: "rgba(138,122,46,0.18)", blob3: "rgba(210,195,120,0.2)", footer: "rgba(58,52,16,0.85)", navBg: "rgba(138,122,46,0.9)", navBorder: "rgba(184,154,56,0.5)", badgeBg: "rgba(184,154,56,0.2)", badgeText: "#5c5218", badgeBorder: "rgba(184,154,56,0.3)" },
     events: { primary: "#3d6878", primaryDark: "#264350", accent: "#6ba0b4", accentLight: "#eaf4f8", text: "#1a3540", textSec: "#4a7080", blob1: "rgba(61,104,120,0.22)", blob2: "rgba(107,160,180,0.18)", blob3: "rgba(80,130,160,0.2)", footer: "rgba(26,53,64,0.85)", navBg: "rgba(61,104,120,0.9)", navBorder: "rgba(107,160,180,0.5)", badgeBg: "rgba(107,160,180,0.2)", badgeText: "#264350", badgeBorder: "rgba(107,160,180,0.3)" },
-    activities: { primary: "#0284c7", primaryDark: "#0369a1", accent: "#38bdf8", accentLight: "#e0f2fe", text: "#0c4a6e", textSec: "#0369a1", blob1: "rgba(2,132,199,0.22)", blob2: "rgba(56,189,248,0.18)", blob3: "rgba(3,105,161,0.2)", footer: "rgba(8,47,73,0.85)", navBg: "rgba(3,105,161,0.9)", navBorder: "rgba(2,132,199,0.5)", badgeBg: "rgba(2,132,199,0.2)", badgeText: "#0369a1", badgeBorder: "rgba(2,132,199,0.3)" },
     articles: { primary: "#475569", primaryDark: "#1e293b", accent: "#94a3b8", accentLight: "#f1f5f9", text: "#0f172a", textSec: "#334155", blob1: "rgba(71,85,105,0.22)", blob2: "rgba(100,116,139,0.18)", blob3: "rgba(30,41,59,0.2)", footer: "rgba(15,23,42,0.85)", navBg: "rgba(30,41,59,0.9)", navBorder: "rgba(100,116,139,0.5)", badgeBg: "rgba(100,116,139,0.2)", badgeText: "#1e293b", badgeBorder: "rgba(100,116,139,0.3)" },
     columns: { primary: "#4a6a50", primaryDark: "#2e4432", accent: "#8aaa60", accentLight: "#f2f7ec", text: "#1e3322", textSec: "#506a54", blob1: "rgba(74,106,80,0.22)", blob2: "rgba(138,170,96,0.18)", blob3: "rgba(100,150,110,0.2)", footer: "rgba(30,51,34,0.85)", navBg: "rgba(74,106,80,0.9)", navBorder: "rgba(138,170,96,0.5)", badgeBg: "rgba(138,170,96,0.2)", badgeText: "#2e4432", badgeBorder: "rgba(138,170,96,0.3)" },
+    promotions: { primary: "#7c3aed", primaryDark: "#4c1d95", accent: "#a78bfa", accentLight: "#f5f3ff", text: "#2e1065", textSec: "#5b21b6", blob1: "rgba(124,58,237,0.22)", blob2: "rgba(76,29,149,0.18)", blob3: "rgba(167,139,250,0.2)", footer: "rgba(46,16,101,0.85)", navBg: "rgba(76,29,149,0.9)", navBorder: "rgba(124,58,237,0.5)", badgeBg: "rgba(124,58,237,0.2)", badgeText: "#4c1d95", badgeBorder: "rgba(124,58,237,0.3)" },
     submission: { primary: "#b45309", primaryDark: "#7c2d12", accent: "#f59e0b", accentLight: "#ffedd5", text: "#431407", textSec: "#9a3412", blob1: "rgba(180,83,9,0.22)", blob2: "rgba(124,45,18,0.18)", blob3: "rgba(245,158,11,0.2)", footer: "rgba(67,20,7,0.85)", navBg: "rgba(124,45,18,0.9)", navBorder: "rgba(180,83,9,0.5)", badgeBg: "rgba(180,83,9,0.2)", badgeText: "#7c2d12", badgeBorder: "rgba(180,83,9,0.3)" },
   };
 
@@ -466,10 +466,29 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
         @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
         .animate-fade-in { animation: fadeIn 0.5s ease-out both; }
-        @keyframes blobPulse { 0%,100% { opacity:0.6; transform:scale(1);} 50%{ opacity:1; transform:scale(1.05);} }
-        .blob-1 { animation: blobPulse 8s ease-in-out infinite; }
-        .blob-2 { animation: blobPulse 10s ease-in-out infinite reverse; }
-        .blob-3 { animation: blobPulse 12s ease-in-out infinite; }
+        
+        /* ===== 動態流體背景動畫 (超明顯版) ===== */
+        @keyframes blobMove1 {
+          0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
+          50% { transform: translate(45vw, 25vh) scale(1.8) rotate(45deg) skew(-10deg, 10deg); opacity: 1; }
+          100% { transform: translate(-20vw, 40vh) scale(0.9) rotate(90deg); opacity: 0.6; }
+        }
+        @keyframes blobMove2 {
+          0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.8; }
+          50% { transform: translate(-45vw, 30vh) scale(2) rotate(-45deg) skew(10deg, -10deg); opacity: 1; }
+          100% { transform: translate(35vw, -30vh) scale(0.9) rotate(-90deg); opacity: 0.7; }
+        }
+        @keyframes blobMove3 {
+          0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.7; }
+          50% { transform: translate(35vw, -45vh) scale(1.7) rotate(45deg) skew(-10deg, -10deg); opacity: 1; }
+          100% { transform: translate(-40vw, 25vh) scale(1.2) rotate(90deg); opacity: 0.6; }
+        }
+        
+        .blob-1 { animation: blobMove1 10s infinite alternate ease-in-out; }
+        .blob-2 { animation: blobMove2 12s infinite alternate ease-in-out; }
+        .blob-3 { animation: blobMove3 14s infinite alternate ease-in-out; }
+        /* ========================== */
+
         .font-sans { font-family: 'Noto Sans TC', sans-serif !important; }
         .font-serif { font-family: 'Noto Serif TC', serif !important; }
         .font-kai { font-family: 'Kaiti TC', 'BiauKai', 'DFKai-SB', 'AR PL UKai TW', serif !important; }
@@ -526,9 +545,9 @@ export default function App() {
       `}} />
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <div className="blob-1" style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", borderRadius: "9999px", filter: "blur(100px)", background: "var(--c-blob-1)", transition: "background 800ms ease" }} />
-        <div className="blob-2" style={{ position: "absolute", top: "20%", right: "-10%", width: "40vw", height: "40vw", borderRadius: "9999px", filter: "blur(100px)", background: "var(--c-blob-2)", transition: "background 800ms ease" }} />
-        <div className="blob-3" style={{ position: "absolute", bottom: "-10%", left: "10%", width: "45vw", height: "45vw", borderRadius: "9999px", filter: "blur(120px)", background: "var(--c-blob-3)", transition: "background 800ms ease" }} />
+        <div className="blob-1" style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", borderRadius: "9999px", filter: "blur(60px)", background: "var(--c-blob-1)", transition: "background 800ms ease" }} />
+        <div className="blob-2" style={{ position: "absolute", top: "20%", right: "-10%", width: "40vw", height: "40vw", borderRadius: "9999px", filter: "blur(60px)", background: "var(--c-blob-2)", transition: "background 800ms ease" }} />
+        <div className="blob-3" style={{ position: "absolute", bottom: "-10%", left: "10%", width: "45vw", height: "45vw", borderRadius: "9999px", filter: "blur(80px)", background: "var(--c-blob-3)", transition: "background 800ms ease" }} />
       </div>
 
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(var(--c-panel-rgb), 0.3)", backdropFilter: "blur(20px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`, boxShadow: `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`, transition: "all 500ms ease" }}>
@@ -575,7 +594,7 @@ export default function App() {
         </div>
 
         {mobileOpen && (
-          <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.95' : '0.85'})`, backdropFilter: "blur(20px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
+          <div style={{ background: "rgba(var(--c-panel-rgb), 1)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.15'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
             <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
               {navItems.map((item) => (
                 <button
