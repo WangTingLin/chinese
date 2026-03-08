@@ -1,4 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import ArticlesPage from './pages/ArticlesPage';
+import { columnArticles, getCategoryColors } from './data/articlesData';
+import EventsPage from './pages/EventsPage';
+import { nextEvent } from './data/eventsData';
+import AboutPage from './pages/AboutPage';
+import BooksPage from './pages/BooksPage';
+import SubmissionPage from './pages/SubmissionPage';
+import HomePage from './pages/HomePage';
+import ActivitiesPage from './pages/ActivitiesPage';
 
 
 
