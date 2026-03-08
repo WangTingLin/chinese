@@ -146,129 +146,82 @@ export default function HomePage({ setPage, isDarkMode }) {
       </div>
 
       <section
-  className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer"
-  onClick={() => setPage("activities")}
->
-  <div className="flex justify-between items-start mb-6">
-    <div
-      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
-      style={{
-        background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
-        color: isDarkMode ? "#7dd3fc" : "#0369a1",
-        borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)"
-      }}
-    >
-      <Icon name="Megaphone" size={16} /> 即將舉辦活動
-    </div>
-
-    <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
-      查看全部 <Icon name="ChevronRight" size={16} />
-    </span>
-  </div>
-
-  {upcomingActivities.length === 0 ? (
-    <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
-      <p className="theme-text-secondary font-sans text-center">
-        目前暫無即將舉辦的活動。
-      </p>
-    </div>
-  ) : (
-    <div className="grid md:grid-cols-3 gap-4">
-
-      {/* 主活動 */}
-      <div className="md:col-span-2 bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex flex-col">
-
-        <span className="text-xs font-bold mb-2 theme-text-secondary">
-          {upcomingActivities[0].category}
-        </span>
-
-        <h3 className="text-2xl font-bold theme-heading mb-4">
-          {upcomingActivities[0].title}
-        </h3>
-
-        <div className="space-y-2 text-sm theme-text-secondary mb-6">
-
-          <div className="flex gap-2">
-            <Icon name="Calendar" size={15} />
-            {upcomingActivities[0].date}
-          </div>
-
-          {upcomingActivities[0].location && (
-            <div className="flex gap-2">
-              <Icon name="MapPin" size={15} />
-              {upcomingActivities[0].location}
-            </div>
-          )}
-
-        </div>
-
-        {upcomingActivities[0].link && (
-          <a
-            href={upcomingActivities[0].link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-auto inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-bold font-sans shadow-sm border"
+        className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer"
+        onClick={() => setPage("activities")}
+      >
+        <div className="flex justify-between items-start mb-6">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
             style={{
-              background: "var(--c-accent)",
-              color: "#fff",
-              borderColor: "var(--c-accent)"
+              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
+              color: isDarkMode ? "#7dd3fc" : "#0369a1",
+              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)"
             }}
           >
-            活動詳情 <Icon name="ExternalLink" size={16} />
-          </a>
-        )}
-      </div>
-
-
-      {/* 右側兩個小活動 */}
-      <div className="flex flex-col gap-4">
-
-        {upcomingActivities.slice(1,3).map(ev => (
-
-          <div
-            key={ev.id}
-            className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white/60 shadow-sm flex flex-col"
-          >
-
-            <span className="text-xs font-bold mb-2 theme-text-secondary">
-              {ev.category}
-            </span>
-
-            <h3 className="text-lg font-bold theme-heading mb-3 line-clamp-2">
-              {ev.title}
-            </h3>
-
-            <div className="text-sm theme-text-secondary mb-4 flex gap-2">
-              <Icon name="Calendar" size={14} />
-              {ev.date}
-            </div>
-
-            {ev.link && (
-              <a
-                href={ev.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold font-sans border text-sm"
-                style={{
-                  background: "var(--c-accent)",
-                  color: "#fff",
-                  borderColor: "var(--c-accent)"
-                }}
-              >
-                活動詳情
-                <Icon name="ExternalLink" size={14} />
-              </a>
-            )}
-
+            <Icon name="Megaphone" size={16} /> 即將舉辦活動
           </div>
+          <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
+            查看全部 <Icon name="ChevronRight" size={16} />
+          </span>
+        </div>
 
-        ))}
+        {upcomingActivities.length === 0 ? (
+          <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
+            <p className="theme-text-secondary font-sans text-center">目前暫無即將舉辦的活動。</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {upcomingActivities.map((ev) => {
+              const badge = getActivityBadgeColor(ev.category);
 
-      </div>
+              return (
+                <div
+                  key={ev.id}
+                  className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white/60 shadow-sm transition-all duration-300 hover:bg-white/70 hover:-translate-y-1 flex flex-col h-full"
+                >
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
+                      style={{
+                        background: badge.bg,
+                        color: badge.color,
+                        borderColor: badge.border
+                      }}
+                    >
+                      {ev.category}
+                    </span>
+                  </div>
 
-    </div>
-  )}
-</section>
+                  <h3 className="text-lg md:text-xl font-bold font-sans theme-heading leading-snug mb-4 line-clamp-2">
+                    {ev.title}
+                  </h3>
+
+                  <div className="space-y-2.5 text-sm theme-text-secondary font-sans mt-auto">
+                    <div className="flex items-start gap-2">
+                      <Icon name="Calendar" size={15} className="opacity-60 mt-0.5 shrink-0" />
+                      <span>{ev.date}</span>
+                    </div>
+
+                    {ev.location && (
+                      <div className="flex items-start gap-2">
+                        <Icon name="MapPin" size={15} className="opacity-60 mt-0.5 shrink-0" />
+                        <span className="line-clamp-2">{ev.location}</span>
+                      </div>
+                    )}
+
+                    {ev.organizer && (
+                      <div className="flex items-start gap-2">
+                        <Icon name="Info" size={15} className="opacity-60 mt-0.5 shrink-0" />
+                        <span className="line-clamp-2">{ev.organizer}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         <section className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col">
