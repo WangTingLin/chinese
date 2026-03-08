@@ -43,7 +43,6 @@ export default function ActivitiesPage({ isDarkMode }) {
     if (!datePart) return new Date(0);
 
     const startTime = timePart ? timePart.split("-")[0] : "00:00";
-
     return new Date(`${datePart}T${startTime}:00`);
   };
 
@@ -52,36 +51,36 @@ export default function ActivitiesPage({ isDarkMode }) {
 
     const trimmed = dateStr.trim();
 
-    // 區間格式：2026-03-13～2026-03-15
+    // 區間格式：2026-03-13～2026-03-15 / 2026-03-13~2026-03-15
     if (trimmed.includes("～") || trimmed.includes("~")) {
       const parts = trimmed.split(/[～~]/).map(s => s.trim());
       const endPart = parts[parts.length - 1];
       return new Date(`${endPart}T23:59:59`);
     }
 
-    // 多日簡寫：2026-03-23,24 或 2026-03-23，24
+    // 多日簡寫：2026-03-23,24 / 2026-03-23，24
     if (/^\d{4}-\d{2}-\d{2}[，,]\d{1,2}$/.test(trimmed)) {
       const [fullDate, dayText] = trimmed.split(/[，,]/);
-      const yearMonth = fullDate.slice(0, 8); // 2026-03-
+      const yearMonth = fullDate.slice(0, 8); // 例如 2026-03-
       const endDate = `${yearMonth}${dayText.padStart(2, "0")}`;
       return new Date(`${endDate}T23:59:59`);
     }
 
-    // 單日但有時間區間：2026-03-10 09:10-12:00
     const [datePart, timePart] = trimmed.split(" ");
     if (!datePart) return new Date(0);
 
+    // 時間區間：2026-03-10 09:10-12:00
     if (timePart && timePart.includes("-")) {
       const endTime = timePart.split("-")[1];
       return new Date(`${datePart}T${endTime}:00`);
     }
 
-    // 單日但只有開始時間：2026-03-18 15:30
+    // 單一時間：2026-03-18 15:30
     if (timePart) {
       return new Date(`${datePart}T23:59:59`);
     }
 
-    // 只有日期
+    // 只有日期：2026-05-31
     return new Date(`${datePart}T23:59:59`);
   };
 
@@ -173,7 +172,24 @@ export default function ActivitiesPage({ isDarkMode }) {
 
         return searchTarget.includes(keyword);
       })
-      .sort((a, b) => parseEventDate(b.date) - parseEventDate(a.date));
+      .sort((a, b) => {
+        const statusOrder = {
+          today: 0,
+          upcoming: 1,
+          normal: 2,
+          past: 3
+        };
+
+        const statusA = getEventStatus(a);
+        const statusB = getEventStatus(b);
+
+        if (statusOrder[statusA] !== statusOrder[statusB]) {
+          return statusOrder[statusA] - statusOrder[statusB];
+        }
+
+        // 同一類別內再依日期先後排序
+        return parseEventDate(a.date) - parseEventDate(b.date);
+      });
   }, [filterCat, searchText]);
 
   return (
