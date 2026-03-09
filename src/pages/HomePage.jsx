@@ -9,7 +9,7 @@ import { nextEvent } from '../data/eventsData';
 import { promoEvents } from '../data/activitiesData';
 
 export default function HomePage({ setPage, isDarkMode }) {
-  const latestArticle = columnArticles.length > 0 ? columnArticles[columnArticles.length - 1] : null;
+  const latestArticle = columnArticles.length > 0 ? columnArticles[0] : null;
   const catColors = getCategoryColors(isDarkMode);
   const latestArtColor = latestArticle
     ? (catColors[latestArticle.category] || {
@@ -38,7 +38,7 @@ export default function HomePage({ setPage, isDarkMode }) {
     const trimmed = dateStr.trim();
 
     if (trimmed.includes("～") || trimmed.includes("~")) {
-      const parts = trimmed.split(/[～~]/).map(s => s.trim());
+      const parts = trimmed.split(/[～~]/).map((s) => s.trim());
       const endPart = parts[parts.length - 1];
       return new Date(`${endPart}T23:59:59`);
     }
@@ -97,12 +97,29 @@ export default function HomePage({ setPage, isDarkMode }) {
   };
 
   return (
-    <div className="space-y-12 animate-fade-in relative z-10">
+    <div className="space-y-16 md:space-y-20 animate-fade-in relative z-10">
+      {/* Hero */}
       <section className="relative rounded-3xl overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
-        <div className={`absolute inset-0 bg-gradient-to-b ${isDarkMode ? 'from-black/20' : 'from-white/30'} to-transparent pointer-events-none`}></div>
-        <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-widest font-sans theme-heading relative z-10">
+        <div
+          className={`absolute inset-0 bg-gradient-to-b ${
+            isDarkMode ? "from-black/20" : "from-white/30"
+          } to-transparent pointer-events-none`}
+        ></div>
+
+        <div
+          className="absolute inset-6 rounded-[2rem] border pointer-events-none"
+          style={{ borderColor: "rgba(var(--c-border-rgb), 0.35)" }}
+        ></div>
+
+        <div
+          className="absolute -top-16 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full blur-3xl opacity-30 pointer-events-none"
+          style={{ background: "var(--c-blob-2)" }}
+        ></div>
+
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-widest font-sans theme-heading relative z-10">
           中文研究室
         </h1>
+
         <p
           className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-serif content-justify theme-text-secondary relative z-10"
           style={{ textAlignLast: "center" }}
@@ -112,175 +129,198 @@ export default function HomePage({ setPage, isDarkMode }) {
           ──《禮記‧學記》
         </p>
 
-        <button
-          onClick={() => setPage("about")}
-          className="text-white px-8 py-3 rounded-full font-medium shadow-lg flex items-center gap-2 mx-auto spring-transition hover:scale-105 active:scale-95 border relative z-10"
-          style={{ background: "var(--c-nav-active-bg)", borderColor: "var(--c-nav-active-border)" }}
-        >
-          探索研究室 <Icon name="ChevronRight" size={20} />
-        </button>
-      </section>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { title: "文章專欄", icon: "BookOpen", target: "articles" },
-          { title: "研討進度", icon: "Calendar", target: "events" },
-          { title: "資源分享", icon: "Library", target: "books" }
-        ].map((item, i) => (
-          <div
-            key={i}
-            onClick={() => setPage(item.target)}
-            className="p-8 rounded-3xl glass-panel glass-card-hover cursor-pointer group flex flex-col items-center text-center border transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
-          >
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[10deg] shadow-sm"
-              style={{ background: "var(--c-badge-bg)", color: "var(--c-badge-text)" }}
-            >
-              <Icon name={item.icon} size={28} />
-            </div>
-            <h3 className="text-xl font-bold font-sans theme-heading transition-colors duration-300 group-hover:text-[var(--c-accent)]">
-              {item.title}
-            </h3>
-          </div>
-        ))}
-      </div>
-
-      <section
-  className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer"
-  onClick={() => setPage("activities")}
->
-  <div className="flex justify-between items-start mb-6">
-    <div
-      className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
-      style={{
-        background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
-        color: isDarkMode ? "#7dd3fc" : "#0369a1",
-        borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)"
-      }}
-    >
-      <Icon name="Megaphone" size={16} /> 即將舉辦活動
-    </div>
-
-    <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
-      查看全部 <Icon name="ChevronRight" size={16} />
-    </span>
-  </div>
-
-  {upcomingActivities.length === 0 ? (
-    <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
-      <p className="theme-text-secondary font-sans text-center">
-        目前暫無即將舉辦的活動。
-      </p>
-    </div>
-  ) : (
-    <div className="grid md:grid-cols-3 gap-4">
-
-      {/* 主活動 */}
-      <div className="md:col-span-2 bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex flex-col">
-
-        <span className="text-xs font-bold mb-2 theme-text-secondary">
-          {upcomingActivities[0].category}
-        </span>
-
-        <h3 className="text-2xl font-bold theme-heading mb-4">
-          {upcomingActivities[0].title}
-        </h3>
-
-        <div className="space-y-2 text-sm theme-text-secondary mb-6">
-
-          <div className="flex gap-2">
-            <Icon name="Calendar" size={15} />
-            {upcomingActivities[0].date}
-          </div>
-
-          {upcomingActivities[0].location && (
-            <div className="flex gap-2">
-              <Icon name="MapPin" size={15} />
-              {upcomingActivities[0].location}
-            </div>
-          )}
-
-        </div>
-
-        {upcomingActivities[0].link && (
-          <a
-            href={upcomingActivities[0].link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-auto inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-bold font-sans shadow-sm border"
+        <div className="flex flex-col sm:flex-row gap-4 relative z-10">
+          <button
+            onClick={() => setPage("about")}
+            className="text-white px-8 py-3 rounded-full font-medium shadow-lg flex items-center justify-center gap-2 spring-transition hover:scale-105 active:scale-95 border"
             style={{
-              background: "var(--c-accent)",
-              color: "#fff",
-              borderColor: "var(--c-accent)"
+              background: "var(--c-nav-active-bg)",
+              borderColor: "var(--c-nav-active-border)"
             }}
           >
-            活動詳情 <Icon name="ExternalLink" size={16} />
-          </a>
-        )}
-      </div>
+            探索研究室 <Icon name="ChevronRight" size={20} />
+          </button>
 
-
-      {/* 右側兩個小活動 */}
-      <div className="flex flex-col gap-4">
-
-        {upcomingActivities.slice(1,3).map(ev => (
-
-          <div
-            key={ev.id}
-            className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white/60 shadow-sm flex flex-col"
+          <button
+            onClick={() => setPage("activities")}
+            className="px-8 py-3 rounded-full font-medium flex items-center justify-center gap-2 spring-transition hover:scale-105 active:scale-95 border"
+            style={{
+              background: "rgba(var(--c-panel-rgb), 0.45)",
+              color: "var(--c-primary-dark)",
+              borderColor: "rgba(var(--c-border-rgb), 0.6)"
+            }}
           >
+            查看近期活動 <Icon name="Megaphone" size={20} />
+          </button>
+        </div>
+      </section>
 
-            <span className="text-xs font-bold mb-2 theme-text-secondary">
-              {ev.category}
-            </span>
-
-            <h3 className="text-lg font-bold theme-heading mb-3 line-clamp-2">
-              {ev.title}
-            </h3>
-
-            <div className="text-sm theme-text-secondary mb-4 flex gap-2">
-              <Icon name="Calendar" size={14} />
-              {ev.date}
-            </div>
-
-            {ev.link && (
-              <a
-                href={ev.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold font-sans border text-sm"
-                style={{
-                  background: "var(--c-accent)",
-                  color: "#fff",
-                  borderColor: "var(--c-accent)"
-                }}
-              >
-                活動詳情
-                <Icon name="ExternalLink" size={14} />
-              </a>
-            )}
-
+      {/* 即將舉辦活動 */}
+      <section
+        className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer"
+        onClick={() => setPage("activities")}
+      >
+        <div className="flex justify-between items-start mb-6">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
+            style={{
+              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
+              color: isDarkMode ? "#7dd3fc" : "#0369a1",
+              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)"
+            }}
+          >
+            <Icon name="Megaphone" size={16} /> 即將舉辦活動
           </div>
 
-        ))}
+          <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
+            查看全部 <Icon name="ChevronRight" size={16} />
+          </span>
+        </div>
 
-      </div>
+        {upcomingActivities.length === 0 ? (
+          <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
+            <p className="theme-text-secondary font-sans text-center">
+              目前暫無即將舉辦的活動。
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-4">
+            {/* 主活動 */}
+            <div className="md:col-span-2 bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex flex-col min-h-[280px]">
+              {(() => {
+                const badge = getActivityBadgeColor(upcomingActivities[0].category);
+                return (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border mb-3 w-fit"
+                    style={{
+                      background: badge.bg,
+                      color: badge.color,
+                      borderColor: badge.border
+                    }}
+                  >
+                    <Icon name="Megaphone" size={12} />
+                    {upcomingActivities[0].category}
+                  </span>
+                );
+              })()}
 
-    </div>
-  )}
-</section>
+              <h3 className="text-2xl font-bold theme-heading mb-4">
+                {upcomingActivities[0].title}
+              </h3>
 
+              <div className="space-y-3 text-sm theme-text-secondary mb-5">
+                <div className="flex items-start gap-2">
+                  <Icon name="Calendar" size={15} className="shrink-0 mt-0.5" />
+                  <span>{upcomingActivities[0].date}</span>
+                </div>
+
+                {upcomingActivities[0].location && (
+                  <div className="flex items-start gap-2">
+                    <Icon name="MapPin" size={15} className="shrink-0 mt-0.5" />
+                    <span>{upcomingActivities[0].location}</span>
+                  </div>
+                )}
+              </div>
+
+              {upcomingActivities[0].description && (
+                <p className="text-sm leading-relaxed theme-text-secondary mb-5 line-clamp-3">
+                  {upcomingActivities[0].description}
+                </p>
+              )}
+
+              {upcomingActivities[0].link && (
+                <a
+                  href={upcomingActivities[0].link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-auto inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-bold font-sans shadow-sm border w-fit"
+                  style={{
+                    background: "var(--c-accent)",
+                    color: "#fff",
+                    borderColor: "var(--c-accent)"
+                  }}
+                >
+                  活動詳情 <Icon name="ExternalLink" size={16} />
+                </a>
+              )}
+            </div>
+
+            {/* 右側兩個小活動 */}
+            <div className="flex flex-col gap-4">
+              {upcomingActivities.slice(1, 3).map((ev) => {
+                const badge = getActivityBadgeColor(ev.category);
+
+                return (
+                  <div
+                    key={ev.id}
+                    className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white/60 shadow-sm flex flex-col min-h-[220px]"
+                  >
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border mb-3 w-fit"
+                      style={{
+                        background: badge.bg,
+                        color: badge.color,
+                        borderColor: badge.border
+                      }}
+                    >
+                      <Icon name="Megaphone" size={12} />
+                      {ev.category}
+                    </span>
+
+                    <h3 className="text-lg font-bold theme-heading mb-3 line-clamp-2">
+                      {ev.title}
+                    </h3>
+
+                    <div className="text-sm theme-text-secondary mb-4 flex items-start gap-2">
+                      <Icon name="Calendar" size={14} className="shrink-0 mt-0.5" />
+                      <span>{ev.date}</span>
+                    </div>
+
+                    {ev.link && (
+                      <a
+                        href={ev.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold font-sans border text-sm"
+                        style={{
+                          background: "var(--c-accent)",
+                          color: "#fff",
+                          borderColor: "var(--c-accent)"
+                        }}
+                      >
+                        活動詳情
+                        <Icon name="ExternalLink" size={14} />
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* 近期研討 + 最新上架 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         <section className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col">
           <div className="flex justify-between items-start mb-5">
             <div
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
-              style={{ background: "var(--c-badge-bg)", color: "var(--c-badge-text)", borderColor: "var(--c-badge-border)" }}
+              style={{
+                background: "var(--c-badge-bg)",
+                color: "var(--c-badge-text)",
+                borderColor: "var(--c-badge-border)"
+              }}
             >
               <Icon name="Calendar" size={16} /> 近期研討
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); setPage("events"); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPage("events");
+              }}
               className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1"
             >
               查看全部 <Icon name="ChevronRight" size={16} />
@@ -289,27 +329,49 @@ export default function HomePage({ setPage, isDarkMode }) {
 
           <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm transition-colors hover:bg-white/70 flex-1 flex flex-col">
             <h3 className="text-2xl font-bold mb-5 font-sans theme-heading">三月讀書會</h3>
-            <div className="space-y-4 flex-1">
-              {[["時間", nextEvent.date], ["地點", nextEvent.location], ["主題", nextEvent.topic]].map(([l, v]) => (
-                <p key={l} className="flex items-start gap-3 theme-text">
-                  <strong className="min-w-16 font-sans shrink-0">{l}：</strong>
-                  <span>{v}</span>
-                </p>
+
+            <div className="grid gap-3 mb-5">
+              {[
+                { icon: "Calendar", label: "時間", value: nextEvent.date },
+                { icon: "MapPin", label: "地點", value: nextEvent.location },
+                { icon: "BookOpen", label: "主題", value: nextEvent.topic }
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-white/30 border border-white/40"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      background: "var(--c-badge-bg)",
+                      color: "var(--c-badge-text)"
+                    }}
+                  >
+                    <Icon name={item.icon} size={15} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold font-sans theme-text-secondary mb-1">
+                      {item.label}
+                    </p>
+                    <p className="text-sm theme-text">{item.value}</p>
+                  </div>
+                </div>
               ))}
-              <div className="flex items-start gap-3 theme-text">
-                <strong className="min-w-16 font-sans shrink-0">論文：</strong>
-                <ul className="space-y-2">
-                  {nextEvent.papers.map((p, i) => (
-                    <li key={i} className="leading-relaxed relative pl-4">
-                      <span
-                        className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
-                        style={{ background: "var(--c-accent)" }}
-                      ></span>
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            </div>
+
+            <div className="flex items-start gap-3 theme-text">
+              <strong className="min-w-16 font-sans shrink-0">論文：</strong>
+              <ul className="space-y-2">
+                {nextEvent.papers.map((p, i) => (
+                  <li key={i} className="leading-relaxed relative pl-4">
+                    <span
+                      className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
+                      style={{ background: "var(--c-accent)" }}
+                    ></span>
+                    {p}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
@@ -336,10 +398,18 @@ export default function HomePage({ setPage, isDarkMode }) {
             </div>
 
             <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm transition-colors group-hover:bg-white/70 flex-1 flex flex-col justify-center">
+              <p className="text-xs tracking-[0.14em] uppercase font-sans theme-text-secondary opacity-50 mb-2">
+                Latest Article
+              </p>
+
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <span
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border transition-colors"
-                  style={{ background: latestArtColor.bg, color: latestArtColor.color, borderColor: latestArtColor.border }}
+                  style={{
+                    background: latestArtColor.bg,
+                    color: latestArtColor.color,
+                    borderColor: latestArtColor.border
+                  }}
                 >
                   <Icon name="Folder" size={14} className="opacity-70" /> {latestArticle.category}
                 </span>
@@ -364,12 +434,40 @@ export default function HomePage({ setPage, isDarkMode }) {
                 <span className="opacity-80 text-xs">{latestArticle.affiliation}</span>
               </div>
 
-              <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary line-clamp-3 opacity-80 border-t border-white/40 pt-4 mt-auto">
-                {latestArticle.summary}
-              </p>
+              <div className="border-t border-white/40 pt-4 mt-auto">
+                <p className="text-xs font-sans theme-text-secondary opacity-60 mb-2">內容摘要</p>
+                <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary line-clamp-3 opacity-80">
+                  {latestArticle.summary}
+                </p>
+              </div>
             </div>
           </section>
         )}
+      </div>
+
+      {/* 首頁功能入口 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { title: "文章專欄", icon: "BookOpen", target: "articles" },
+          { title: "研討進度", icon: "Calendar", target: "events" },
+          { title: "資源分享", icon: "Library", target: "books" }
+        ].map((item, i) => (
+          <div
+            key={i}
+            onClick={() => setPage(item.target)}
+            className="p-8 rounded-3xl glass-panel glass-card-hover cursor-pointer group flex flex-col items-center text-center border transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
+          >
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[10deg] shadow-sm"
+              style={{ background: "var(--c-badge-bg)", color: "var(--c-badge-text)" }}
+            >
+              <Icon name={item.icon} size={28} />
+            </div>
+            <h3 className="text-xl font-bold font-sans theme-heading transition-colors duration-300 group-hover:text-[var(--c-accent)]">
+              {item.title}
+            </h3>
+          </div>
+        ))}
       </div>
     </div>
   );
