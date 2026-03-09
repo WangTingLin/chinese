@@ -778,4 +778,22 @@ export const promoEvents = [
     organizer: "國科會歷史學研究人才培育計畫、興大歷史系、中國近代史學會",
     link:"https://www.history.nchu.edu.tw/front/news/news.php?ID=5a4326493836406d4c7753254864596840a90d315d234cda9f62e3112d807551c1ca6c2e803e033c4c27ab07&Sn=545",
 },
+{
+    id: 80,
+    title: "阿彌陀佛 2.0：從好死到好命",
+    category: "學術講座",
+    date: "2026-03-27 13:30-15:30",
+    speaker:"Dr. Jens Reinke ／ Assistant professor of Buddhist studies, Buddhist Seminary, School of Religion and Theology",
+    location: "政大大智樓190101教室",
+    organizer: "政大宗教所／華人宗教研究中心",
+    link:"https://www.facebook.com/photo/?fbid=26291772377085266&set=gm.4181524498775272&idorvanity=1417502001844216",
+},
+{
+    id: 81,
+    title: "2026政大宗教研究生論壇徵稿",
+    category: "徵稿資訊",
+    date: "2026-03-31",
+    organizer: "政大華人宗教研究中心",
+    link:"https://www.facebook.com/groups/1417502001844216/permalink/4184248145169574",
+},
 ];
