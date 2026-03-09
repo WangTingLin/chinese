@@ -376,8 +376,7 @@ export default function HomePage({ setPage, isDarkMode }) {
                   </div>
 
                   {/* 右側翻頁控制 */}
-                  <div className="lg:w-[220px] shrink-0 flex flex-col justify-between gap-4">
-                    <div className="grid grid-cols-2 gap-3">
+                      <div className="lg:w-[280px] shrink-0 flex flex-col justify-between gap-4">                    <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={prevActivity}
                         className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
