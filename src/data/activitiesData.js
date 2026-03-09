@@ -561,16 +561,6 @@ export const promoEvents = [
     link:"https://www.facebook.com/photo?fbid=899369256038725&set=a.141086115200380",
 },
 {
-    id: 57,
-    title: "禪宗「傳燈」觀念的演進：從《祖堂集》到《五燈會元》 ",
-    category: "學術講座",
-    date: "2026-03-26 14:00-16:00",
-    speaker:"莊慧姿臨床心理師、精神分析師",
-    location: "成大中文系館 21205 教室",
-    organizer: "成大中文系",
-    link:"https://www.facebook.com/photo?fbid=897746639534320&set=a.141086115200380",
-},
-{
     id: 58,
     title: "「知天命」與「愛命運」之間，孔子與尼采思想的比較考察",
     category: "學術講座",
