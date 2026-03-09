@@ -121,7 +121,7 @@ export default function HomePage({ setPage, isDarkMode }) {
               className="w-2 h-2 rounded-full"
               style={{ background: "var(--c-accent)" }}
             />
-            古典．研究．交流
+            經史．文哲．語言
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold mb-5 tracking-[0.18em] font-sans theme-heading">
