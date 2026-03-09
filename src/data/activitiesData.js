@@ -685,15 +685,8 @@ export const promoEvents = [
     title: "國立臺中教育大學語文教育學系《語文教育學報》第十一期徵稿",
     category: "徵稿資訊",
     date: "2026-08-31",
-    organizer: "中教大語教",
+    organizer: "中教大語教系",
     link:"https://lle.ntcu.edu.tw/front/academic/publication/publication1/archive.php?ID=817a66ad59a2f213bce260c89d813214611e718c9d1be78a6f9ac22d9d8fab62",
 },
-{
-    id: 71,
-    title: "國立臺中教育大學語文教育學系《語文教育學報》第十一期徵稿",
-    category: "徵稿資訊",
-    date: "2026-08-31",
-    organizer: "中教大語教",
-    link:"https://lle.ntcu.edu.tw/front/academic/publication/publication1/archive.php?ID=817a66ad59a2f213bce260c89d813214611e718c9d1be78a6f9ac22d9d8fab62",
-},
+
 ];
