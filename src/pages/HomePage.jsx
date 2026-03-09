@@ -9,9 +9,10 @@ import { nextEvent } from '../data/eventsData';
 import { promoEvents } from '../data/activitiesData';
 
 export default function HomePage({ setPage, isDarkMode }) {
-  const latestArticle = columnArticles.length > 0 ? columnArticles[0] : null;
-  const catColors = getCategoryColors(isDarkMode);
-  const latestArtColor = latestArticle
+const latestArticle =
+  columnArticles.length > 0
+    ? [...columnArticles].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    : null;  const latestArtColor = latestArticle
     ? (catColors[latestArticle.category] || {
         bg: "rgba(100,116,139,0.12)",
         color: "#475569",
