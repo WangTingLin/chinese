@@ -6,14 +6,11 @@ import { nextEvent } from "../data/eventsData";
 import { promoEvents } from "../data/activitiesData";
 
 export default function HomePage({ setPage, isDarkMode }) {
-
   /* ================= 最新文章 ================= */
 
   const latestArticle =
     columnArticles.length > 0
-      ? [...columnArticles].sort(
-          (a, b) => new Date(b.date) - new Date(a.date)
-        )[0]
+      ? [...columnArticles].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
       : null;
 
   const catColors = getCategoryColors(isDarkMode);
@@ -73,31 +70,19 @@ export default function HomePage({ setPage, isDarkMode }) {
   const getActivityBadgeColor = (category) => {
     const map = {
       學術講座: {
-        bg: isDarkMode
-          ? "rgba(59,130,246,0.2)"
-          : "rgba(59,130,246,0.12)",
+        bg: isDarkMode ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)",
         color: isDarkMode ? "#93c5fd" : "#1e40af",
-        border: isDarkMode
-          ? "rgba(59,130,246,0.4)"
-          : "rgba(59,130,246,0.3)",
+        border: isDarkMode ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)",
       },
       "研討會／工作坊": {
-        bg: isDarkMode
-          ? "rgba(34,197,94,0.2)"
-          : "rgba(34,197,94,0.12)",
+        bg: isDarkMode ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)",
         color: isDarkMode ? "#86efac" : "#166534",
-        border: isDarkMode
-          ? "rgba(34,197,94,0.4)"
-          : "rgba(34,197,94,0.3)",
+        border: isDarkMode ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)",
       },
       徵稿資訊: {
-        bg: isDarkMode
-          ? "rgba(245,158,11,0.2)"
-          : "rgba(245,158,11,0.12)",
+        bg: isDarkMode ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.12)",
         color: isDarkMode ? "#fde047" : "#b45309",
-        border: isDarkMode
-          ? "rgba(245,158,11,0.4)"
-          : "rgba(245,158,11,0.3)",
+        border: isDarkMode ? "rgba(245,158,11,0.4)" : "rgba(245,158,11,0.3)",
       },
     };
 
@@ -114,146 +99,230 @@ export default function HomePage({ setPage, isDarkMode }) {
 
   return (
     <div className="space-y-16 md:space-y-20 animate-fade-in relative z-10">
-
       {/* ================= Hero ================= */}
 
-      <section className="relative rounded-3xl overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
+      <section className="relative rounded-[2rem] overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: isDarkMode
+              ? "radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 55%)"
+              : "radial-gradient(circle at top, rgba(255,255,255,0.6), transparent 58%)",
+          }}
+        />
+        <div
+          className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 rounded-full blur-3xl opacity-40 pointer-events-none"
+          style={{ background: "var(--c-accent)" }}
+        />
 
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-widest font-sans theme-heading">
-          中文研究室
-        </h1>
+        <div className="relative z-10 max-w-3xl">
+          <div className="mb-5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border bg-white/40 backdrop-blur-sm">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--c-accent)" }}
+            />
+            古典．研究．交流
+          </div>
 
-        <p className="text-lg md:text-xl max-w-2xl mb-10 leading-relaxed font-serif theme-text-secondary">
-          「獨學而無友，則孤陋而寡聞。」
-          <br />
-          ──《禮記‧學記》
-        </p>
+          <h1 className="text-4xl md:text-6xl font-bold mb-5 tracking-[0.18em] font-sans theme-heading">
+            中文研究室
+          </h1>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={() => setPage("about")}
-            className="text-white px-8 py-3 rounded-full font-medium shadow-lg flex items-center gap-2 border"
-            style={{
-              background: "var(--c-nav-active-bg)",
-              borderColor: "var(--c-nav-active-border)",
-            }}
-          >
-            探索研究室 <Icon name="ChevronRight" size={20} />
-          </button>
+          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-serif theme-text-secondary">
+            「獨學而無友，則孤陋而寡聞。」
+            <br />
+            ──《禮記‧學記》
+          </p>
 
-          <button
-            onClick={() => setPage("activities")}
-            className="px-8 py-3 rounded-full font-medium flex items-center gap-2 border"
-            style={{
-              background: "rgba(var(--c-panel-rgb),0.45)",
-              borderColor: "rgba(var(--c-border-rgb),0.6)",
-            }}
-          >
-            查看近期活動 <Icon name="Megaphone" size={20} />
-          </button>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button
+              onClick={() => setPage("about")}
+              className="text-white px-8 py-3 rounded-full font-medium shadow-lg flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
+              style={{
+                background: "var(--c-nav-active-bg)",
+                borderColor: "var(--c-nav-active-border)",
+              }}
+            >
+              探索研究室 <Icon name="ChevronRight" size={20} />
+            </button>
+
+            <button
+              onClick={() => setPage("activities")}
+              className="px-8 py-3 rounded-full font-medium flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
+              style={{
+                background: "rgba(var(--c-panel-rgb),0.45)",
+                borderColor: "rgba(var(--c-border-rgb),0.6)",
+                color: "var(--c-primary-dark)",
+              }}
+            >
+              查看近期活動 <Icon name="Megaphone" size={20} />
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ================= 即將舉辦活動 ================= */}
+      {/* ================= 三個入口 ================= */}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { title: "文章專欄", icon: "BookOpen", target: "articles" },
+          { title: "研討進度", icon: "Calendar", target: "events" },
+          { title: "資源分享", icon: "Library", target: "books" },
+        ].map((item, i) => (
+          <div
+            key={i}
+            onClick={() => setPage(item.target)}
+            className="p-8 rounded-3xl glass-panel glass-card-hover cursor-pointer group flex flex-col items-center text-center border transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
+          >
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[10deg] shadow-sm"
+              style={{
+                background: "var(--c-badge-bg)",
+                color: "var(--c-badge-text)",
+              }}
+            >
+              <Icon name={item.icon} size={28} />
+            </div>
+            <h3 className="text-xl font-bold font-sans theme-heading transition-colors duration-300 group-hover:text-[var(--c-accent)]">
+              {item.title}
+            </h3>
+          </div>
+        ))}
+      </div>
+
+      {/* ================= 即將舉辦活動：時間軸視覺 ================= */}
 
       <section
-        className="rounded-3xl p-6 md:p-8 glass-panel cursor-pointer"
-        onClick={() => setPage("activities")}
+        className="rounded-3xl p-6 md:p-8 glass-panel transition-all duration-500 hover:shadow-xl"
       >
-        <div className="flex justify-between items-start mb-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border">
+        <div className="flex justify-between items-start mb-8">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border font-sans"
+            style={{
+              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
+              color: isDarkMode ? "#7dd3fc" : "#0369a1",
+              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)",
+            }}
+          >
             <Icon name="Megaphone" size={16} />
             即將舉辦活動
           </div>
 
-          <span className="text-sm flex items-center gap-1 opacity-50">
+          <button
+            onClick={() => setPage("activities")}
+            className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1"
+          >
             查看全部 <Icon name="ChevronRight" size={16} />
-          </span>
+          </button>
         </div>
 
         {upcomingActivities.length === 0 ? (
-          <p className="text-center opacity-70">目前暫無活動</p>
+          <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl border border-white/60 shadow-sm">
+            <p className="text-center theme-text-secondary font-sans">
+              目前暫無即將舉辦的活動。
+            </p>
+          </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="relative pl-0 md:pl-10">
+            <div
+              className="hidden md:block absolute top-2 bottom-2 left-4 w-px border-l-2 border-dashed"
+              style={{
+                borderColor: "color-mix(in srgb, var(--c-primary) 28%, transparent)",
+              }}
+            />
 
-            {/* 主活動 */}
+            <div className="space-y-5">
+              {upcomingActivities.map((ev, index) => {
+                const badgeStyle = getActivityBadgeColor(ev.category);
+                const isMain = index === 0;
 
-            <div className="md:col-span-2 bg-white/50 p-6 rounded-2xl border flex flex-col">
-
-              <h3 className="text-2xl font-bold mb-4">
-                {upcomingActivities[0].title}
-              </h3>
-
-              <div className="space-y-2 text-sm mb-5">
-
-                <div className="flex gap-2">
-                  <Icon name="Calendar" size={15} />
-                  {upcomingActivities[0].date}
-                </div>
-
-                {upcomingActivities[0].location && (
-                  <div className="flex gap-2">
-                    <Icon name="MapPin" size={15} />
-                    {upcomingActivities[0].location}
-                  </div>
-                )}
-              </div>
-
-              {upcomingActivities[0].link && (
-                <a
-                  href={upcomingActivities[0].link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-auto inline-flex items-center gap-2 px-5 py-2 rounded-xl font-bold border"
-                  style={{
-                    background: "var(--c-accent)",
-                    color: "#fff",
-                    borderColor: "var(--c-accent)",
-                  }}
-                >
-                  活動詳情
-                  <Icon name="ExternalLink" size={16} />
-                </a>
-              )}
-            </div>
-
-            {/* 次活動 */}
-
-            <div className="flex flex-col gap-4">
-              {upcomingActivities.slice(1, 3).map((ev) => (
-                <div
-                  key={ev.id}
-                  className="bg-white/50 p-5 rounded-2xl border flex flex-col"
-                >
-                  <h3 className="text-lg font-bold mb-3 line-clamp-2">
-                    {ev.title}
-                  </h3>
-
-                  <div className="text-sm mb-4 flex gap-2">
-                    <Icon name="Calendar" size={14} />
-                    {ev.date}
-                  </div>
-
-                  {ev.link && (
-                    <a
-                      href={ev.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold border text-sm"
+                return (
+                  <div key={ev.id} className="relative">
+                    <div
+                      className="hidden md:block absolute left-[7px] top-8 w-4 h-4 rounded-full border-[3px] shadow-sm"
                       style={{
-                        background: "var(--c-accent)",
-                        color: "#fff",
+                        background: "rgba(var(--c-panel-rgb),1)",
                         borderColor: "var(--c-accent)",
                       }}
-                    >
-                      活動詳情
-                      <Icon name="ExternalLink" size={14} />
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
+                    />
 
+                    <div
+                      className={`rounded-2xl border border-white/60 shadow-sm bg-white/50 backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-lg ${
+                        isMain ? "md:ml-6 p-6 md:p-7" : "md:ml-6 p-5"
+                      }`}
+                    >
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
+                              style={{
+                                background: badgeStyle.bg,
+                                color: badgeStyle.color,
+                                borderColor: badgeStyle.border,
+                              }}
+                            >
+                              {ev.category}
+                            </span>
+
+                            <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
+                              <Icon name="Calendar" size={14} />
+                              {ev.date}
+                            </span>
+                          </div>
+
+                          <h3
+                            className={`font-bold theme-heading leading-snug ${
+                              isMain ? "text-2xl md:text-3xl mb-4" : "text-lg md:text-xl mb-3"
+                            }`}
+                          >
+                            {ev.title}
+                          </h3>
+
+                          {ev.location && (
+                            <div className="flex items-start gap-2 text-sm theme-text-secondary mb-3">
+                              <Icon name="MapPin" size={15} className="shrink-0 mt-[2px]" />
+                              <span>{ev.location}</span>
+                            </div>
+                          )}
+
+                          {ev.description && (
+                            <p
+                              className={`font-serif leading-relaxed theme-text-secondary ${
+                                isMain ? "text-sm md:text-base line-clamp-3" : "text-sm line-clamp-2"
+                              }`}
+                            >
+                              {ev.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {ev.link && (
+                          <div className="md:pl-4 shrink-0">
+                            <a
+                              href={ev.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold font-sans border text-sm spring-transition hover:scale-105 active:scale-95"
+                              style={{
+                                background: "var(--c-accent)",
+                                color: "#fff",
+                                borderColor: "var(--c-accent)",
+                                boxShadow: "0 8px 18px rgba(0,0,0,0.12)",
+                              }}
+                            >
+                              活動詳情
+                              <Icon name="ExternalLink" size={15} />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </section>
@@ -261,7 +330,6 @@ export default function HomePage({ setPage, isDarkMode }) {
       {/* ================= 近期研討 ＋ 最新上架 ================= */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-
         {/* 近期研討 */}
         <section className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col">
           <div className="flex justify-between items-start mb-5">
@@ -299,9 +367,7 @@ export default function HomePage({ setPage, isDarkMode }) {
                 ["主題", nextEvent.topic],
               ].map(([label, value]) => (
                 <p key={label} className="flex items-start gap-3 theme-text">
-                  <strong className="min-w-16 font-sans shrink-0">
-                    {label}：
-                  </strong>
+                  <strong className="min-w-16 font-sans shrink-0">{label}：</strong>
                   <span>{value}</span>
                 </p>
               ))}
@@ -324,7 +390,7 @@ export default function HomePage({ setPage, isDarkMode }) {
           </div>
         </section>
 
-        {/* 最新上架 */}
+        {/* 最新上架：期刊封面風格 */}
         {latestArticle && (
           <section
             className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer group flex flex-col"
@@ -334,13 +400,9 @@ export default function HomePage({ setPage, isDarkMode }) {
               <div
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
                 style={{
-                  background: isDarkMode
-                    ? "rgba(244,63,94,0.2)"
-                    : "rgba(244,63,94,0.1)",
+                  background: isDarkMode ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.1)",
                   color: isDarkMode ? "#fda4af" : "#e11d48",
-                  borderColor: isDarkMode
-                    ? "rgba(244,63,94,0.4)"
-                    : "rgba(244,63,94,0.2)",
+                  borderColor: isDarkMode ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.2)",
                 }}
               >
                 <Icon name="PenLine" size={16} /> 最新上架
@@ -351,47 +413,100 @@ export default function HomePage({ setPage, isDarkMode }) {
               </span>
             </div>
 
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm transition-colors group-hover:bg-white/70 flex-1 flex flex-col justify-center">
-              <div className="flex flex-wrap items-center gap-3 mb-3">
+            <div
+              className="relative flex-1 rounded-[1.75rem] overflow-hidden border shadow-sm p-6 md:p-8 flex flex-col min-h-[420px]"
+              style={{
+                background: isDarkMode
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))"
+                  : "linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.58))",
+                borderColor: latestArtColor.border,
+              }}
+            >
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: isDarkMode
+                    ? "radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 42%)"
+                    : "radial-gradient(circle at top right, rgba(255,255,255,0.75), transparent 42%)",
+                }}
+              />
+
+              <div className="relative z-10 flex items-center justify-between mb-6">
+                <div
+                  className="text-[11px] tracking-[0.28em] uppercase font-bold font-sans"
+                  style={{ color: latestArtColor.color, opacity: 0.85 }}
+                >
+                  Chinese Research Review
+                </div>
+
+                <div className="text-xs font-mono theme-text-secondary opacity-70">
+                  {latestArticle.date}
+                </div>
+              </div>
+
+              <div className="relative z-10 mb-5">
                 <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
                   style={{
                     background: latestArtColor.bg,
                     color: latestArtColor.color,
                     borderColor: latestArtColor.border,
                   }}
                 >
-                  <Icon name="Folder" size={14} className="opacity-70" />
+                  <Icon name="Folder" size={13} className="opacity-70" />
                   {latestArticle.category}
                 </span>
-
-                <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                  <Icon name="Calendar" size={14} />
-                  {latestArticle.date}
-                </span>
               </div>
 
-              <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-4 leading-snug group-hover:text-[var(--c-accent)] transition-colors line-clamp-2">
-                {latestArticle.title}
-              </h3>
+              <div className="relative z-10 flex-1 flex flex-col">
+                <div
+                  className="w-12 h-1 rounded-full mb-5"
+                  style={{ background: latestArtColor.color, opacity: 0.8 }}
+                />
 
-              <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-4">
-                <span
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
-                  style={{ background: latestArtColor.color, opacity: 0.9 }}
-                >
-                  {latestArticle.author[0]}
-                </span>
-                <span className="font-medium">{latestArticle.author}</span>
-                <span className="opacity-50">｜</span>
-                <span className="opacity-80 text-xs">
-                  {latestArticle.affiliation}
-                </span>
+                <h3 className="text-2xl md:text-3xl font-bold font-serif theme-heading leading-snug mb-6 group-hover:text-[var(--c-accent)] transition-colors">
+                  {latestArticle.title}
+                </h3>
+
+                <div className="mt-auto">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm"
+                      style={{ background: latestArtColor.color, opacity: 0.95 }}
+                    >
+                      {latestArticle.author[0]}
+                    </span>
+
+                    <div className="min-w-0">
+                      <p className="font-bold font-sans theme-heading text-sm">
+                        {latestArticle.author}
+                      </p>
+                      <p className="text-xs theme-text-secondary opacity-80 line-clamp-1">
+                        {latestArticle.affiliation}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="pt-4 border-t"
+                    style={{ borderColor: latestArtColor.border }}
+                  >
+                    <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary line-clamp-4 opacity-85">
+                      {latestArticle.summary}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary line-clamp-3 opacity-80 border-t border-white/40 pt-4 mt-auto">
-                {latestArticle.summary}
-              </p>
+              <div
+                className="absolute right-5 bottom-5 text-[72px] leading-none font-serif select-none pointer-events-none"
+                style={{
+                  color: latestArtColor.color,
+                  opacity: isDarkMode ? 0.08 : 0.1,
+                }}
+              >
+                文
+              </div>
             </div>
           </section>
         )}
