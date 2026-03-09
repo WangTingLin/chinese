@@ -69,6 +69,7 @@ export const Icon = ({ name, size = 24, className = "" }) => {
     ChevronRight: <path d="m9 18 6-6-6-6" />,
     ChevronDown: <path d="m6 9 6 6 6-6" />,
     ChevronUp: <path d="m18 15-6-6-6 6" />,
+    ChevronLeft: <path d="m15 18-6-6 6-6" />,
     Folder: (
       <>
         <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
