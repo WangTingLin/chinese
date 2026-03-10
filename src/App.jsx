@@ -15,13 +15,8 @@ const client = createClient({
   apiVersion: '2024-01-01',
   useCdn: true,
 });
-import { client } from "./sanityClient";
 
 /* ==================== 圖示與 Logo ==================== */
-
-const [articles, setArticles] = useState([]);
-const [events, setEvents] = useState([]);
-const [activities, setActivities] = useState([]);
 
 
 export const Icon = ({ name, size = 24, className = "" }) => {
@@ -339,62 +334,6 @@ export const BlockRenderer = ({ block, index, articleId }) => {
 
 const BackToTopButton = ({ isDarkMode }) => {
   const [visible, setVisible] = useState(false);
-
-
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const articleData = await client.fetch(`
-        *[_type == "article"] | order(date desc) {
-          _id,
-          title,
-          author,
-          affiliation,
-          date,
-          category,
-          summary,
-          slug
-        }
-      `);
-
-      const eventData = await client.fetch(`
-        *[_type == "event"] | order(date asc) {
-          _id,
-          title,
-          date,
-          location,
-          topic,
-          papers
-        }
-      `);
-
-      const activityData = await client.fetch(`
-        *[_type == "activity"] | order(date asc) {
-          _id,
-          title,
-          date,
-          location,
-          category,
-          description,
-          link
-        }
-      `);
-
-      console.log("articleData:", articleData);
-      console.log("eventData:", eventData);
-      console.log("activityData:", activityData);
-
-      setArticles(articleData || []);
-      setEvents(eventData || []);
-      setActivities(activityData || []);
-    } catch (error) {
-      console.error("Sanity 資料讀取失敗：", error);
-    }
-  };
-
-  fetchData();
-}, []);
-
 
   useEffect(() => {
     const handleScroll = () => {
