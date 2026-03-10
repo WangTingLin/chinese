@@ -20,6 +20,22 @@ body{
   background-size:300% 300%;
   animation:pageGradientFlow 18s ease infinite;
 }
+.dark-mode{
+  background: linear-gradient(
+    135deg,
+    #020617,
+    #0f172a,
+    #020617
+  );
+  background-size:200% 200%;
+  animation:darkGradientFlow 20s ease infinite;
+}
+
+@keyframes darkGradientFlow{
+  0%{ background-position:0% 50%; }
+  50%{ background-position:100% 50%; }
+  100%{ background-position:0% 50%; }
+}
 
 /* 動態背景動畫 */
 
