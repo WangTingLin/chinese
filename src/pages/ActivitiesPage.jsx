@@ -17,7 +17,7 @@ export default function ActivitiesPage({ isDarkMode }) {
     }`).then(data => {
       setEvents(data);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
   const categories = ["全部", "學術講座", "研討會／工作坊", "徵稿資訊"];
 

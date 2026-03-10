@@ -26,7 +26,7 @@ export default function EventsPage({ isDarkMode }) {
       setTimelineEvents(evs);
       setResearchArticles(arts);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const filteredEvents = timelineEvents.filter((ev) => {

@@ -55,7 +55,7 @@ export default function ArticlesPage({ isDarkMode }) {
     }`).then(data => {
       setArticles(data);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const categories = FIXED_CATEGORIES;
