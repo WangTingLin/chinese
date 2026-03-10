@@ -201,46 +201,6 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* ===================== 跑馬燈 ===================== */}
-      <div
-        className="marquee-track rounded-2xl py-3 border"
-        style={{
-          background: isDarkMode
-            ? "rgba(var(--c-panel-rgb),0.25)"
-            : "rgba(var(--c-panel-rgb),0.55)",
-          borderColor: "rgba(var(--c-border-rgb),0.38)",
-        }}
-      >
-        <div className="marquee-inner">
-          {tickerDouble.map((item, i) => (
-            <span key={i} className="inline-flex items-center">
-              <span
-                className="text-sm font-sans tracking-[0.22em] theme-text-secondary px-4"
-                style={{ opacity: 0.55 }}
-              >
-                {item.text}
-              </span>
-              {/* 每 6 個用特殊分隔符，其餘用小點 */}
-              {(i + 1) % 6 === 0 ? (
-                <span
-                  className="text-xs mx-1 opacity-30"
-                  style={{ color: "var(--c-accent)" }}
-                >
-                  ❖
-                </span>
-              ) : (
-                <span
-                  className="text-sm opacity-20"
-                  style={{ color: "var(--c-accent)" }}
-                >
-                  ·
-                </span>
-              )}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* ===================== 翻頁式近期活動 ===================== */}
       <section className="rounded-3xl p-6 md:p-8 glass-panel shadow-sm">
         <div className="flex justify-between items-start mb-6 gap-4">
@@ -681,6 +641,45 @@ export default function HomePage({
             </div>
           </section>
         )}
+      </div>
+
+      {/* ===================== 跑馬燈 ===================== */}
+      <div
+        className="marquee-track rounded-2xl py-3 border"
+        style={{
+          background: isDarkMode
+            ? "rgba(var(--c-panel-rgb),0.25)"
+            : "rgba(var(--c-panel-rgb),0.55)",
+          borderColor: "rgba(var(--c-border-rgb),0.38)",
+        }}
+      >
+        <div className="marquee-inner">
+          {tickerDouble.map((item, i) => (
+            <span key={i} className="inline-flex items-center">
+              <span
+                className="text-sm font-sans tracking-[0.22em] theme-text-secondary px-4"
+                style={{ opacity: 0.55 }}
+              >
+                {item.text}
+              </span>
+              {(i + 1) % 6 === 0 ? (
+                <span
+                  className="text-xs mx-1 opacity-30"
+                  style={{ color: "var(--c-accent)" }}
+                >
+                  ❖
+                </span>
+              ) : (
+                <span
+                  className="text-sm opacity-20"
+                  style={{ color: "var(--c-accent)" }}
+                >
+                  ·
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
