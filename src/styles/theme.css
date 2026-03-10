@@ -2,63 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ================= 全站背景 ================= */
-
 body{
   margin:0;
+  background:#faf9f6;
   color:#1f2937;
   font-family:"Noto Serif TC", serif;
-
-  background: linear-gradient(
-    135deg,
-    #faf9f6,
-    #f5f1e8,
-    #f3efe6,
-    #f8f6f1,
-    #f1ede4
-  );
-  background-size:300% 300%;
-  animation:pageGradientFlow 18s ease infinite;
 }
-.dark-mode{
-  background: linear-gradient(
-    135deg,
-    #020617,
-    #0f172a,
-    #020617
-  );
-  background-size:200% 200%;
-  animation:darkGradientFlow 20s ease infinite;
-}
-
-@keyframes darkGradientFlow{
-  0%{ background-position:0% 50%; }
-  50%{ background-position:100% 50%; }
-  100%{ background-position:0% 50%; }
-}
-
-/* 動態背景動畫 */
-
-@keyframes pageGradientFlow{
-  0%{
-    background-position:0% 50%;
-  }
-  50%{
-    background-position:100% 50%;
-  }
-  100%{
-    background-position:0% 50%;
-  }
-}
-
-/* ================= 標題字體 ================= */
 
 h1,h2,h3,h4,h5,h6{
   font-family:"Noto Sans TC", sans-serif;
   letter-spacing:0.03em;
 }
-
-/* ================= 內文字體 ================= */
 
 p{
   line-height:1.9;
@@ -69,8 +23,6 @@ article{
   line-height:1.9;
 }
 
-/* ================= 引文 ================= */
-
 blockquote{
   border-left:4px solid #9f1239;
   padding-left:1rem;
@@ -78,8 +30,6 @@ blockquote{
   color:#444;
   font-style:italic;
 }
-
-/* ================= 進場動畫 ================= */
 
 @keyframes fadeIn{
   from{
@@ -96,8 +46,6 @@ blockquote{
   animation:fadeIn .6s ease-out forwards;
 }
 
-/* ================= scrollbar 隱藏 ================= */
-
 .scrollbar-hide::-webkit-scrollbar{
   display:none;
 }
@@ -106,8 +54,6 @@ blockquote{
   -ms-overflow-style:none;
   scrollbar-width:none;
 }
-
-/* ================= 文章排版 ================= */
 
 .prose p{
   margin-bottom:1.2rem;
@@ -126,15 +72,10 @@ blockquote{
   margin-bottom:.4rem;
 }
 
-/* ================= 文字選取 ================= */
-
 ::selection{
   background:#fecaca;
   color:#7f1d1d;
 }
-
-/* ================= 字體統一 ================= */
-
 .logo,
 nav button,
 button,
@@ -149,4 +90,4 @@ li,
 span,
 div{
   font-family:inherit;
-}
+} 
