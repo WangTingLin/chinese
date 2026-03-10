@@ -1,70 +1,34 @@
 // 檔案路徑：src/pages/HomePage.jsx
 import React, { useMemo, useState } from "react";
 import { Icon } from "../App";
+import { columnArticles, getCategoryColors } from "../data/articlesData";
+import { nextEvent } from "../data/eventsData";
+import { promoEvents } from "../data/activitiesData";
 
-export default function HomePage({
-  setPage,
-  isDarkMode,
-  articles = [],
-  events = [],
-  activities = [],
-}) {
+export default function HomePage({ setPage, isDarkMode }) {
   /* ================= 最新文章 ================= */
 
   const latestArticle =
-    articles.length > 0
-      ? [...articles].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    columnArticles.length > 0
+      ? [...columnArticles].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
       : null;
 
-  const getArticleCategoryColor = (category) => {
-    const map = {
-      學術筆記: {
-        bg: isDarkMode ? "rgba(59,130,246,0.16)" : "rgba(59,130,246,0.1)",
-        color: isDarkMode ? "#93c5fd" : "#1d4ed8",
-        border: isDarkMode ? "rgba(59,130,246,0.35)" : "rgba(59,130,246,0.22)",
-      },
-      讀書會紀錄: {
-        bg: isDarkMode ? "rgba(16,185,129,0.16)" : "rgba(16,185,129,0.1)",
-        color: isDarkMode ? "#6ee7b7" : "#047857",
-        border: isDarkMode ? "rgba(16,185,129,0.35)" : "rgba(16,185,129,0.22)",
-      },
-      文學創作: {
-        bg: isDarkMode ? "rgba(244,63,94,0.16)" : "rgba(244,63,94,0.1)",
-        color: isDarkMode ? "#fda4af" : "#e11d48",
-        border: isDarkMode ? "rgba(244,63,94,0.35)" : "rgba(244,63,94,0.22)",
-      },
-    };
-
-    return (
-      map[category] || {
-        bg: "rgba(100,116,139,0.12)",
-        color: isDarkMode ? "#cbd5e1" : "#475569",
-        border: "rgba(100,116,139,0.3)",
-      }
-    );
-  };
+  const catColors = getCategoryColors(isDarkMode);
 
   const latestArtColor = latestArticle
-    ? getArticleCategoryColor(latestArticle.category)
-    : {
+    ? catColors[latestArticle.category] || {
         bg: "rgba(100,116,139,0.12)",
-        color: isDarkMode ? "#cbd5e1" : "#475569",
+        color: "#475569",
         border: "rgba(100,116,139,0.3)",
-      };
-
-  /* ================= 近期研討 ================= */
-
-  const nextEvent =
-    events.length > 0
-      ? [...events].sort((a, b) => new Date(a.date) - new Date(b.date))[0]
-      : null;
+      }
+    : null;
 
   /* ================= 活動時間解析 ================= */
 
   const parseEventDate = (dateStr) => {
     if (!dateStr) return new Date(0);
 
-    const trimmed = String(dateStr).trim();
+    const trimmed = dateStr.trim();
     const firstPart = trimmed.split(/[~,～，,]/)[0].trim();
     const [datePart, timePart] = firstPart.split(" ");
 
@@ -77,7 +41,7 @@ export default function HomePage({
   const getEventEndDate = (dateStr) => {
     if (!dateStr) return new Date(0);
 
-    const trimmed = String(dateStr).trim();
+    const trimmed = dateStr.trim();
 
     if (trimmed.includes("～") || trimmed.includes("~")) {
       const parts = trimmed.split(/[～~]/).map((s) => s.trim());
@@ -97,10 +61,10 @@ export default function HomePage({
   };
 
   const upcomingActivities = useMemo(() => {
-    return [...activities]
+    return [...promoEvents]
       .filter((ev) => getEventEndDate(ev.date) >= new Date())
       .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date));
-  }, [activities]);
+  }, []);
 
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
 
@@ -118,7 +82,7 @@ export default function HomePage({
     );
   };
 
-  const nextActivitySlide = () => {
+  const nextActivity = () => {
     if (upcomingActivities.length <= 1) return;
     setCurrentActivityIndex((prev) =>
       prev === upcomingActivities.length - 1 ? 0 : prev + 1
@@ -285,13 +249,9 @@ export default function HomePage({
           <div
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
             style={{
-              background: isDarkMode
-                ? "rgba(2,132,199,0.2)"
-                : "rgba(2,132,199,0.12)",
+              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
               color: isDarkMode ? "#7dd3fc" : "#0369a1",
-              borderColor: isDarkMode
-                ? "rgba(2,132,199,0.4)"
-                : "rgba(2,132,199,0.25)",
+              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)",
             }}
           >
             <Icon name="Megaphone" size={16} />
@@ -322,6 +282,7 @@ export default function HomePage({
 
               <div className="p-6 md:p-8 md:pl-10">
                 <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
+                  {/* 左側資訊 */}
                   <div className="flex-1 min-w-0 flex flex-col">
                     <div className="flex flex-wrap items-center gap-3 mb-4">
                       <span
@@ -333,7 +294,7 @@ export default function HomePage({
                         }}
                       >
                         <Icon name="Megaphone" size={12} />
-                        {currentActivity?.category}
+                        {currentActivity.category}
                       </span>
 
                       <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
@@ -343,7 +304,7 @@ export default function HomePage({
                     </div>
 
                     <h3 className="text-2xl md:text-3xl font-bold font-sans theme-heading leading-snug mb-4">
-                      {currentActivity?.title}
+                      {currentActivity.title}
                     </h3>
 
                     <div className="space-y-3 text-sm md:text-base theme-text-secondary mb-5">
@@ -357,12 +318,10 @@ export default function HomePage({
                         >
                           <Icon name="Calendar" size={15} />
                         </span>
-                        <span className="leading-relaxed">
-                          {currentActivity?.date}
-                        </span>
+                        <span className="leading-relaxed">{currentActivity.date}</span>
                       </div>
 
-                      {currentActivity?.location && (
+                      {currentActivity.location && (
                         <div className="flex items-start gap-3">
                           <span
                             className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border"
@@ -373,21 +332,19 @@ export default function HomePage({
                           >
                             <Icon name="MapPin" size={15} />
                           </span>
-                          <span className="leading-relaxed">
-                            {currentActivity.location}
-                          </span>
+                          <span className="leading-relaxed">{currentActivity.location}</span>
                         </div>
                       )}
                     </div>
 
-                    {currentActivity?.description && (
+                    {currentActivity.description && (
                       <p className="text-sm md:text-base leading-relaxed font-serif content-justify theme-text-secondary bg-white/30 border border-white/40 rounded-2xl p-4 mb-5">
                         {currentActivity.description}
                       </p>
                     )}
 
                     <div className="mt-auto flex flex-wrap gap-3">
-                      {currentActivity?.link && (
+                      {currentActivity.link && (
                         <a
                           href={currentActivity.link}
                           target="_blank"
@@ -418,11 +375,11 @@ export default function HomePage({
                     </div>
                   </div>
 
-                  <div className="lg:w-[280px] shrink-0 flex flex-col justify-between gap-4">
-                    <div className="grid grid-cols-2 gap-3">
+                  {/* 右側翻頁控制 */}
+                      <div className="lg:w-[280px] shrink-0 flex flex-col justify-between gap-4">                    <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={prevActivity}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95 whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
                         style={{
                           background: "rgba(var(--c-panel-rgb),0.45)",
                           color: "var(--c-primary-dark)",
@@ -435,8 +392,8 @@ export default function HomePage({
                       </button>
 
                       <button
-                        onClick={nextActivitySlide}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95 whitespace-nowrap"
+                        onClick={nextActivity}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
                         style={{
                           background: "rgba(var(--c-panel-rgb),0.45)",
                           color: "var(--c-primary-dark)",
@@ -557,98 +514,81 @@ export default function HomePage({
             </button>
           </div>
 
-          {nextEvent ? (
-            <div className="relative bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm transition-colors hover:bg-white/70 flex-1 flex flex-col overflow-hidden">
-              <div
-                className="absolute top-0 left-8 bottom-0 w-px"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--c-primary) 30%, transparent), transparent)",
-                }}
-              />
+          <div className="relative bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm transition-colors hover:bg-white/70 flex-1 flex flex-col overflow-hidden">
+            <div
+              className="absolute top-0 left-8 bottom-0 w-px"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--c-primary) 30%, transparent), transparent)",
+              }}
+            />
 
-              <h3 className="text-2xl font-bold mb-6 font-sans theme-heading relative z-10">
-                {nextEvent.title || "近期研討"}
-              </h3>
+            <h3 className="text-2xl font-bold mb-6 font-sans theme-heading relative z-10">
+              三月讀書會
+            </h3>
 
-              <div className="space-y-5 flex-1 relative z-10">
-                {[
-                  { label: "時間", value: nextEvent.date, icon: "Calendar" },
-                  { label: "地點", value: nextEvent.location, icon: "MapPin" },
-                  { label: "主題", value: nextEvent.topic, icon: "BookOpen" },
-                ]
-                  .filter((item) => item.value)
-                  .map((item) => (
-                    <div key={item.label} className="flex items-start gap-4">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
-                        style={{
-                          background: "rgba(var(--c-panel-rgb),0.85)",
-                          borderColor: "rgba(var(--c-border-rgb),0.7)",
-                          color: "var(--c-primary)",
-                        }}
-                      >
-                        <Icon name={item.icon} size={15} />
-                      </div>
-
-                      <div className="pt-0.5">
-                        <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-1">
-                          {item.label}
-                        </p>
-                        <p className="theme-text leading-relaxed">
-                          {item.value}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-
-                {nextEvent?.papers?.length > 0 && (
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
-                      style={{
-                        background: "rgba(var(--c-panel-rgb),0.85)",
-                        borderColor: "rgba(var(--c-border-rgb),0.7)",
-                        color: "var(--c-primary)",
-                      }}
-                    >
-                      <Icon name="FileText" size={15} />
-                    </div>
-
-                    <div className="pt-0.5 min-w-0">
-                      <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-2">
-                        論文
-                      </p>
-                      <ul className="space-y-2">
-                        {nextEvent.papers.map((p, i) => (
-                          <li
-                            key={i}
-                            className="leading-relaxed relative pl-4 theme-text-secondary"
-                          >
-                            <span
-                              className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
-                              style={{ background: "var(--c-accent)" }}
-                            />
-                            {p}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+            <div className="space-y-5 flex-1 relative z-10">
+              {[
+                { label: "時間", value: nextEvent.date, icon: "Calendar" },
+                { label: "地點", value: nextEvent.location, icon: "MapPin" },
+                { label: "主題", value: nextEvent.topic, icon: "BookOpen" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-start gap-4">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                    style={{
+                      background: "rgba(var(--c-panel-rgb),0.85)",
+                      borderColor: "rgba(var(--c-border-rgb),0.7)",
+                      color: "var(--c-primary)",
+                    }}
+                  >
+                    <Icon name={item.icon} size={15} />
                   </div>
-                )}
+
+                  <div className="pt-0.5">
+                    <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-1">
+                      {item.label}
+                    </p>
+                    <p className="theme-text leading-relaxed">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex items-start gap-4">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                  style={{
+                    background: "rgba(var(--c-panel-rgb),0.85)",
+                    borderColor: "rgba(var(--c-border-rgb),0.7)",
+                    color: "var(--c-primary)",
+                  }}
+                >
+                  <Icon name="FileText" size={15} />
+                </div>
+
+                <div className="pt-0.5 min-w-0">
+                  <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-2">
+                    論文
+                  </p>
+                  <ul className="space-y-2">
+                    {nextEvent.papers.map((p, i) => (
+                      <li key={i} className="leading-relaxed relative pl-4 theme-text-secondary">
+                        <span
+                          className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
+                          style={{ background: "var(--c-accent)" }}
+                        />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex-1 flex items-center justify-center">
-              <p className="theme-text-secondary font-sans text-center">
-                目前尚無近期研討資料。
-              </p>
-            </div>
-          )}
+          </div>
         </section>
 
         {/* 最新上架 */}
-        {latestArticle ? (
+        {latestArticle && (
           <section
             className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer group flex flex-col"
             onClick={() => setPage("articles")}
@@ -657,13 +597,9 @@ export default function HomePage({
               <div
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
                 style={{
-                  background: isDarkMode
-                    ? "rgba(244,63,94,0.2)"
-                    : "rgba(244,63,94,0.1)",
+                  background: isDarkMode ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.1)",
                   color: isDarkMode ? "#fda4af" : "#e11d48",
-                  borderColor: isDarkMode
-                    ? "rgba(244,63,94,0.4)"
-                    : "rgba(244,63,94,0.2)",
+                  borderColor: isDarkMode ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.2)",
                 }}
               >
                 <Icon name="PenLine" size={16} /> 最新上架
@@ -681,6 +617,7 @@ export default function HomePage({
               />
 
               <div className="grid grid-cols-[88px_1fr] md:grid-cols-[104px_1fr] min-h-full">
+                {/* 期刊書脊感 */}
                 <div
                   className="relative flex flex-col items-center justify-between py-6 px-3 border-r border-white/40"
                   style={{
@@ -710,6 +647,7 @@ export default function HomePage({
                   </div>
                 </div>
 
+                {/* 封面主體 */}
                 <div className="p-6 md:p-7 flex flex-col justify-between min-w-0">
                   <div>
                     <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -738,24 +676,15 @@ export default function HomePage({
                     <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-5">
                       <span
                         className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
-                        style={{
-                          background: latestArtColor.color,
-                          opacity: 0.9,
-                        }}
+                        style={{ background: latestArtColor.color, opacity: 0.9 }}
                       >
-                        {latestArticle.author?.[0] || "文"}
+                        {latestArticle.author[0]}
                       </span>
-                      <span className="font-medium">
-                        {latestArticle.author || "未署名"}
+                      <span className="font-medium">{latestArticle.author}</span>
+                      <span className="opacity-50">｜</span>
+                      <span className="opacity-80 text-xs line-clamp-1">
+                        {latestArticle.affiliation}
                       </span>
-                      {latestArticle.affiliation && (
-                        <>
-                          <span className="opacity-50">｜</span>
-                          <span className="opacity-80 text-xs line-clamp-1">
-                            {latestArticle.affiliation}
-                          </span>
-                        </>
-                      )}
                     </div>
 
                     <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary opacity-80 border-t border-white/40 pt-4">
@@ -777,31 +706,6 @@ export default function HomePage({
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
-        ) : (
-          <section className="rounded-3xl p-6 md:p-8 glass-panel flex flex-col">
-            <div className="flex justify-between items-start mb-5">
-              <div
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold backdrop-blur-sm font-sans border"
-                style={{
-                  background: isDarkMode
-                    ? "rgba(244,63,94,0.2)"
-                    : "rgba(244,63,94,0.1)",
-                  color: isDarkMode ? "#fda4af" : "#e11d48",
-                  borderColor: isDarkMode
-                    ? "rgba(244,63,94,0.4)"
-                    : "rgba(244,63,94,0.2)",
-                }}
-              >
-                <Icon name="PenLine" size={16} /> 最新上架
-              </div>
-            </div>
-
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex-1 flex items-center justify-center">
-              <p className="theme-text-secondary font-sans text-center">
-                目前尚無文章資料。
-              </p>
             </div>
           </section>
         )}
