@@ -1,5 +1,5 @@
 // 檔案路徑：src/pages/HomePage.jsx
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Icon } from "../App";
 import { getCategoryColors } from "../data/articlesData";
 export default function HomePage({
@@ -12,7 +12,7 @@ export default function HomePage({
 
   console.log("首頁活動資料:", activities);
 
-  
+
     /* ================= 最新文章 ================= */
 
 const latestArticle =
