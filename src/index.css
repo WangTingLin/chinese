@@ -75,4 +75,20 @@ body {
 
 .font-sans { font-family: 'Noto Sans TC', sans-serif !important; }
 .font-serif { font-family: 'Noto Serif TC', serif !important; }
+
+/* ===== 跑馬燈 ===== */
+@keyframes marqueeScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track { overflow: hidden; }
+.marquee-inner {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: marqueeScroll 32s linear infinite;
+  will-change: transform;
+}
+.marquee-inner:hover { animation-play-state: paused; }
+
 @import "./styles/theme.css";
