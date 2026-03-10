@@ -140,127 +140,63 @@ export default function HomePage({
     <div className="space-y-10 md:space-y-14 animate-fade-in relative z-10">
 
       {/* ===================== Hero ===================== */}
-      <section className="relative rounded-3xl overflow-hidden glass-panel shadow-sm">
-        {/* 內部裝飾光暈 */}
+      <section className="relative rounded-3xl overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 opacity-70 pointer-events-none"
           style={{
             background: isDarkMode
-              ? "radial-gradient(circle at 15% 25%, rgba(255,255,255,0.07) 0%, transparent 40%), radial-gradient(circle at 75% 60%, rgba(212,162,78,0.12) 0%, transparent 35%)"
-              : "radial-gradient(circle at 15% 25%, rgba(255,255,255,0.7) 0%, transparent 40%), radial-gradient(circle at 75% 60%, rgba(212,162,78,0.2) 0%, transparent 35%)",
+              ? "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 35%), radial-gradient(circle at 80% 30%, rgba(212,162,78,0.14), transparent 30%), linear-gradient(to bottom, rgba(255,255,255,0.02), transparent)"
+              : "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.65), transparent 35%), radial-gradient(circle at 80% 30%, rgba(212,162,78,0.22), transparent 30%), linear-gradient(to bottom, rgba(255,255,255,0.35), transparent)",
           }}
         />
         <div
-          className="absolute top-6 left-8 h-20 w-20 rounded-full blur-3xl opacity-40 pointer-events-none"
+          className="absolute top-6 left-6 md:top-10 md:left-10 h-16 w-16 md:h-24 md:w-24 rounded-full blur-2xl opacity-50"
           style={{ background: "var(--c-accent)" }}
         />
         <div
-          className="absolute bottom-10 right-[38%] h-16 w-16 rounded-full blur-2xl opacity-25 pointer-events-none"
+          className="absolute bottom-8 right-8 md:bottom-10 md:right-12 h-20 w-20 md:h-28 md:w-28 rounded-full blur-3xl opacity-30"
           style={{ background: "var(--c-primary)" }}
         />
 
-        {/* 大型裝飾字「道」 */}
-        <div
-          className="absolute right-0 top-0 bottom-0 hidden md:flex items-center pr-10 select-none pointer-events-none"
-          aria-hidden="true"
-        >
-          <span
-            className="font-serif leading-none"
+        <div className="relative z-10 max-w-3xl">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border mb-6"
             style={{
-              fontSize: "clamp(160px, 20vw, 300px)",
+              background: "rgba(var(--c-panel-rgb),0.45)",
+              borderColor: "rgba(var(--c-border-rgb),0.55)",
               color: "var(--c-primary-dark)",
-              opacity: isDarkMode ? 0.055 : 0.045,
-              letterSpacing: "-0.02em",
             }}
           >
-            道
-          </span>
-        </div>
+            <Icon name="BookOpen" size={16} />
+            志於道・據於德・依於仁・游於藝
+          </div>
 
-        {/* 主體內容 */}
-        <div className="relative z-10 p-8 md:p-14">
-          <div className="max-w-xl">
-            {/* 引言標籤 */}
-            <div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border mb-7"
+          <h1 className="text-4xl md:text-6xl font-bold mb-5 tracking-[0.18em] font-sans theme-heading">
+            中文研究室
+          </h1>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => setPage("about")}
+              className="text-white px-8 py-3 rounded-full font-medium font-sans shadow-lg flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
               style={{
-                background: "rgba(var(--c-panel-rgb),0.5)",
-                borderColor: "rgba(var(--c-border-rgb),0.55)",
+                background: "var(--c-nav-active-bg)",
+                borderColor: "var(--c-nav-active-border)",
+              }}
+            >
+              探索研究室 <Icon name="ChevronRight" size={20} />
+            </button>
+            <button
+              onClick={() => setPage("activities")}
+              className="px-8 py-3 rounded-full font-medium font-sans flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
+              style={{
+                background: "rgba(var(--c-panel-rgb),0.45)",
+                borderColor: "rgba(var(--c-border-rgb),0.6)",
                 color: "var(--c-primary-dark)",
               }}
             >
-              <Icon name="BookOpen" size={15} />
-              志於道・據於德・依於仁・游於藝
-            </div>
-
-            {/* 主標題 */}
-            <h1
-              className="font-bold font-sans theme-heading leading-tight mb-5"
-              style={{ fontSize: "clamp(2.6rem, 6vw, 4.5rem)", letterSpacing: "0.14em" }}
-            >
-              中文研究室
-            </h1>
-
-            {/* 副標題 */}
-            <p className="text-base md:text-lg leading-relaxed font-serif theme-text-secondary mb-8 opacity-75 max-w-md">
-              聚焦傳統經典文獻研究，定期舉辦讀書會，<br className="hidden sm:block" />
-              探討經學、史學與文學思想的跨代對話。
-            </p>
-
-            {/* CTA 按鈕 */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => setPage("about")}
-                className="text-white px-8 py-3 rounded-full font-medium font-sans shadow-lg flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
-                style={{
-                  background: "var(--c-nav-active-bg)",
-                  borderColor: "var(--c-nav-active-border)",
-                }}
-              >
-                探索研究室 <Icon name="ChevronRight" size={20} />
-              </button>
-              <button
-                onClick={() => setPage("activities")}
-                className="px-8 py-3 rounded-full font-medium font-sans flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
-                style={{
-                  background: "rgba(var(--c-panel-rgb),0.45)",
-                  borderColor: "rgba(var(--c-border-rgb),0.6)",
-                  color: "var(--c-primary-dark)",
-                }}
-              >
-                查看近期活動 <Icon name="Megaphone" size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* ── 底部統計欄 ── */}
-          <div
-            className="mt-10 pt-8 grid grid-cols-3 gap-4 md:gap-12 border-t"
-            style={{ borderColor: "rgba(var(--c-border-rgb),0.28)" }}
-          >
-            {[
-              { label: "研究文章", count: articles.length, unit: "篇", target: "articles" },
-              { label: "讀書紀錄", count: events.length, unit: "場", target: "events" },
-              { label: "學術活動", count: activities.length, unit: "場", target: "activities" },
-            ].map((stat) => (
-              <button
-                key={stat.label}
-                onClick={() => setPage(stat.target)}
-                className="text-left group transition-opacity hover:opacity-75"
-              >
-                <div
-                  className="font-bold font-sans theme-heading leading-none"
-                  style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}
-                >
-                  {stat.count}
-                  <span className="text-sm font-normal opacity-50 ml-1.5">{stat.unit}</span>
-                </div>
-                <div className="text-xs font-sans theme-text-secondary opacity-55 tracking-[0.14em] mt-2 flex items-center gap-1">
-                  {stat.label}
-                  <Icon name="ChevronRight" size={12} className="opacity-0 group-hover:opacity-100 transition-opacity -ml-0.5" />
-                </div>
-              </button>
-            ))}
+              查看近期活動 <Icon name="Megaphone" size={20} />
+            </button>
           </div>
         </div>
       </section>
