@@ -555,22 +555,29 @@ const pageProps = {
       "--c-selection": `${t.accent}4D`,
       "--c-panel-rgb": isDarkMode ? "30, 41, 59" : "255, 255, 255",
       "--c-border-rgb": isDarkMode ? "148, 163, 184" : "255, 255, 255",
-      backgroundColor: isDarkMode ? "#0f172a" : "#f9fafb",
-      color: t.text, 
-      fontFamily: "'Noto Serif TC', serif", 
-      minHeight: "100vh", 
-      display: "flex", 
+      background: isDarkMode
+        ? `linear-gradient(-45deg, #0c1422, #0f172a, #0d1525, #101828)`
+        : `linear-gradient(-45deg, #f5f8fb, #f9fafb, #f7f4fc, #f9fafb)`,
+      backgroundSize: "400% 400%",
+      animation: "gradientShift 20s ease infinite",
+      color: t.text,
+      fontFamily: "'Noto Serif TC', serif",
+      minHeight: "100vh",
+      display: "flex",
       flexDirection: "column",
-      transition: "background-color 500ms ease, color 500ms ease",
+      transition: "background 800ms ease, color 500ms ease",
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
         @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
         .animate-fade-in { animation: fadeIn 0.5s ease-out both; }
-        @keyframes blobPulse { 0%,100% { opacity:0.6; transform:scale(1);} 50%{ opacity:1; transform:scale(1.05);} }
-        .blob-1 { animation: blobPulse 8s ease-in-out infinite; }
-        .blob-2 { animation: blobPulse 10s ease-in-out infinite reverse; }
-        .blob-3 { animation: blobPulse 12s ease-in-out infinite; }
+        @keyframes blob1Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.65} 25%{transform:translate(5vw,8vh) scale(1.1);opacity:.85} 50%{transform:translate(-3vw,14vh) scale(.95);opacity:.7} 75%{transform:translate(8vw,3vh) scale(1.07);opacity:.88} }
+        @keyframes blob2Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.6} 33%{transform:translate(-6vw,11vh) scale(1.08);opacity:.8} 66%{transform:translate(4vw,-8vh) scale(.91);opacity:.65} }
+        @keyframes blob3Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.6} 40%{transform:translate(7vw,-11vh) scale(1.12);opacity:.85} 80%{transform:translate(-5vw,-3vh) scale(.94);opacity:.65} }
+        @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .blob-1 { animation: blob1Float 20s ease-in-out infinite; }
+        .blob-2 { animation: blob2Float 26s ease-in-out infinite; }
+        .blob-3 { animation: blob3Float 32s ease-in-out infinite; }
         .font-sans { font-family: 'Noto Sans TC', sans-serif !important; }
         .font-serif { font-family: 'Noto Serif TC', serif !important; }
         .font-kai { font-family: 'Kaiti TC', 'BiauKai', 'DFKai-SB', 'AR PL UKai TW', serif !important; }
