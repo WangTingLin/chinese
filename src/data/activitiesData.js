@@ -796,4 +796,13 @@ export const promoEvents = [
     organizer: "政大華人宗教研究中心",
     link:"https://www.facebook.com/groups/1417502001844216/permalink/4184248145169574",
 },
+{
+    id: 82,
+    title: "2026年《史原》論壇學生論文研討會",
+    category: "研討會／工作坊",
+    date: "2026-03-21 09:00-18:00",
+    organizer: "臺大歷史系",
+    link:"https://www.facebook.com/photo/?fbid=1340744191406620&set=pcb.1340752934739079&locale=zh_TW",
+},
+
 ];
