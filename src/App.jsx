@@ -8,6 +8,7 @@ import BooksPage from './pages/BooksPage';
 import SubmissionPage from './pages/SubmissionPage';
 import HomePage from './pages/HomePage';
 import ActivitiesPage from './pages/ActivitiesPage';
+import { client } from "./sanityClient";
 
 /* ==================== 圖示與 Logo ==================== */
 
@@ -434,9 +435,44 @@ export const ReadingProgress = ({ targetRef, color, isDarkMode }) => {
 /* ==================== 主應用程式 ==================== */
 
 export default function App() {
+
   const [currentPage, setCurrentPage] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [activities, setActivities] = useState([]);
+
+  // ⭐ 這裡加入
+  useEffect(() => {
+
+    const fetchActivities = async () => {
+
+      try {
+
+        const data = await client.fetch(`
+          *[_type == "activity"] | order(date asc){
+            _id,
+            title,
+            category,
+            date,
+            location,
+            description,
+            link
+          }
+        `);
+
+        setActivities(data || []);
+
+      } catch (err) {
+
+        console.error("Sanity活動讀取失敗:", err);
+
+      }
+
+    };
+
+    fetchActivities();
+
+  }, []);
 
   const navItems = [
     { id: "home", label: "首頁", icon: <Icon name="Home" size={18} /> },
@@ -450,7 +486,11 @@ export default function App() {
 
   const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
 
-  const pageProps = { setPage: setCurrentPage, isDarkMode };
+const pageProps = {
+  setPage: setCurrentPage,
+  isDarkMode,
+  activities
+};
   const page = (() => {
     switch (currentPage) {
       case "home": return <HomePage {...pageProps} />;

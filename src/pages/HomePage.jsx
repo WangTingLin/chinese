@@ -1,17 +1,31 @@
 // 檔案路徑：src/pages/HomePage.jsx
 import React, { useMemo, useState } from "react";
 import { Icon } from "../App";
-import { columnArticles, getCategoryColors } from "../data/articlesData";
-import { nextEvent } from "../data/eventsData";
-import { promoEvents } from "../data/activitiesData";
+import { getCategoryColors } from "../data/articlesData";
+export default function HomePage({
+  setPage,
+  isDarkMode,
+  articles = [],
+  events = [],
+  activities = []
+}) {
 
-export default function HomePage({ setPage, isDarkMode }) {
-  /* ================= 最新文章 ================= */
+  console.log("首頁活動資料:", activities);
 
-  const latestArticle =
-    columnArticles.length > 0
-      ? [...columnArticles].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-      : null;
+  
+    /* ================= 最新文章 ================= */
+
+const latestArticle =
+  articles.length > 0
+    ? [...articles].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    : null;
+/* ================= 近期研討 ================= */
+
+const nextSeminar =
+  events.length > 0
+    ? [...events].sort((a, b) => new Date(a.date) - new Date(b.date))[0]
+    : null;
+
 
   const catColors = getCategoryColors(isDarkMode);
 
@@ -60,11 +74,12 @@ export default function HomePage({ setPage, isDarkMode }) {
     return new Date(`${datePart}T23:59:59`);
   };
 
-  const upcomingActivities = useMemo(() => {
-    return [...promoEvents]
-      .filter((ev) => getEventEndDate(ev.date) >= new Date())
-      .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date));
-  }, []);
+const upcomingActivities = useMemo(() => {
+  return [...activities]
+    .filter((ev) => getEventEndDate(ev.date) >= new Date())
+    .sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date));
+}, [activities]);
+
 
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
 
@@ -529,9 +544,9 @@ export default function HomePage({ setPage, isDarkMode }) {
 
             <div className="space-y-5 flex-1 relative z-10">
               {[
-                { label: "時間", value: nextEvent.date, icon: "Calendar" },
-                { label: "地點", value: nextEvent.location, icon: "MapPin" },
-                { label: "主題", value: nextEvent.topic, icon: "BookOpen" },
+{ label: "時間", value: nextSeminar?.date || "尚未公告", icon: "Calendar" },
+{ label: "地點", value: nextSeminar?.location || "尚未公告", icon: "MapPin" },
+{ label: "主題", value: nextSeminar?.topic || nextSeminar?.title || "尚未公告", icon: "BookOpen" },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-4">
                   <div
@@ -571,7 +586,7 @@ export default function HomePage({ setPage, isDarkMode }) {
                     論文
                   </p>
                   <ul className="space-y-2">
-                    {nextEvent.papers.map((p, i) => (
+                    {(nextSeminar?.papers || []).map((p, i) => (
                       <li key={i} className="leading-relaxed relative pl-4 theme-text-secondary">
                         <span
                           className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
