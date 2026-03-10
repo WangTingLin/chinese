@@ -1,25 +1,41 @@
 // 檔案路徑：src/pages/EventsPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-// 💡 匯入活動資料
-import { timelineEvents, researchArticles } from '../data/eventsData';
+import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
 
 export default function EventsPage({ isDarkMode }) {
-  const [viewMode, setViewMode] = useState("timeline"); 
+  const [viewMode, setViewMode] = useState("timeline");
   const [activeEventId, setActiveEventId] = useState(null);
   const [eventFilter, setEventFilter] = useState("all");
   const [expandedArticleId, setExpandedArticleId] = useState(null);
+  const [timelineEvents, setTimelineEvents] = useState([]);
+  const [researchArticles, setResearchArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      client.fetch(`*[_type == "event"] | order(date desc) {
+        _id, title, date, type, status, summary, details, location
+      }`),
+      client.fetch(`*[_type == "article" && category == "讀書會紀錄"] | order(date desc) {
+        _id, title, author, affiliation, date, tags, publicationStatus, summary
+      }`)
+    ]).then(([evs, arts]) => {
+      setTimelineEvents(evs);
+      setResearchArticles(arts);
+      setLoading(false);
+    });
+  }, []);
 
   const filteredEvents = timelineEvents.filter((ev) => {
     if (eventFilter === "all") return true;
     return ev.status === eventFilter;
   });
 
-  // 💡 關鍵：將過濾後的活動及文章順序反轉，讓 ID 最大的（最新建立的）排在最上方
-  const displayEvents = [...filteredEvents].reverse();
-  const displayResearchArticles = [...researchArticles].reverse();
+  const displayEvents = [...filteredEvents];
+  const displayResearchArticles = [...researchArticles];
 
   const getTypeColor = (type, isDark) => {
     if (type === "讀書會") return isDark ? { bg: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "rgba(59,130,246,0.4)" } : { bg: "rgba(59,130,246,0.12)", color: "#1d4ed8", border: "rgba(59,130,246,0.3)" };
@@ -38,6 +54,13 @@ export default function EventsPage({ isDarkMode }) {
 
   const activeTabClass = "bg-white shadow-md text-[var(--c-primary-dark)]";
   const inactiveTabClass = "text-[var(--c-text-secondary)] hover-bg-surface";
+
+  if (loading) return (
+    <div className="max-w-4xl mx-auto animate-fade-in relative z-10">
+      <PageHeader title="研討進度" />
+      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in relative z-10">
@@ -87,15 +110,15 @@ export default function EventsPage({ isDarkMode }) {
 
             <div className="space-y-10">
               {displayEvents.map((ev) => {
-                const open = activeEventId === ev.id;
+                const open = activeEventId === ev._id;
                 const typeStyle = getTypeColor(ev.type, isDarkMode);
 
                 return (
-                  <div key={ev.id} className="relative">
+                  <div key={ev._id} className="relative">
                     <div className="absolute -left-6 md:-left-8 top-7 w-4 h-4 rounded-full border-[3px] shadow-sm z-10" style={{ backgroundColor: "rgba(var(--c-panel-rgb), 1)", borderColor: "var(--c-primary)" }}></div>
                     
                     <article 
-                      onClick={() => setActiveEventId(open ? null : ev.id)}
+                      onClick={() => setActiveEventId(open ? null : ev._id)}
                       className={`rounded-2xl glass-panel cursor-pointer spring-transition border border-white/60 ${open ? "bg-white/70 shadow-xl scale-[1.02]" : "glass-card-hover hover:-translate-y-1"}`}
                     >
                       <div className="p-6 md:p-8">
@@ -166,11 +189,11 @@ export default function EventsPage({ isDarkMode }) {
       {viewMode === "articles" && (
         <div className="space-y-6 animate-fade-in">
           {displayResearchArticles.map((art) => {
-            const open = expandedArticleId === art.id;
-            const sc = getStatusColor(art.status, isDarkMode);
-            const hasAbstract = art.abstract && art.abstract.trim().length > 0;
+            const open = expandedArticleId === art._id;
+            const sc = getStatusColor(art.publicationStatus, isDarkMode);
+            const hasAbstract = art.summary && art.summary.trim().length > 0;
             return (
-              <article key={art.id} onClick={() => setExpandedArticleId(open ? null : art.id)}
+              <article key={art._id} onClick={() => setExpandedArticleId(open ? null : art._id)}
                 className={`rounded-2xl glass-panel cursor-pointer spring-transition ${open ? "bg-white/60 shadow-lg scale-[1.01]" : "glass-card-hover"}`}>
                 <div className="p-6 md:p-8">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
@@ -187,7 +210,7 @@ export default function EventsPage({ isDarkMode }) {
                       </div>
                     </div>
                     <span className="inline-block text-xs font-bold px-3 py-1 rounded-full font-sans shrink-0 border transition-colors"
-                      style={{ background: sc.bg, color: sc.color, borderColor: sc.border }}>{art.status}</span>
+                      style={{ background: sc.bg, color: sc.color, borderColor: sc.border }}>{art.publicationStatus}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {art.tags.map((tag, i) => (
@@ -204,7 +227,7 @@ export default function EventsPage({ isDarkMode }) {
                             <h4 className="text-sm font-bold font-sans mb-3 flex items-center gap-2 theme-heading">
                               <Icon name="BookOpen" size={16} /> 摘要
                             </h4>
-                            <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary mb-4">{art.abstract}</p>
+                            <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary mb-4">{art.summary}</p>
                           </>
                         ) : (
                           <div className="flex items-center gap-3 py-4 px-5 bg-white/30 rounded-xl text-sm theme-text-secondary font-sans">

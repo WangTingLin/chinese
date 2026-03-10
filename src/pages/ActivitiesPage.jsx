@@ -1,14 +1,24 @@
 // 檔案路徑：src/pages/ActivitiesPage.jsx
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
-// 💡 匯入活動資料
-import { promoEvents } from '../data/activitiesData';
+import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
 
 export default function ActivitiesPage({ isDarkMode }) {
   const [filterCat, setFilterCat] = useState("全部");
   const [searchText, setSearchText] = useState("");
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    client.fetch(`*[_type == "promoEvent"] | order(_createdAt desc) {
+      _id, title, category, date, speaker, location, organizer, link
+    }`).then(data => {
+      setEvents(data);
+      setLoading(false);
+    });
+  }, []);
   const categories = ["全部", "學術講座", "研討會／工作坊", "徵稿資訊"];
 
   const getPromoColors = (isDark) => ({
@@ -152,7 +162,7 @@ export default function ActivitiesPage({ isDarkMode }) {
   const filteredEvents = useMemo(() => {
     const keyword = searchText.trim().toLowerCase();
 
-    return [...promoEvents]
+    return [...events]
       .filter(ev => filterCat === "全部" || ev.category === filterCat)
       .filter(ev => {
         if (!keyword) return true;
@@ -190,7 +200,14 @@ export default function ActivitiesPage({ isDarkMode }) {
         // 同一類別內再依日期先後排序
         return parseEventDate(a.date) - parseEventDate(b.date);
       });
-  }, [filterCat, searchText]);
+  }, [filterCat, searchText, events]);
+
+  if (loading) return (
+    <div className="max-w-4xl mx-auto animate-fade-in relative z-10">
+      <PageHeader title="近期活動" />
+      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
@@ -281,7 +298,7 @@ export default function ActivitiesPage({ isDarkMode }) {
 
             return (
               <article
-                key={ev.id}
+                key={ev._id}
                 className="rounded-3xl glass-panel overflow-hidden glass-card-hover border border-white/60 p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start"
                 style={{
                   opacity: isPast ? 0.52 : 1,
