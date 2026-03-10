@@ -491,9 +491,10 @@ export default function App() {
   badgeBorder: isDarkMode ? "rgba(255,255,255,0.12)" : bTheme.badgeBorder,
 };
 
-  return (
-    <div style={{
-      "--c-primary": t.primary, 
+return (
+  <div
+    className={isDarkMode ? "app-shell dark-mode" : "app-shell"}
+    style={{      "--c-primary": t.primary, 
       "--c-primary-dark": t.primaryDark, 
       "--c-accent": t.accent,
       "--c-accent-light": t.accentLight, 
@@ -510,7 +511,7 @@ export default function App() {
       "--c-badge-border": t.badgeBorder,
       "--c-selection": `${t.accent}4D`,
       "--c-panel-rgb": isDarkMode ? "15, 23, 42" : "255, 255, 255",
-      "--c-border-rgb": isDarkMode ? "71, 85, 105" : "255, 255, 255",      backgroundColor: "transparent" ,     color: t.text, 
+      "--c-border-rgb": isDarkMode ? "71, 85, 105" : "255, 255, 255",      background: "transparent" ,     color: t.text, 
       fontFamily: "'Noto Serif TC', serif", 
       minHeight: "100vh", 
       display: "flex", 
@@ -533,7 +534,36 @@ export default function App() {
         .theme-text { color: var(--c-text); transition: color 500ms ease; }
         .theme-text-secondary { color: var(--c-text-secondary); transition: color 500ms ease; }
         .theme-heading { color: var(--c-primary-dark); transition: color 500ms ease; }
-        .theme-divider { border-color: color-mix(in srgb, var(--c-primary) 15%, transparent); }
+.theme-divider { border-color: color-mix(in srgb, var(--c-primary) 15%, transparent); }
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(
+    135deg,
+    #f8fafc 0%,
+    #f7f3ea 45%,
+    #eef6f6 100%
+  );
+  background-attachment: fixed;
+  transition: background 500ms ease, color 500ms ease;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-shell.dark-mode {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(45,106,106,0.18), transparent 32%),
+    radial-gradient(circle at 82% 18%, rgba(212,162,78,0.12), transparent 26%),
+    radial-gradient(circle at 50% 78%, rgba(71,85,105,0.18), transparent 30%),
+    linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%);
+  transition: background 500ms ease;
+}
 
         /* ===== 全域覆寫 Tailwind 背景/框線供玻璃擬態使用 ===== */
 .glass-panel {
