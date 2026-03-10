@@ -19,7 +19,7 @@ export default function ActivitiesPage({ isDarkMode }) {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
-  const categories = ["全部", "學術講座", "研討會／工作坊", "徵稿資訊"];
+  const categories = ["全部", "學術講座", "研討會／工作坊", "徵稿資訊", "已結束"];
 
   const getPromoColors = (isDark) => ({
     "學術講座": {
@@ -36,6 +36,11 @@ export default function ActivitiesPage({ isDarkMode }) {
       bg: isDark ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.12)",
       color: isDark ? "#fde047" : "#b45309",
       border: isDark ? "rgba(245,158,11,0.4)" : "rgba(245,158,11,0.3)"
+    },
+    "已結束": {
+      bg: isDark ? "rgba(107,114,128,0.2)" : "rgba(107,114,128,0.12)",
+      color: isDark ? "#9ca3af" : "#6b7280",
+      border: isDark ? "rgba(107,114,128,0.4)" : "rgba(107,114,128,0.3)"
     },
   });
 
@@ -163,7 +168,11 @@ export default function ActivitiesPage({ isDarkMode }) {
     const keyword = searchText.trim().toLowerCase();
 
     return [...events]
-      .filter(ev => filterCat === "全部" || ev.category === filterCat)
+      .filter(ev => {
+        if (filterCat === "全部") return true;
+        if (filterCat === "已結束") return getEventStatus(ev) === "past";
+        return ev.category === filterCat;
+      })
       .filter(ev => {
         if (!keyword) return true;
 
@@ -197,7 +206,10 @@ export default function ActivitiesPage({ isDarkMode }) {
           return statusOrder[statusA] - statusOrder[statusB];
         }
 
-        // 同一類別內再依日期先後排序
+        // 已結束：最近結束的排最前；其餘：最早舉辦的排最前
+        if (statusA === "past") {
+          return parseEventDate(b.date) - parseEventDate(a.date);
+        }
         return parseEventDate(a.date) - parseEventDate(b.date);
       });
   }, [filterCat, searchText, events]);
