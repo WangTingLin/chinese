@@ -479,17 +479,17 @@ export default function App() {
   
   /* 動態計算亮/暗模式的變數值 */
   const t = {
-    ...bTheme,
-    primaryDark: isDarkMode ? "#f8fafc" : bTheme.primaryDark,
-    text: isDarkMode ? "#f1f5f9" : bTheme.text,
-    textSec: isDarkMode ? "#cbd5e1" : bTheme.textSec,
-    navBg: isDarkMode ? "rgba(15,23,42,0.9)" : bTheme.navBg,
-    navBorder: isDarkMode ? "rgba(255,255,255,0.15)" : bTheme.navBorder,
-    footer: isDarkMode ? "rgba(2,6,23,0.95)" : bTheme.footer,
-    badgeBg: isDarkMode ? bTheme.badgeBorder : bTheme.badgeBg,
-    badgeText: isDarkMode ? bTheme.accentLight : bTheme.badgeText,
-    badgeBorder: isDarkMode ? bTheme.badgeBg : bTheme.badgeBorder,
-  };
+  ...bTheme,
+  primaryDark: isDarkMode ? "#f8fafc" : bTheme.primaryDark,
+  text: isDarkMode ? "#f8fafc" : bTheme.text,
+  textSec: isDarkMode ? "#cbd5e1" : bTheme.textSec,
+  navBg: isDarkMode ? "rgba(2,6,23,0.88)" : bTheme.navBg,
+  navBorder: isDarkMode ? "rgba(255,255,255,0.1)" : bTheme.navBorder,
+  footer: isDarkMode ? "rgba(2,6,23,0.96)" : bTheme.footer,
+  badgeBg: isDarkMode ? "rgba(255,255,255,0.08)" : bTheme.badgeBg,
+  badgeText: isDarkMode ? "#f8fafc" : bTheme.badgeText,
+  badgeBorder: isDarkMode ? "rgba(255,255,255,0.12)" : bTheme.badgeBorder,
+};
 
   return (
     <div style={{
@@ -509,9 +509,8 @@ export default function App() {
       "--c-badge-text": t.badgeText, 
       "--c-badge-border": t.badgeBorder,
       "--c-selection": `${t.accent}4D`,
-      "--c-panel-rgb": isDarkMode ? "30, 41, 59" : "255, 255, 255",
-      "--c-border-rgb": isDarkMode ? "148, 163, 184" : "255, 255, 255",
-      backgroundColor: "transparent" ,     color: t.text, 
+      "--c-panel-rgb": isDarkMode ? "15, 23, 42" : "255, 255, 255",
+      "--c-border-rgb": isDarkMode ? "71, 85, 105" : "255, 255, 255",      backgroundColor: "transparent" ,     color: t.text, 
       fontFamily: "'Noto Serif TC', serif", 
       minHeight: "100vh", 
       display: "flex", 
@@ -537,11 +536,27 @@ export default function App() {
         .theme-divider { border-color: color-mix(in srgb, var(--c-primary) 15%, transparent); }
 
         /* ===== 全域覆寫 Tailwind 背景/框線供玻璃擬態使用 ===== */
-        .glass-panel { background: rgba(var(--c-panel-rgb), 0.4) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'}); transition: all 500ms ease; }
-        .glass-panel:hover { background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.6'}) !important; }
-        .glass-card-hover { transition: all 300ms ease; }
-        .glass-card-hover:hover { background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.5' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.4' : '0.1'}) !important; }
-        
+.glass-panel {
+  background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.75' : '0.45'}) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.25' : '0.6'}) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.35' : '0.05'});
+  transition: all 500ms ease;
+}
+
+.glass-panel:hover {
+  background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.85' : '0.6'}) !important;
+}
+
+.glass-card-hover {
+  transition: all 300ms ease;
+}
+
+.glass-card-hover:hover {
+  background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.85' : '0.6'}) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.45' : '0.1'}) !important;
+}        
         .bg-white { background-color: rgba(var(--c-panel-rgb), 1) !important; transition: background-color 500ms ease; }
         .bg-white\\/30 { background-color: rgba(var(--c-panel-rgb), 0.3) !important; transition: background-color 500ms ease; }
         .bg-white\\/40 { background-color: rgba(var(--c-panel-rgb), 0.4) !important; transition: background-color 500ms ease; }
