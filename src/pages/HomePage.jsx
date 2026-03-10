@@ -23,7 +23,10 @@ const latestArticle =
 
 const nextSeminar =
   events.length > 0
-    ? [...events].sort((a, b) => new Date(a.date) - new Date(b.date))[0]
+    ? [...events]
+        .filter((e) => e.status === 'upcoming' || new Date(e.date) >= new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0]
+      ?? [...events].sort((a, b) => new Date(b.date) - new Date(a.date))[0]
     : null;
 
 
@@ -539,14 +542,17 @@ const upcomingActivities = useMemo(() => {
             />
 
             <h3 className="text-2xl font-bold mb-6 font-sans theme-heading relative z-10">
-              三月讀書會
+              {nextSeminar?.title || "近期讀書會"}
             </h3>
 
+            {!nextSeminar ? (
+              <p className="theme-text-secondary font-sans text-center py-4">目前暫無排定的研討活動。</p>
+            ) : (
             <div className="space-y-5 flex-1 relative z-10">
               {[
-{ label: "時間", value: nextSeminar?.date || "尚未公告", icon: "Calendar" },
-{ label: "地點", value: nextSeminar?.location || "尚未公告", icon: "MapPin" },
-{ label: "主題", value: nextSeminar?.topic || nextSeminar?.title || "尚未公告", icon: "BookOpen" },
+                { label: "時間", value: nextSeminar.date ? new Date(nextSeminar.date).toLocaleString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "尚未公告", icon: "Calendar" },
+                { label: "地點", value: nextSeminar.location || "尚未公告", icon: "MapPin" },
+                { label: "類型", value: nextSeminar.type || "讀書會", icon: "BookOpen" },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-4">
                   <div
@@ -559,7 +565,6 @@ const upcomingActivities = useMemo(() => {
                   >
                     <Icon name={item.icon} size={15} />
                   </div>
-
                   <div className="pt-0.5">
                     <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-1">
                       {item.label}
@@ -569,36 +574,30 @@ const upcomingActivities = useMemo(() => {
                 </div>
               ))}
 
-              <div className="flex items-start gap-4">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
-                  style={{
-                    background: "rgba(var(--c-panel-rgb),0.85)",
-                    borderColor: "rgba(var(--c-border-rgb),0.7)",
-                    color: "var(--c-primary)",
-                  }}
-                >
-                  <Icon name="FileText" size={15} />
+              {(nextSeminar.summary || nextSeminar.details) && (
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                    style={{
+                      background: "rgba(var(--c-panel-rgb),0.85)",
+                      borderColor: "rgba(var(--c-border-rgb),0.7)",
+                      color: "var(--c-primary)",
+                    }}
+                  >
+                    <Icon name="FileText" size={15} />
+                  </div>
+                  <div className="pt-0.5 min-w-0">
+                    <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-2">
+                      內容
+                    </p>
+                    <p className="leading-relaxed theme-text-secondary text-sm line-clamp-4">
+                      {nextSeminar.summary || nextSeminar.details}
+                    </p>
+                  </div>
                 </div>
-
-                <div className="pt-0.5 min-w-0">
-                  <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-2">
-                    論文
-                  </p>
-                  <ul className="space-y-2">
-                    {(nextSeminar?.papers || []).map((p, i) => (
-                      <li key={i} className="leading-relaxed relative pl-4 theme-text-secondary">
-                        <span
-                          className="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full"
-                          style={{ background: "var(--c-accent)" }}
-                        />
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              )}
             </div>
+            )}
           </div>
         </section>
 
