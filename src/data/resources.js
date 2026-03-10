@@ -6,6 +6,7 @@ export const resourceCategories = [
       { name: "中文古籍聯合目錄及循證平台", url: "http://gj.library.sh.cn/index" },
       { name: "古籍普查登記基本數據庫", url: "http://gjpc.nlc.cn/xlsworkbench/publish" },
       { name: "典津─全球漢籍影像開放集成", url: "https://guji.cckb.cn/" },
+      { name: "近代史數位資料庫", url: "https://mhdb.mh.sinica.edu.tw/" },
     ],
   },
   {
