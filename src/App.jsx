@@ -1,13 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
+import { createClient } from '@sanity/client';
 import ArticlesPage from './pages/ArticlesPage';
-import { columnArticles, getCategoryColors } from './data/articlesData';
+import { getCategoryColors } from './data/articlesData';
 import EventsPage from './pages/EventsPage';
-import { nextEvent } from './data/eventsData';
 import AboutPage from './pages/AboutPage';
 import BooksPage from './pages/BooksPage';
 import SubmissionPage from './pages/SubmissionPage';
 import HomePage from './pages/HomePage';
 import ActivitiesPage from './pages/ActivitiesPage';
+
+const client = createClient({
+  projectId: '6c1fauax',
+  dataset: 'production',
+  apiVersion: '2024-01-01',
+  useCdn: true,
+});
 import { client } from "./sanityClient";
 
 /* ==================== 圖示與 Logo ==================== */
@@ -500,39 +507,32 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [events, setEvents] = useState([]);
   const [activities, setActivities] = useState([]);
 
-  // ⭐ 這裡加入
   useEffect(() => {
-
-    const fetchActivities = async () => {
-
+    const fetchAllData = async () => {
       try {
-
-        const data = await client.fetch(`
-          *[_type == "activity"] | order(date asc){
-            _id,
-            title,
-            category,
-            date,
-            location,
-            description,
-            link
-          }
-        `);
-
-        setActivities(data || []);
-
+        const [articlesData, eventsData, activitiesData] = await Promise.all([
+          client.fetch(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {
+            _id, title, author, affiliation, contact, date, category, tags, summary, blocks
+          }`),
+          client.fetch(`*[_type == "event"] | order(date desc) {
+            _id, title, date, type, status, summary, details, location, topic, papers
+          }`),
+          client.fetch(`*[_type == "promoEvent"] | order(_createdAt desc) {
+            _id, title, category, date, speaker, location, organizer, link
+          }`),
+        ]);
+        setArticles(articlesData || []);
+        setEvents(eventsData || []);
+        setActivities(activitiesData || []);
       } catch (err) {
-
-        console.error("Sanity活動讀取失敗:", err);
-
+        console.error("Sanity 資料讀取失敗:", err);
       }
-
     };
-
-    fetchActivities();
-
+    fetchAllData();
   }, []);
 
   const navItems = [
