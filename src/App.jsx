@@ -631,6 +631,20 @@ const pageProps = {
             gap: 1.5rem;
           }
         }
+
+        /* ===== RWD 主要內容區塊 ===== */
+        .main-content {
+          flex-grow: 1;
+          max-width: 72rem;
+          margin: 0 auto;
+          padding: 2rem 1.5rem 6rem;
+          width: 100%;
+        }
+        @media (max-width: 640px) {
+          .main-content {
+            padding: 1.25rem 1rem 4rem;
+          }
+        }
       `}} />
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
@@ -712,7 +726,7 @@ const pageProps = {
         )}
       </nav>
 
-      <main style={{ flexGrow: 1, maxWidth: "72rem", margin: "0 auto", padding: "2rem 1.5rem 6rem", width: "100%" }}>
+      <main className="main-content">
         {page}
       </main>
 

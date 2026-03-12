@@ -140,7 +140,7 @@ export default function HomePage({
     <div className="space-y-10 md:space-y-14 animate-fade-in relative z-10">
 
       {/* ===================== Hero ===================== */}
-      <section className="relative rounded-3xl overflow-hidden p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
+      <section className="relative rounded-3xl overflow-hidden p-6 sm:p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
         <div
           className="absolute inset-0 opacity-70 pointer-events-none"
           style={{
@@ -171,7 +171,7 @@ export default function HomePage({
             志於道・據於德・依於仁・游於藝
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold mb-5 tracking-[0.18em] font-sans theme-heading">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-5 tracking-[0.18em] font-sans theme-heading">
             中文研究室
           </h1>
 
@@ -260,7 +260,7 @@ export default function HomePage({
                       </span>
                     </div>
 
-                    <h3 className="text-2xl md:text-3xl font-bold font-sans theme-heading leading-snug mb-4">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold font-sans theme-heading leading-snug mb-4">
                       {currentActivity.title}
                     </h3>
 

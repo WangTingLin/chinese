@@ -70,15 +70,15 @@ export default function EventsPage({ isDarkMode }) {
         <div className="inline-flex bg-white/40 p-1.5 rounded-full border border-white/60 shadow-inner backdrop-blur-sm">
           <button
             onClick={() => setViewMode("timeline")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold font-sans spring-transition ${viewMode === "timeline" ? activeTabClass : inactiveTabClass}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold font-sans spring-transition ${viewMode === "timeline" ? activeTabClass : inactiveTabClass}`}
           >
-            <Icon name="Calendar" size={18} /> 研討歷程
+            <Icon name="Calendar" size={16} className="shrink-0" /> 研討歷程
           </button>
           <button
             onClick={() => setViewMode("articles")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold font-sans spring-transition ${viewMode === "articles" ? activeTabClass : inactiveTabClass}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold font-sans spring-transition ${viewMode === "articles" ? activeTabClass : inactiveTabClass}`}
           >
-            <Icon name="ClipboardList" size={18} /> 討論進度
+            <Icon name="ClipboardList" size={16} className="shrink-0" /> 討論進度
           </button>
         </div>
       </div>
