@@ -8,6 +8,11 @@ import { Icon, PageHeader, ReadingProgress } from '../App';
 
 const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書心得", "文學創作"];
 
+// 後端儲存值 → 前端顯示名稱的對照表
+const CATEGORY_DISPLAY = {
+  "讀書心得": "讀書會紀錄",
+};
+
 const getCategoryColors = (isDark) => ({
   "學術筆記": { bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)", color: isDark ? "#93c5fd" : "#1e40af", border: isDark ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)" },
   "讀書心得": { bg: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)", color: isDark ? "#86efac" : "#166534", border: isDark ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)" },
@@ -106,7 +111,7 @@ export default function ArticlesPage({ isDarkMode }) {
                       color: "var(--c-text-secondary)" 
                     }}
               >
-                {cat}
+                {CATEGORY_DISPLAY[cat] ?? cat}
               </button>
             )
           })}
@@ -136,7 +141,7 @@ export default function ArticlesPage({ isDarkMode }) {
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border transition-colors"
                         style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
-                        <Icon name="Folder" size={14} className="opacity-70" /> {a.category}
+                        <Icon name="Folder" size={14} className="opacity-70" /> {CATEGORY_DISPLAY[a.category] ?? a.category}
                       </span>
                       <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
                         <Icon name="Calendar" size={14} /> {a.date}
