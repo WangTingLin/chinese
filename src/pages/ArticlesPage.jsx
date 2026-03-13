@@ -156,9 +156,9 @@ export default function ArticlesPage({ isDarkMode }) {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm theme-text-secondary font-sans">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: cColor.color, opacity: 0.9 }}>
-                            {a.author[0]}
+                            {a.author?.[0] ?? '?'}
                           </span>
-                          <span className="font-medium text-base whitespace-nowrap">{a.author}</span>
+                          <span className="font-medium text-base whitespace-nowrap">{a.author ?? '（未填）'}</span>
                           <span className="opacity-50 hidden md:inline">｜</span>
                         </div>
                         <span className="opacity-80 w-full md:w-auto ml-8 md:ml-0 text-xs md:text-sm leading-relaxed">{a.affiliation}</span>
@@ -171,7 +171,7 @@ export default function ArticlesPage({ isDarkMode }) {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
-                      {a.tags.map((tag, i) => (
+                      {(a.tags || []).map((tag, i) => (
                         <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full border transition-colors hover:brightness-95"
                           style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
                           <Icon name="Tag" size={12} className="opacity-60 shrink-0" /> {tag}
