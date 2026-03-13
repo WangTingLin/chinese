@@ -1,8 +1,12 @@
 // 檔案路徑：src/pages/ArticlesPage.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { PortableText } from '@portabletext/react';
+import imageUrlBuilder from '@sanity/image-url';
 
 import { client } from '../sanityClient';
+
+const builder = imageUrlBuilder(client);
+const urlFor = (source) => builder.image(source);
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader, ReadingProgress } from '../App';
 
@@ -27,6 +31,26 @@ const extractTocHeadings = (blocks) => {
 };
 
 const makePortableComponents = (articleId) => ({
+  types: {
+    image: ({ value }) => {
+      if (!value?.asset) return null;
+      return (
+        <figure className="my-8">
+          <img
+            src={urlFor(value).width(900).auto('format').url()}
+            alt={value.alt || ''}
+            className="w-full rounded-2xl shadow-md border border-white/40"
+            loading="lazy"
+          />
+          {value.caption && (
+            <figcaption className="mt-3 text-center text-sm theme-text-secondary opacity-70 font-sans">
+              {value.caption}
+            </figcaption>
+          )}
+        </figure>
+      );
+    },
+  },
   block: {
     normal: ({children}) => <p className="leading-relaxed theme-text-secondary mb-4" style={{ textIndent: "2em" }}>{children}</p>,
     h2: ({value, children}) => <h4 id={`article-${articleId}-${value._key}`} className="text-xl md:text-2xl font-bold theme-heading mt-10 mb-5 flex items-center gap-3" style={{ scrollMarginTop: "120px" }}><span style={{ width: "5px", height: "1.2em", background: "var(--c-accent)", borderRadius: "4px" }}></span>{children}</h4>,
