@@ -280,7 +280,7 @@ export default function ActivitiesPage({ isDarkMode }) {
   );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
+    <div className="max-w-4xl xl:max-w-6xl mx-auto space-y-12 animate-fade-in relative z-10">
       <PageHeader title="近期活動" />
 
       <div className="space-y-5">
@@ -345,9 +345,9 @@ export default function ActivitiesPage({ isDarkMode }) {
         </div>
       </div>
 
-      <div className="space-y-6 md:space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {filteredEvents.length === 0 ? (
-          <div className="text-center py-16 glass-panel rounded-3xl theme-text-secondary font-sans">
+          <div className="xl:col-span-2 text-center py-16 glass-panel rounded-3xl theme-text-secondary font-sans">
             <Icon name="Megaphone" size={40} className="mx-auto mb-4 opacity-30" />
             <p className="mb-2">查無符合條件的活動資訊。</p>
             <p className="text-sm opacity-70">

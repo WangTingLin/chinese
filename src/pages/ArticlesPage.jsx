@@ -109,7 +109,7 @@ export default function ArticlesPage({ isDarkMode }) {
         <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={isDarkMode} />
       )}
       
-      <div className="max-w-4xl mx-auto space-y-10 animate-fade-in relative z-10">
+      <div className="max-w-4xl xl:max-w-6xl mx-auto space-y-10 animate-fade-in relative z-10">
         <PageHeader title="文章專欄" />
 
         <div className="flex flex-wrap gap-2 justify-center">
@@ -147,7 +147,7 @@ export default function ArticlesPage({ isDarkMode }) {
             <p>尚無文章，敬請期待。</p>
           </div>
         ) : (
-          <div className="space-y-6 md:space-y-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {displayArticles.map((a) => {
               const open = expandedId === a._id;
               const cColor = catColors[a.category] || { bg: "var(--c-badge-bg)", color: "var(--c-badge-text)", border: "var(--c-badge-border)" };
@@ -156,7 +156,7 @@ export default function ArticlesPage({ isDarkMode }) {
                 <article
                   key={a._id}
                   ref={open ? activeArticleRef : null}
-                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70" : "glass-card-hover"}`}
+                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70 xl:col-span-2" : "glass-card-hover"}`}
                 >
                   <div
                     className="p-5 md:p-8 relative"
