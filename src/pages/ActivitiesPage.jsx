@@ -9,6 +9,56 @@ import { Icon, PageHeader } from '../App';
 const builder = imageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
 
+// ── 主辦單位縮寫對照表 ───────────────────────────────────────
+const UNIV_MAP = [
+  ["成功大學", "成大"], ["臺灣大學", "台大"], ["台灣大學", "台大"],
+  ["政治大學", "政大"], ["清華大學", "清大"], ["交通大學", "交大"],
+  ["陽明交通大學", "陽交大"], ["中央大學", "中央大"], ["中山大學", "中山大"],
+  ["中正大學", "中正大"], ["中興大學", "中興大"], ["師範大學", "師大"],
+  ["臺北大學", "北大"], ["台北大學", "北大"], ["輔仁大學", "輔大"],
+  ["東吳大學", "東吳"], ["淡江大學", "淡江"], ["文化大學", "文化大"],
+  ["逢甲大學", "逢甲"], ["靜宜大學", "靜宜"], ["東華大學", "東華"],
+  ["暨南大學", "暨大"], ["屏東大學", "屏大"], ["海洋大學", "海大"],
+  ["彰化師範大學", "彰師大"], ["高雄師範大學", "高師大"],
+  ["元智大學", "元智"], ["長庚大學", "長庚"], ["中原大學", "中原"],
+  ["高雄大學", "高大"], ["臺南大學", "南大"], ["台南大學", "南大"],
+];
+
+const abbreviateOrganizer = (organizer) => {
+  if (!organizer) return null;
+  for (const [full, abbrev] of UNIV_MAP) {
+    if (organizer.includes(full)) return abbrev;
+  }
+  // 去掉國立/私立前綴與系所後綴再判斷
+  const core = organizer
+    .replace(/^國立|^私立|^財團法人/g, '')
+    .replace(/(中文|中國文學|文學|人文|社會)(學?系|研究所)?$/, '')
+    .replace(/學系$|研究所$|學院$|中心$/, '');
+  if (core.length <= 4) return core;
+  // 包含「大學」的長名稱 → 取前段縮寫
+  const daIdx = core.indexOf('大學');
+  if (daIdx >= 1) return core.slice(0, daIdx) + '大';
+  return core.slice(0, 3);
+};
+
+const getEventTags = (ev) => {
+  const tags = [];
+  const org = abbreviateOrganizer(ev.organizer);
+  if (org) tags.push({ label: org, type: 'org' });
+
+  if (ev.location) {
+    const cityMatch = ev.location.match(/台北|臺北|台南|臺南|台中|臺中|高雄|新竹|桃園|嘉義|台東|臺東|花蓮|宜蘭|基隆|屏東|彰化|南投|雲林|澎湖|金門/);
+    const locLabel = cityMatch
+      ? cityMatch[0]
+      : ev.location.length <= 6 ? ev.location : ev.location.slice(0, 5) + '…';
+    tags.push({ label: locLabel, type: 'loc' });
+  }
+
+  return tags;
+};
+
+// ────────────────────────────────────────────────────────────
+
 export default function ActivitiesPage({ isDarkMode }) {
   const [filterCat, setFilterCat] = useState("全部");
   const [searchText, setSearchText] = useState("");
@@ -357,9 +407,42 @@ export default function ActivitiesPage({ isDarkMode }) {
                     </span>
                   </div>
 
-                  <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-3">
+                  <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-2">
                     {ev.title}
                   </h3>
+
+                  {/* 標籤列 */}
+                  {(() => {
+                    const tags = getEventTags(ev);
+                    if (!tags.length) return null;
+                    return (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {tags.map((tag, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-sans border"
+                            style={{
+                              background: "rgba(var(--c-panel-rgb), 0.6)",
+                              color: "var(--c-accent)",
+                              borderColor: "rgba(var(--c-border-rgb), 0.5)",
+                            }}
+                          >
+                            {tag.type === 'org' && (
+                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style={{ opacity: 0.7 }}>
+                                <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h2v2H5V5zm4 0h2v2H9V5zm-4 4h2v2H5V9zm4 0h2v2H9V9z"/>
+                              </svg>
+                            )}
+                            {tag.type === 'loc' && (
+                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style={{ opacity: 0.7 }}>
+                                <path d="M8 1a5 5 0 0 1 5 5c0 3-5 9-5 9S3 9 3 6a5 5 0 0 1 5-5zm0 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                              </svg>
+                            )}
+                            {tag.label}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex flex-col gap-2 mb-5 text-sm theme-text-secondary font-sans">
                     {ev.speaker && (
