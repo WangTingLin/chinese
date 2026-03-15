@@ -157,15 +157,23 @@ export default function ArticlesPage({ isDarkMode }) {
                 <article
                   key={a._id}
                   ref={open ? activeArticleRef : null}
-                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 relative ${open ? "shadow-2xl bg-white/70" : "glass-card-hover cursor-pointer"}`}
+                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70" : "glass-card-hover"}`}
                 >
-                  {/* 幾何古典紋樣浮水印 */}
+                  {/* 頂部幾何古典圖像帶 */}
                   {!open && (
                     <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{ color: cColor.color, opacity: 0.09 }}
+                      className="relative h-28 md:h-36 overflow-hidden cursor-pointer"
+                      onClick={() => setExpandedId(a._id)}
+                      style={{ color: cColor.color }}
                     >
                       <ArticleThumbnail category={a.category} />
+                      {/* 左側色條 */}
+                      <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
+                      {/* 底部漸層淡出到卡片背景 */}
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-16 z-10"
+                        style={{ background: "linear-gradient(to bottom, transparent, rgba(var(--c-panel-rgb), 0.97))" }}
+                      />
                     </div>
                   )}
                   <div

@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
+import { ArticleThumbnail } from '../components/ClassicalDecoration';
 
 export default function ActivitiesPage({ isDarkMode }) {
   const [filterCat, setFilterCat] = useState("全部");
@@ -311,13 +312,28 @@ export default function ActivitiesPage({ isDarkMode }) {
             return (
               <article
                 key={ev._id}
-                className="rounded-3xl glass-panel overflow-hidden glass-card-hover border border-white/60 p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start"
+                className="rounded-3xl glass-panel overflow-hidden glass-card-hover border border-white/60 relative"
                 style={{
                   opacity: isPast ? 0.52 : 1,
                   filter: isPast ? "grayscale(45%)" : "none",
                   transition: "opacity 300ms ease, filter 300ms ease"
                 }}
               >
+                {/* 頂部幾何古典圖像帶 */}
+                <div
+                  className="relative h-24 md:h-28 overflow-hidden"
+                  style={{ color: cColor.color }}
+                >
+                  <ArticleThumbnail category={ev.category} />
+                  {/* 左側色條 */}
+                  <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
+                  {/* 底部漸層 */}
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-14 z-10"
+                    style={{ background: "linear-gradient(to bottom, transparent, rgba(var(--c-panel-rgb), 0.97))" }}
+                  />
+                </div>
+                <div className="p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start">
                 <div className="flex-1 min-w-0 w-full">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <span
@@ -396,6 +412,7 @@ export default function ActivitiesPage({ isDarkMode }) {
                     查看詳情 <Icon name="ExternalLink" size={16} />
                   </a>
                 )}
+                </div>
               </article>
             );
           })

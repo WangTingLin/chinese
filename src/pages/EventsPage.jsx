@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
+import { ArticleThumbnail } from '../components/ClassicalDecoration';
 
 export default function EventsPage({ isDarkMode }) {
   const [viewMode, setViewMode] = useState("timeline");
@@ -117,10 +118,23 @@ export default function EventsPage({ isDarkMode }) {
                   <div key={ev._id} className="relative">
                     <div className="absolute -left-6 md:-left-8 top-7 w-4 h-4 rounded-full border-[3px] shadow-sm z-10" style={{ backgroundColor: "rgba(var(--c-panel-rgb), 1)", borderColor: "var(--c-primary)" }}></div>
                     
-                    <article 
+                    <article
                       onClick={() => setActiveEventId(open ? null : ev._id)}
-                      className={`rounded-2xl glass-panel cursor-pointer spring-transition border border-white/60 ${open ? "bg-white/70 shadow-xl scale-[1.02]" : "glass-card-hover hover:-translate-y-1"}`}
+                      className={`rounded-2xl glass-panel cursor-pointer spring-transition border border-white/60 overflow-hidden relative ${open ? "bg-white/70 shadow-xl scale-[1.02]" : "glass-card-hover hover:-translate-y-1"}`}
                     >
+                      {/* 右側幾何紋樣裝飾帶 */}
+                      {!open && (
+                        <div
+                          className="absolute top-0 right-0 bottom-0 w-32 md:w-44 pointer-events-none"
+                          style={{ color: typeStyle.color, opacity: 0.3 }}
+                        >
+                          <ArticleThumbnail category={ev.type || '研討'} />
+                          <div
+                            className="absolute inset-y-0 left-0 w-20 md:w-28"
+                            style={{ background: "linear-gradient(to right, rgba(var(--c-panel-rgb), 1), transparent)" }}
+                          />
+                        </div>
+                      )}
                       <div className="p-6 md:p-8">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3">

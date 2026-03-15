@@ -191,3 +191,126 @@ export function NavCardPattern() {
     </svg>
   );
 }
+
+// ─── Hero 大型圓形勳章 ─────────────────────────────────────────
+// viewBox 300×300，透明背景，同心圓 + 菱格底 + 輻射線 + 中心「文」字
+export function HeroMedallion() {
+  const id = React.useId().replace(/:/g, '-');
+  const pid = `hm-${id}`;
+
+  // 8個方位角的徑度
+  const angles8 = [0, 45, 90, 135, 180, 225, 270, 315];
+
+  return (
+    <svg
+      viewBox="0 0 300 300"
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-full h-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern id={pid} width="18" height="18" patternUnits="userSpaceOnUse">
+          <path d="M9,1 L17,9 L9,17 L1,9 Z"
+            fill="none" stroke="currentColor" strokeWidth="0.45" strokeOpacity="0.22" />
+          <circle cx="9" cy="9" r="0.8" fill="currentColor" fillOpacity="0.18" />
+        </pattern>
+        {/* 裁切為圓形 */}
+        <clipPath id={`circ-${id}`}>
+          <circle cx="150" cy="150" r="148" />
+        </clipPath>
+      </defs>
+
+      {/* 圓形底色 + 菱格紋 */}
+      <circle cx="150" cy="150" r="148" fill="currentColor" fillOpacity="0.04" />
+      <rect width="300" height="300" fill={`url(#${pid})`} clipPath={`url(#circ-${id})`} />
+
+      {/* 同心圓 */}
+      <circle cx="150" cy="150" r="148" fill="none" stroke="currentColor" strokeWidth="1.8" strokeOpacity="0.55" />
+      <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.3" />
+      <circle cx="150" cy="150" r="118" fill="none" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.45" />
+      <circle cx="150" cy="150" r="110" fill="none" stroke="currentColor" strokeWidth="0.4" strokeOpacity="0.25" />
+      <circle cx="150" cy="150" r="82"  fill="none" stroke="currentColor" strokeWidth="1"   strokeOpacity="0.4" />
+      <circle cx="150" cy="150" r="52"  fill="none" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.5" />
+      <circle cx="150" cy="150" r="44"  fill="none" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.28" />
+
+      {/* 外層大菱形框 */}
+      <path d="M150,8 L292,150 L150,292 L8,150 Z"
+        fill="none" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.32" />
+
+      {/* 中層菱形框 */}
+      <path d="M150,68 L232,150 L150,232 L68,150 Z"
+        fill="none" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.22" />
+
+      {/* 8條輻射線（從內圈到外圈之間） */}
+      {angles8.map((deg, i) => {
+        const r = (deg * Math.PI) / 180;
+        const cos = Math.cos(r), sin = Math.sin(r);
+        return (
+          <g key={i}>
+            <line
+              x1={150 + cos * 52} y1={150 + sin * 52}
+              x2={150 + cos * 82} y2={150 + sin * 82}
+              stroke="currentColor" strokeWidth="0.7" strokeOpacity="0.3"
+            />
+            <line
+              x1={150 + cos * 118} y1={150 + sin * 118}
+              x2={150 + cos * 140} y2={150 + sin * 140}
+              stroke="currentColor" strokeWidth="0.7" strokeOpacity="0.28"
+            />
+            {/* 中環上的小圓點 */}
+            <circle
+              cx={150 + cos * 100} cy={150 + sin * 100}
+              r="2.8" fill="none" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.45"
+            />
+          </g>
+        );
+      })}
+
+      {/* 四個主方向 ── 外圈圓形角花 */}
+      {[0, 90, 180, 270].map((deg, i) => {
+        const r = (deg * Math.PI) / 180;
+        const cx = 150 + Math.cos(r) * 148;
+        const cy = 150 + Math.sin(r) * 148;
+        return (
+          <g key={i} strokeOpacity="0.65" fillOpacity="0.55">
+            <circle cx={cx} cy={cy} r="5.5" fill="none" stroke="currentColor" strokeWidth="0.9" />
+            <circle cx={cx} cy={cy} r="2.2" fill="currentColor" />
+          </g>
+        );
+      })}
+
+      {/* 四個斜向 ── 外圈小菱形 */}
+      {[45, 135, 225, 315].map((deg, i) => {
+        const r = (deg * Math.PI) / 180;
+        const cx = 150 + Math.cos(r) * 148;
+        const cy = 150 + Math.sin(r) * 148;
+        return (
+          <path key={i}
+            d={`M${cx},${cy - 5} L${cx + 5},${cy} L${cx},${cy + 5} L${cx - 5},${cy} Z`}
+            fill="none" stroke="currentColor" strokeWidth="0.9" strokeOpacity="0.6"
+          />
+        );
+      })}
+
+      {/* 內圈 8 個節點小實心菱 */}
+      {angles8.map((deg, i) => {
+        const r = (deg * Math.PI) / 180;
+        const cx = 150 + Math.cos(r) * 52;
+        const cy = 150 + Math.sin(r) * 52;
+        return (
+          <circle key={i} cx={cx} cy={cy} r="2.5" fill="currentColor" fillOpacity="0.45" />
+        );
+      })}
+
+      {/* 中央「文」字 */}
+      <text
+        x="150" y="150"
+        textAnchor="middle" dominantBaseline="central"
+        fill="currentColor" fontSize="58" fontWeight="bold"
+        fillOpacity="0.18" fontFamily="serif"
+      >
+        文
+      </text>
+    </svg>
+  );
+}
