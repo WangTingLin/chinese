@@ -9,7 +9,6 @@ const builder = imageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader, ReadingProgress } from '../App';
-import { ArticleThumbnail } from '../components/ClassicalDecoration';
 
 const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書心得", "文學創作"];
 
@@ -159,23 +158,6 @@ export default function ArticlesPage({ isDarkMode }) {
                   ref={open ? activeArticleRef : null}
                   className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70" : "glass-card-hover"}`}
                 >
-                  {/* 頂部幾何古典圖像帶 */}
-                  {!open && (
-                    <div
-                      className="relative h-28 md:h-36 overflow-hidden cursor-pointer"
-                      onClick={() => setExpandedId(a._id)}
-                      style={{ color: cColor.color }}
-                    >
-                      <ArticleThumbnail category={a.category} />
-                      {/* 左側色條 */}
-                      <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
-                      {/* 底部漸層淡出到卡片背景 */}
-                      <div
-                        className="absolute inset-x-0 bottom-0 h-16 z-10"
-                        style={{ background: "linear-gradient(to bottom, transparent, rgba(var(--c-panel-rgb), 0.97))" }}
-                      />
-                    </div>
-                  )}
                   <div
                     className="p-5 md:p-8 relative"
                     onClick={() => setExpandedId(open ? null : a._id)}

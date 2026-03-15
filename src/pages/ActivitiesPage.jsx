@@ -1,10 +1,14 @@
 // 檔案路徑：src/pages/ActivitiesPage.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 
+import imageUrlBuilder from '@sanity/image-url';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
 import { ArticleThumbnail } from '../components/ClassicalDecoration';
+
+const builder = imageUrlBuilder(client);
+const urlFor = (source) => builder.image(source);
 
 export default function ActivitiesPage({ isDarkMode }) {
   const [filterCat, setFilterCat] = useState("全部");
@@ -14,7 +18,8 @@ export default function ActivitiesPage({ isDarkMode }) {
 
   useEffect(() => {
     client.fetch(`*[_type == "promoEvent"] | order(_createdAt desc) {
-      _id, title, category, date, speaker, location, organizer, link
+      _id, title, category, date, speaker, location, organizer, link,
+      coverImage { asset->{ _id, url }, alt, hotspot, crop }
     }`).then(data => {
       setEvents(data);
       setLoading(false);
@@ -319,12 +324,21 @@ export default function ActivitiesPage({ isDarkMode }) {
                   transition: "opacity 300ms ease, filter 300ms ease"
                 }}
               >
-                {/* 頂部幾何古典圖像帶 */}
+                {/* 頂部圖像帶：有封面圖用真實照片，否則用幾何紋樣 */}
                 <div
-                  className="relative h-24 md:h-28 overflow-hidden"
+                  className={`relative overflow-hidden ${ev.coverImage?.asset ? "h-48 md:h-56" : "h-24 md:h-28"}`}
                   style={{ color: cColor.color }}
                 >
-                  <ArticleThumbnail category={ev.category} />
+                  {ev.coverImage?.asset ? (
+                    <img
+                      src={urlFor(ev.coverImage).width(800).height(220).auto('format').fit('crop').url()}
+                      alt={ev.coverImage.alt || ev.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <ArticleThumbnail category={ev.category} />
+                  )}
                   {/* 左側色條 */}
                   <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
                   {/* 底部漸層 */}
