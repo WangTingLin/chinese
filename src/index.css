@@ -35,11 +35,11 @@ body {
 }
 
 .glass-panel {
-  background: rgba(var(--c-panel-rgb), 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(var(--c-border-rgb), 0.35);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  background: rgba(var(--c-panel-rgb), 0.22);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(var(--c-border-rgb), 0.28);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
 }
 
 .glass-card-hover {
@@ -47,7 +47,7 @@ body {
 }
 
 .glass-card-hover:hover {
-  background: rgba(var(--c-panel-rgb), 0.6);
+  background: rgba(var(--c-panel-rgb), 0.38);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
