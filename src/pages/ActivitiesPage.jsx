@@ -219,8 +219,11 @@ export default function ActivitiesPage({ isDarkMode }) {
     }
   };
 
+  // 台／臺 通用：統一替換後再比對
+  const normalizeZh = (str) => str.replace(/臺/g, '台');
+
   const filteredEvents = useMemo(() => {
-    const keyword = searchText.trim().toLowerCase();
+    const keyword = normalizeZh(searchText.trim().toLowerCase());
 
     return [...events]
       .filter(ev => {
@@ -231,7 +234,7 @@ export default function ActivitiesPage({ isDarkMode }) {
       .filter(ev => {
         if (!keyword) return true;
 
-        const searchTarget = [
+        const searchTarget = normalizeZh([
           ev.title,
           ev.speaker,
           ev.organizer,
@@ -242,7 +245,7 @@ export default function ActivitiesPage({ isDarkMode }) {
         ]
           .filter(Boolean)
           .join(" ")
-          .toLowerCase();
+          .toLowerCase());
 
         return searchTarget.includes(keyword);
       })
