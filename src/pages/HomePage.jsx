@@ -136,6 +136,66 @@ export default function HomePage({
   ];
   const tickerDouble = [...tickerItems, ...tickerItems];
 
+  /* ================= 快速導覽卡片設定 ================= */
+  const navCards = [
+    {
+      id: "articles",
+      icon: "PenLine",
+      label: "研究文章",
+      desc: "學術論文・讀書筆記",
+      count: articles.length,
+      countLabel: "篇文章",
+      gradient: isDarkMode
+        ? "linear-gradient(135deg, rgba(244,63,94,0.22) 0%, rgba(244,63,94,0.05) 100%)"
+        : "linear-gradient(135deg, rgba(244,63,94,0.11) 0%, rgba(244,63,94,0.02) 100%)",
+      accentColor: isDarkMode ? "#fda4af" : "#e11d48",
+      borderColor: isDarkMode ? "rgba(244,63,94,0.28)" : "rgba(244,63,94,0.16)",
+      blobColor: isDarkMode ? "rgba(244,63,94,0.35)" : "rgba(244,63,94,0.2)",
+    },
+    {
+      id: "events",
+      icon: "Calendar",
+      label: "研討活動",
+      desc: "讀書會・學術研討",
+      count: events.length,
+      countLabel: "場研討",
+      gradient: isDarkMode
+        ? "linear-gradient(135deg, rgba(2,132,199,0.22) 0%, rgba(2,132,199,0.05) 100%)"
+        : "linear-gradient(135deg, rgba(2,132,199,0.11) 0%, rgba(2,132,199,0.02) 100%)",
+      accentColor: isDarkMode ? "#7dd3fc" : "#0369a1",
+      borderColor: isDarkMode ? "rgba(2,132,199,0.28)" : "rgba(2,132,199,0.16)",
+      blobColor: isDarkMode ? "rgba(2,132,199,0.35)" : "rgba(2,132,199,0.2)",
+    },
+    {
+      id: "activities",
+      icon: "Megaphone",
+      label: "近期活動",
+      desc: "講座・工作坊・徵稿",
+      count: upcomingActivities.length,
+      countLabel: "場即將舉辦",
+      gradient: isDarkMode
+        ? "linear-gradient(135deg, rgba(34,197,94,0.22) 0%, rgba(34,197,94,0.05) 100%)"
+        : "linear-gradient(135deg, rgba(34,197,94,0.11) 0%, rgba(34,197,94,0.02) 100%)",
+      accentColor: isDarkMode ? "#86efac" : "#166534",
+      borderColor: isDarkMode ? "rgba(34,197,94,0.28)" : "rgba(34,197,94,0.16)",
+      blobColor: isDarkMode ? "rgba(34,197,94,0.35)" : "rgba(34,197,94,0.2)",
+    },
+    {
+      id: "about",
+      icon: "BookOpen",
+      label: "關於研究室",
+      desc: "簡介・成員・宗旨",
+      count: null,
+      countLabel: null,
+      gradient: isDarkMode
+        ? "linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(245,158,11,0.05) 100%)"
+        : "linear-gradient(135deg, rgba(245,158,11,0.11) 0%, rgba(245,158,11,0.02) 100%)",
+      accentColor: isDarkMode ? "#fcd34d" : "#b45309",
+      borderColor: isDarkMode ? "rgba(245,158,11,0.28)" : "rgba(245,158,11,0.16)",
+      blobColor: isDarkMode ? "rgba(245,158,11,0.35)" : "rgba(245,158,11,0.2)",
+    },
+  ];
+
   return (
     <div className="space-y-10 md:space-y-14 animate-fade-in relative z-10">
 
@@ -201,84 +261,146 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* ===================== 翻頁式近期活動 ===================== */}
-      <section className="rounded-3xl p-6 md:p-8 glass-panel shadow-sm">
-        <div className="flex justify-between items-start mb-6 gap-4">
-          <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border"
+      {/* ===================== 快速導覽卡片 ===================== */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        {navCards.map((nav) => (
+          <button
+            key={nav.id}
+            onClick={() => setPage(nav.id)}
+            className="relative text-left rounded-3xl p-5 md:p-6 border overflow-hidden spring-transition hover:-translate-y-2 hover:shadow-xl active:scale-[0.97] group"
             style={{
-              background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
-              color: isDarkMode ? "#7dd3fc" : "#0369a1",
-              borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)",
+              background: nav.gradient,
+              borderColor: nav.borderColor,
             }}
           >
-            <Icon name="Megaphone" size={16} />
-            即將舉辦活動
-          </div>
-
-          <button
-            onClick={() => setPage("activities")}
-            className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1 shrink-0"
-          >
-            查看全部 <Icon name="ChevronRight" size={16} />
-          </button>
-        </div>
-
-        {upcomingActivities.length === 0 ? (
-          <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
-            <p className="theme-text-secondary font-sans text-center">
-              目前暫無即將舉辦的活動。
+            {/* 裝飾性光球 */}
+            <div
+              className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"
+              style={{ background: nav.blobColor }}
+            />
+            {/* Icon 框 */}
+            <div
+              className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border shadow-sm relative z-10 group-hover:scale-110 transition-transform duration-300"
+              style={{
+                background: isDarkMode ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.78)",
+                borderColor: nav.borderColor,
+                color: nav.accentColor,
+              }}
+            >
+              <Icon name={nav.icon} size={22} />
+            </div>
+            {/* 標題 */}
+            <p
+              className="text-sm md:text-base font-bold font-sans mb-1 relative z-10 tracking-wide"
+              style={{ color: nav.accentColor }}
+            >
+              {nav.label}
             </p>
+            {/* 說明 */}
+            <p className="text-xs font-sans theme-text-secondary opacity-65 mb-4 relative z-10">
+              {nav.desc}
+            </p>
+            {/* 底部：數量標籤 ＋ 箭頭 */}
+            <div className="flex items-center justify-between relative z-10">
+              {nav.count != null ? (
+                <span
+                  className="text-xs font-bold font-sans px-2.5 py-1 rounded-full border"
+                  style={{
+                    background: isDarkMode ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.68)",
+                    color: nav.accentColor,
+                    borderColor: nav.borderColor,
+                  }}
+                >
+                  {nav.count} {nav.countLabel}
+                </span>
+              ) : (
+                <span />
+              )}
+              <span
+                className="w-7 h-7 rounded-full flex items-center justify-center opacity-30 group-hover:opacity-90 group-hover:translate-x-1 transition-all duration-300"
+                style={{ color: nav.accentColor }}
+              >
+                <Icon name="ChevronRight" size={18} />
+              </span>
+            </div>
+          </button>
+        ))}
+      </section>
+
+      {/* ===================== 翻頁式近期活動 ===================== */}
+      <section className="rounded-3xl overflow-hidden glass-panel shadow-sm">
+        {/* Top accent */}
+        <div
+          className="h-1.5 w-full"
+          style={{
+            background: isDarkMode
+              ? "linear-gradient(90deg, rgba(2,132,199,0.9) 0%, rgba(2,132,199,0.15) 100%)"
+              : "linear-gradient(90deg, rgba(2,132,199,0.65) 0%, rgba(2,132,199,0.08) 100%)",
+          }}
+        />
+        <div className="p-6 md:p-8">
+          <div className="flex justify-between items-start mb-6 gap-4">
+            <div
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border"
+              style={{
+                background: isDarkMode ? "rgba(2,132,199,0.2)" : "rgba(2,132,199,0.12)",
+                color: isDarkMode ? "#7dd3fc" : "#0369a1",
+                borderColor: isDarkMode ? "rgba(2,132,199,0.4)" : "rgba(2,132,199,0.25)",
+              }}
+            >
+              <Icon name="Megaphone" size={16} />
+              即將舉辦活動
+            </div>
+
+            <button
+              onClick={() => setPage("activities")}
+              className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1 shrink-0"
+            >
+              查看全部 <Icon name="ChevronRight" size={16} />
+            </button>
           </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/40 shadow-sm">
-              <div
-                className="absolute inset-y-0 left-0 w-2"
-                style={{ background: activityBadge?.color || "var(--c-accent)" }}
-              />
 
-              <div className="p-6 md:p-8 md:pl-10">
-                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
-                  {/* 左側資訊 */}
-                  <div className="flex-1 min-w-0 flex flex-col">
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                      <span
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
-                        style={{
-                          background: activityBadge?.bg,
-                          color: activityBadge?.color,
-                          borderColor: activityBadge?.border,
-                        }}
-                      >
-                        <Icon name="Megaphone" size={12} />
-                        {currentActivity.category}
-                      </span>
-                      <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                        <Icon name="Calendar" size={14} />
-                        {safeIdx + 1} / {upcomingActivities.length}
-                      </span>
-                    </div>
+          {upcomingActivities.length === 0 ? (
+            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm">
+              <p className="theme-text-secondary font-sans text-center">
+                目前暫無即將舉辦的活動。
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-white/40 shadow-sm">
+                <div
+                  className="absolute inset-y-0 left-0 w-2"
+                  style={{ background: activityBadge?.color || "var(--c-accent)" }}
+                />
 
-                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold font-sans theme-heading leading-snug mb-4">
-                      {currentActivity.title}
-                    </h3>
-
-                    <div className="space-y-3 text-sm md:text-base theme-text-secondary mb-5">
-                      <div className="flex items-start gap-3">
+                <div className="p-6 md:p-8 md:pl-10">
+                  <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch">
+                    {/* 左側資訊 */}
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex flex-wrap items-center gap-3 mb-4">
                         <span
-                          className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
                           style={{
-                            background: "rgba(var(--c-panel-rgb),0.5)",
-                            borderColor: "rgba(var(--c-border-rgb),0.5)",
+                            background: activityBadge?.bg,
+                            color: activityBadge?.color,
+                            borderColor: activityBadge?.border,
                           }}
                         >
-                          <Icon name="Calendar" size={15} />
+                          <Icon name="Megaphone" size={12} />
+                          {currentActivity.category}
                         </span>
-                        <span className="leading-relaxed">{currentActivity.date}</span>
+                        <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
+                          <Icon name="Calendar" size={14} />
+                          {safeIdx + 1} / {upcomingActivities.length}
+                        </span>
                       </div>
 
-                      {currentActivity.location && (
+                      <h3 className="text-xl sm:text-2xl md:text-3xl font-bold font-sans theme-heading leading-snug mb-4">
+                        {currentActivity.title}
+                      </h3>
+
+                      <div className="space-y-3 text-sm md:text-base theme-text-secondary mb-5">
                         <div className="flex items-start gap-3">
                           <span
                             className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border"
@@ -287,354 +409,389 @@ export default function HomePage({
                               borderColor: "rgba(var(--c-border-rgb),0.5)",
                             }}
                           >
-                            <Icon name="MapPin" size={15} />
+                            <Icon name="Calendar" size={15} />
                           </span>
-                          <span className="leading-relaxed">{currentActivity.location}</span>
+                          <span className="leading-relaxed">{currentActivity.date}</span>
                         </div>
+
+                        {currentActivity.location && (
+                          <div className="flex items-start gap-3">
+                            <span
+                              className="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border"
+                              style={{
+                                background: "rgba(var(--c-panel-rgb),0.5)",
+                                borderColor: "rgba(var(--c-border-rgb),0.5)",
+                              }}
+                            >
+                              <Icon name="MapPin" size={15} />
+                            </span>
+                            <span className="leading-relaxed">{currentActivity.location}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {currentActivity.description && (
+                        <p className="text-sm md:text-base leading-relaxed font-serif content-justify theme-text-secondary bg-white/30 border border-white/40 rounded-2xl p-4 mb-5">
+                          {currentActivity.description}
+                        </p>
                       )}
-                    </div>
 
-                    {currentActivity.description && (
-                      <p className="text-sm md:text-base leading-relaxed font-serif content-justify theme-text-secondary bg-white/30 border border-white/40 rounded-2xl p-4 mb-5">
-                        {currentActivity.description}
-                      </p>
-                    )}
-
-                    <div className="mt-auto flex flex-wrap gap-3">
-                      {currentActivity.link && (
-                        <a
-                          href={currentActivity.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold font-sans shadow-sm border transition-transform hover:-translate-y-0.5"
+                      <div className="mt-auto flex flex-wrap gap-3">
+                        {currentActivity.link && (
+                          <a
+                            href={currentActivity.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold font-sans shadow-sm border transition-transform hover:-translate-y-0.5"
+                            style={{
+                              background: "var(--c-accent)",
+                              color: "#fff",
+                              borderColor: "var(--c-accent)",
+                            }}
+                          >
+                            活動詳情 <Icon name="ExternalLink" size={16} />
+                          </a>
+                        )}
+                        <button
+                          onClick={() => setPage("activities")}
+                          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold font-sans shadow-sm border"
                           style={{
-                            background: "var(--c-accent)",
-                            color: "#fff",
-                            borderColor: "var(--c-accent)",
+                            background: "rgba(var(--c-panel-rgb),0.45)",
+                            color: "var(--c-primary-dark)",
+                            borderColor: "rgba(var(--c-border-rgb),0.6)",
                           }}
                         >
-                          活動詳情 <Icon name="ExternalLink" size={16} />
-                        </a>
-                      )}
-                      <button
-                        onClick={() => setPage("activities")}
-                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold font-sans shadow-sm border"
-                        style={{
-                          background: "rgba(var(--c-panel-rgb),0.45)",
-                          color: "var(--c-primary-dark)",
-                          borderColor: "rgba(var(--c-border-rgb),0.6)",
-                        }}
-                      >
-                        全部活動 <Icon name="ChevronRight" size={16} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 右側翻頁控制 */}
-                  <div className="lg:w-[280px] shrink-0 flex flex-col justify-between gap-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={prevActivity}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
-                        style={{
-                          background: "rgba(var(--c-panel-rgb),0.45)",
-                          color: "var(--c-primary-dark)",
-                          borderColor: "rgba(var(--c-border-rgb),0.6)",
-                        }}
-                        aria-label="上一則活動"
-                      >
-                        <Icon name="ChevronLeft" size={18} /> 上一則
-                      </button>
-                      <button
-                        onClick={nextActivity}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
-                        style={{
-                          background: "rgba(var(--c-panel-rgb),0.45)",
-                          color: "var(--c-primary-dark)",
-                          borderColor: "rgba(var(--c-border-rgb),0.6)",
-                        }}
-                        aria-label="下一則活動"
-                      >
-                        下一則 <Icon name="ChevronRight" size={18} />
-                      </button>
-                    </div>
-
-                    <div
-                      className="rounded-2xl border p-4"
-                      style={{
-                        background: "rgba(var(--c-panel-rgb),0.32)",
-                        borderColor: "rgba(var(--c-border-rgb),0.5)",
-                      }}
-                    >
-                      <p className="text-xs font-sans uppercase tracking-[0.2em] theme-text-secondary opacity-60 mb-3">
-                        Page
-                      </p>
-                      <div className="flex items-end gap-2 mb-4">
-                        <span className="text-3xl font-bold font-sans theme-heading leading-none">
-                          {String(safeIdx + 1).padStart(2, "0")}
-                        </span>
-                        <span className="text-sm font-mono theme-text-secondary opacity-60 pb-1">
-                          / {String(upcomingActivities.length).padStart(2, "0")}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {getVisibleDots(upcomingActivities.length, safeIdx, 7).map((i) => (
-                          <button
-                            key={i}
-                            onClick={() => setCurrentActivityIndex(i)}
-                            aria-label={`切換到第 ${i + 1} 個活動`}
-                            className="rounded-full transition-all duration-300 shrink-0"
-                            style={{
-                              width: i === safeIdx ? "26px" : "8px",
-                              height: "8px",
-                              background:
-                                i === safeIdx
-                                  ? "var(--c-accent)"
-                                  : isDarkMode
-                                  ? "rgba(148,163,184,0.35)"
-                                  : "rgba(100,116,139,0.25)",
-                            }}
-                          />
-                        ))}
+                          全部活動 <Icon name="ChevronRight" size={16} />
+                        </button>
                       </div>
                     </div>
 
-                    <div
-                      className="rounded-2xl border p-4"
-                      style={{
-                        background: "rgba(var(--c-panel-rgb),0.32)",
-                        borderColor: "rgba(var(--c-border-rgb),0.5)",
-                      }}
-                    >
-                      <p className="text-xs font-sans theme-text-secondary opacity-60 mb-2">
-                        下一則預告
-                      </p>
-                      <p className="text-sm font-serif leading-relaxed theme-text-secondary line-clamp-3">
-                        {
-                          upcomingActivities[
-                            safeIdx === upcomingActivities.length - 1 ? 0 : safeIdx + 1
-                          ]?.title
-                        }
-                      </p>
+                    {/* 右側翻頁控制 */}
+                    <div className="lg:w-[280px] shrink-0 flex flex-col justify-between gap-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={prevActivity}
+                          className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
+                          style={{
+                            background: "rgba(var(--c-panel-rgb),0.45)",
+                            color: "var(--c-primary-dark)",
+                            borderColor: "rgba(var(--c-border-rgb),0.6)",
+                          }}
+                          aria-label="上一則活動"
+                        >
+                          <Icon name="ChevronLeft" size={18} /> 上一則
+                        </button>
+                        <button
+                          onClick={nextActivity}
+                          className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border font-sans font-bold spring-transition hover:scale-[1.03] active:scale-95"
+                          style={{
+                            background: "rgba(var(--c-panel-rgb),0.45)",
+                            color: "var(--c-primary-dark)",
+                            borderColor: "rgba(var(--c-border-rgb),0.6)",
+                          }}
+                          aria-label="下一則活動"
+                        >
+                          下一則 <Icon name="ChevronRight" size={18} />
+                        </button>
+                      </div>
+
+                      <div
+                        className="rounded-2xl border p-4"
+                        style={{
+                          background: "rgba(var(--c-panel-rgb),0.32)",
+                          borderColor: "rgba(var(--c-border-rgb),0.5)",
+                        }}
+                      >
+                        <p className="text-xs font-sans uppercase tracking-[0.2em] theme-text-secondary opacity-60 mb-3">
+                          Page
+                        </p>
+                        <div className="flex items-end gap-2 mb-4">
+                          <span className="text-3xl font-bold font-sans theme-heading leading-none">
+                            {String(safeIdx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="text-sm font-mono theme-text-secondary opacity-60 pb-1">
+                            / {String(upcomingActivities.length).padStart(2, "0")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {getVisibleDots(upcomingActivities.length, safeIdx, 7).map((i) => (
+                            <button
+                              key={i}
+                              onClick={() => setCurrentActivityIndex(i)}
+                              aria-label={`切換到第 ${i + 1} 個活動`}
+                              className="rounded-full transition-all duration-300 shrink-0"
+                              style={{
+                                width: i === safeIdx ? "26px" : "8px",
+                                height: "8px",
+                                background:
+                                  i === safeIdx
+                                    ? "var(--c-accent)"
+                                    : isDarkMode
+                                    ? "rgba(148,163,184,0.35)"
+                                    : "rgba(100,116,139,0.25)",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div
+                        className="rounded-2xl border p-4"
+                        style={{
+                          background: "rgba(var(--c-panel-rgb),0.32)",
+                          borderColor: "rgba(var(--c-border-rgb),0.5)",
+                        }}
+                      >
+                        <p className="text-xs font-sans theme-text-secondary opacity-60 mb-2">
+                          下一則預告
+                        </p>
+                        <p className="text-sm font-serif leading-relaxed theme-text-secondary line-clamp-3">
+                          {
+                            upcomingActivities[
+                              safeIdx === upcomingActivities.length - 1 ? 0 : safeIdx + 1
+                            ]?.title
+                          }
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </section>
 
       {/* ===================== 近期研討 ＋ 最新上架 ===================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {/* 近期研討 */}
         <section
-          className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col"
+          className="rounded-3xl overflow-hidden glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col"
           onClick={() => setPage("events")}
         >
-          <div className="flex justify-between items-start mb-5">
-            <div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border"
-              style={{
-                background: "var(--c-badge-bg)",
-                color: "var(--c-badge-text)",
-                borderColor: "var(--c-badge-border)",
-              }}
-            >
-              <Icon name="Calendar" size={16} /> 近期研討
-            </div>
-            <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
-              查看全部 <Icon name="ChevronRight" size={16} />
-            </span>
-          </div>
-
-          <div className="relative bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex-1 flex flex-col overflow-hidden">
-            <div
-              className="absolute top-0 left-8 bottom-0 w-px"
-              style={{
-                background:
-                  "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--c-primary) 30%, transparent), transparent)",
-              }}
-            />
-            <h3 className="text-2xl font-bold mb-6 font-sans theme-heading relative z-10">
-              {nextSeminar?.title || "近期讀書會"}
-            </h3>
-
-            {!nextSeminar ? (
-              <p className="theme-text-secondary font-sans text-center py-4">
-                目前暫無排定的研討活動。
-              </p>
-            ) : (
-              <div className="space-y-5 flex-1 relative z-10">
-                {[
-                  {
-                    label: "時間",
-                    value: nextSeminar.date
-                      ? new Date(nextSeminar.date).toLocaleString("zh-TW", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "尚未公告",
-                    icon: "Calendar",
-                  },
-                  { label: "地點", value: nextSeminar.location || "尚未公告", icon: "MapPin" },
-                  { label: "類型", value: nextSeminar.type || "讀書會", icon: "BookOpen" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-start gap-4">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
-                      style={{
-                        background: "rgba(var(--c-panel-rgb),0.85)",
-                        borderColor: "rgba(var(--c-border-rgb),0.7)",
-                        color: "var(--c-primary)",
-                      }}
-                    >
-                      <Icon name={item.icon} size={15} />
-                    </div>
-                    <div className="pt-0.5">
-                      <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-1">
-                        {item.label}
-                      </p>
-                      <p className="theme-text leading-relaxed">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
-
-                {(nextSeminar.summary || nextSeminar.details) && (
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
-                      style={{
-                        background: "rgba(var(--c-panel-rgb),0.85)",
-                        borderColor: "rgba(var(--c-border-rgb),0.7)",
-                        color: "var(--c-primary)",
-                      }}
-                    >
-                      <Icon name="FileText" size={15} />
-                    </div>
-                    <div className="pt-0.5 min-w-0">
-                      <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-2">
-                        內容
-                      </p>
-                      <p className="leading-relaxed theme-text-secondary text-sm line-clamp-4">
-                        {nextSeminar.summary || nextSeminar.details}
-                      </p>
-                    </div>
-                  </div>
-                )}
+          {/* Top accent band */}
+          <div
+            className="h-1.5 w-full shrink-0"
+            style={{
+              background: isDarkMode
+                ? "linear-gradient(90deg, rgba(2,132,199,0.9) 0%, rgba(2,132,199,0.15) 100%)"
+                : "linear-gradient(90deg, rgba(2,132,199,0.65) 0%, rgba(2,132,199,0.08) 100%)",
+            }}
+          />
+          <div className="p-6 md:p-8 flex flex-col flex-1">
+            <div className="flex justify-between items-start mb-5">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border"
+                style={{
+                  background: "var(--c-badge-bg)",
+                  color: "var(--c-badge-text)",
+                  borderColor: "var(--c-badge-border)",
+                }}
+              >
+                <Icon name="Calendar" size={16} /> 近期研討
               </div>
-            )}
+              <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1">
+                查看全部 <Icon name="ChevronRight" size={16} />
+              </span>
+            </div>
+
+            <div className="relative bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-white/60 shadow-sm flex-1 flex flex-col overflow-hidden">
+              <div
+                className="absolute top-0 left-8 bottom-0 w-px"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, transparent, color-mix(in srgb, var(--c-primary) 30%, transparent), transparent)",
+                }}
+              />
+              <h3 className="text-2xl font-bold mb-6 font-sans theme-heading relative z-10">
+                {nextSeminar?.title || "近期讀書會"}
+              </h3>
+
+              {!nextSeminar ? (
+                <p className="theme-text-secondary font-sans text-center py-4">
+                  目前暫無排定的研討活動。
+                </p>
+              ) : (
+                <div className="space-y-5 flex-1 relative z-10">
+                  {[
+                    {
+                      label: "時間",
+                      value: nextSeminar.date
+                        ? new Date(nextSeminar.date).toLocaleString("zh-TW", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "尚未公告",
+                      icon: "Calendar",
+                    },
+                    { label: "地點", value: nextSeminar.location || "尚未公告", icon: "MapPin" },
+                    { label: "類型", value: nextSeminar.type || "讀書會", icon: "BookOpen" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-start gap-4">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                        style={{
+                          background: "rgba(var(--c-panel-rgb),0.85)",
+                          borderColor: "rgba(var(--c-border-rgb),0.7)",
+                          color: "var(--c-primary)",
+                        }}
+                      >
+                        <Icon name={item.icon} size={15} />
+                      </div>
+                      <div className="pt-0.5">
+                        <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-1">
+                          {item.label}
+                        </p>
+                        <p className="theme-text leading-relaxed">{item.value}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {(nextSeminar.summary || nextSeminar.details) && (
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm"
+                        style={{
+                          background: "rgba(var(--c-panel-rgb),0.85)",
+                          borderColor: "rgba(var(--c-border-rgb),0.7)",
+                          color: "var(--c-primary)",
+                        }}
+                      >
+                        <Icon name="FileText" size={15} />
+                      </div>
+                      <div className="pt-0.5 min-w-0">
+                        <p className="text-xs font-sans tracking-[0.16em] uppercase opacity-50 theme-text-secondary mb-2">
+                          內容
+                        </p>
+                        <p className="leading-relaxed theme-text-secondary text-sm line-clamp-4">
+                          {nextSeminar.summary || nextSeminar.details}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         {/* 最新上架 */}
         {latestArticle && (
           <section
-            className="rounded-3xl p-6 md:p-8 glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer group flex flex-col"
+            className="rounded-3xl overflow-hidden glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer group flex flex-col"
             onClick={() => setPage("articles")}
           >
-            <div className="flex justify-between items-start mb-5">
-              <div
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border"
-                style={{
-                  background: isDarkMode ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.1)",
-                  color: isDarkMode ? "#fda4af" : "#e11d48",
-                  borderColor: isDarkMode ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.2)",
-                }}
-              >
-                <Icon name="PenLine" size={16} /> 最新上架
-              </div>
-              <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 group-hover:opacity-100 transition-opacity mt-1">
-                前往專欄 <Icon name="ChevronRight" size={16} />
-              </span>
-            </div>
-
-            <div className="relative bg-white/50 backdrop-blur-sm rounded-[1.75rem] border border-white/60 shadow-sm flex-1 overflow-hidden">
-              <div
-                className="absolute inset-y-0 left-0 w-3"
-                style={{ background: latestArtColor.color }}
-              />
-              <div className="grid grid-cols-[88px_1fr] md:grid-cols-[104px_1fr] min-h-full">
-                {/* 書脊 */}
+            {/* Top accent band */}
+            <div
+              className="h-1.5 w-full shrink-0"
+              style={{
+                background: `linear-gradient(90deg, ${latestArtColor.color}cc 0%, ${latestArtColor.color}15 100%)`,
+              }}
+            />
+            <div className="p-6 md:p-8 flex flex-col flex-1">
+              <div className="flex justify-between items-start mb-5">
                 <div
-                  className="relative flex flex-col items-center justify-between py-6 px-3 border-r border-white/40"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold font-sans border"
                   style={{
-                    background: isDarkMode
-                      ? "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))"
-                      : "linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.35))",
+                    background: isDarkMode ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.1)",
+                    color: isDarkMode ? "#fda4af" : "#e11d48",
+                    borderColor: isDarkMode ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.2)",
                   }}
                 >
-                  <div
-                    className="text-[11px] font-sans tracking-[0.28em] theme-text-secondary opacity-70"
-                    style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
-                  >
-                    JOURNAL NOTE
-                  </div>
-                  <div
-                    className="text-[10px] font-mono theme-text-secondary opacity-50"
-                    style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
-                  >
-                    {latestArticle.date}
-                  </div>
+                  <Icon name="PenLine" size={16} /> 最新上架
                 </div>
+                <span className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 group-hover:opacity-100 transition-opacity mt-1">
+                  前往專欄 <Icon name="ChevronRight" size={16} />
+                </span>
+              </div>
 
-                {/* 封面主體 */}
-                <div className="p-6 md:p-7 flex flex-col justify-between min-w-0">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                      <span
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
-                        style={{
-                          background: latestArtColor.bg,
-                          color: latestArtColor.color,
-                          borderColor: latestArtColor.border,
-                        }}
-                      >
-                        <Icon name="Folder" size={14} className="opacity-70" />
-                        {latestArticle.category}
-                      </span>
-                      <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                        <Icon name="Calendar" size={14} /> {latestArticle.date}
-                      </span>
+              <div className="relative bg-white/50 backdrop-blur-sm rounded-[1.75rem] border border-white/60 shadow-sm flex-1 overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 w-3"
+                  style={{ background: latestArtColor.color }}
+                />
+                <div className="grid grid-cols-[88px_1fr] md:grid-cols-[104px_1fr] min-h-full">
+                  {/* 書脊 */}
+                  <div
+                    className="relative flex flex-col items-center justify-between py-6 px-3 border-r border-white/40"
+                    style={{
+                      background: isDarkMode
+                        ? "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))"
+                        : "linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.35))",
+                    }}
+                  >
+                    <div
+                      className="text-[11px] font-sans tracking-[0.28em] theme-text-secondary opacity-70"
+                      style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+                    >
+                      JOURNAL NOTE
                     </div>
-
-                    <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-4 leading-snug group-hover:text-[var(--c-accent)] transition-colors line-clamp-3">
-                      {latestArticle.title}
-                    </h3>
-
-                    <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-5">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
-                        style={{ background: latestArtColor.color, opacity: 0.9 }}
-                      >
-                        {latestArticle.author[0]}
-                      </span>
-                      <span className="font-medium">{latestArticle.author}</span>
-                      <span className="opacity-50">｜</span>
-                      <span className="opacity-80 text-xs line-clamp-1">
-                        {latestArticle.affiliation}
-                      </span>
+                    <div
+                      className="text-[10px] font-mono theme-text-secondary opacity-50"
+                      style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+                    >
+                      {latestArticle.date}
                     </div>
-
-                    <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary opacity-80 border-t border-white/40 pt-4">
-                      {latestArticle.summary}
-                    </p>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between gap-4">
-                    <div className="text-[11px] font-sans tracking-[0.18em] uppercase theme-text-secondary opacity-45">
-                      Latest Upload
+                  {/* 封面主體 */}
+                  <div className="p-6 md:p-7 flex flex-col justify-between min-w-0">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
+                          style={{
+                            background: latestArtColor.bg,
+                            color: latestArtColor.color,
+                            borderColor: latestArtColor.border,
+                          }}
+                        >
+                          <Icon name="Folder" size={14} className="opacity-70" />
+                          {latestArticle.category}
+                        </span>
+                        <span className="text-xs font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
+                          <Icon name="Calendar" size={14} /> {latestArticle.date}
+                        </span>
+                      </div>
+
+                      <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-4 leading-snug group-hover:text-[var(--c-accent)] transition-colors line-clamp-3">
+                        {latestArticle.title}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-sm theme-text-secondary font-sans mb-5">
+                        <span
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm"
+                          style={{ background: latestArtColor.color, opacity: 0.9 }}
+                        >
+                          {latestArticle.author[0]}
+                        </span>
+                        <span className="font-medium">{latestArticle.author}</span>
+                        <span className="opacity-50">｜</span>
+                        <span className="opacity-80 text-xs line-clamp-1">
+                          {latestArticle.affiliation}
+                        </span>
+                      </div>
+
+                      <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary opacity-80 border-t border-white/40 pt-4">
+                        {latestArticle.summary}
+                      </p>
                     </div>
-                    <span
-                      className="inline-flex items-center gap-2 text-sm font-bold font-sans"
-                      style={{ color: latestArtColor.color }}
-                    >
-                      閱讀文章 <Icon name="ChevronRight" size={16} />
-                    </span>
+
+                    <div className="mt-6 flex items-center justify-between gap-4">
+                      <div className="text-[11px] font-sans tracking-[0.18em] uppercase theme-text-secondary opacity-45">
+                        Latest Upload
+                      </div>
+                      <span
+                        className="inline-flex items-center gap-2 text-sm font-bold font-sans"
+                        style={{ color: latestArtColor.color }}
+                      >
+                        閱讀文章 <Icon name="ChevronRight" size={16} />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
