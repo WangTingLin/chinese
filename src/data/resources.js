@@ -15,6 +15,7 @@ export const resourceCategories = [
       { name: "國圖古籍與特藏文獻資源", url: "https://rbook.ncl.edu.tw/NCLSearch/Search/Index/0" },
       { name: "Universal Library", url: "https://archive.org/details/universallibrary" },
       { name: "Z-Library", url: "https://zh.zlib.li/" },
+      { name: "明代科舉《春秋》義題目資料庫（建置中）", url: "https://wangtinglin.github.io/ming-chunqiu-exam-db/public.html" },
     ],
   },
   {
