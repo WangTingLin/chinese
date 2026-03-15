@@ -673,7 +673,7 @@ const pageProps = {
       </div>
 
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(var(--c-panel-rgb), 0.3)", backdropFilter: "blur(20px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`, boxShadow: `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`, transition: "all 500ms ease" }}>
-        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.5rem" }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "5rem" }}>
             <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
               <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
@@ -750,7 +750,7 @@ const pageProps = {
       </main>
 
       <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
-        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "0 1.5rem" }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
           <div className="footer-grid">
             <div style={{ marginBottom: "1rem" }}>
               <div style={{ display: "flex", alignItems: "center", color: "white", marginBottom: "0.5rem" }}>
