@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from "react";
 import { Icon } from "../App";
 import { getCategoryColors } from "../data/articlesData";
+import { NavCardPattern } from "../components/ClassicalDecoration";
 
 export default function HomePage({
   setPage,
@@ -273,6 +274,8 @@ export default function HomePage({
               borderColor: nav.borderColor,
             }}
           >
+            {/* 幾何紋樣底紋 */}
+            <NavCardPattern />
             {/* 裝飾性光球 */}
             <div
               className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"
