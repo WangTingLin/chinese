@@ -5,7 +5,6 @@ import imageUrlBuilder from '@sanity/image-url';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
-import { ArticleThumbnail } from '../components/ClassicalDecoration';
 
 const builder = imageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
@@ -324,30 +323,9 @@ export default function ActivitiesPage({ isDarkMode }) {
                   transition: "opacity 300ms ease, filter 300ms ease"
                 }}
               >
-                {/* 頂部圖像帶：有封面圖用真實照片，否則用幾何紋樣 */}
-                <div
-                  className={`relative overflow-hidden ${ev.coverImage?.asset ? "h-48 md:h-56" : "h-24 md:h-28"}`}
-                  style={{ color: cColor.color }}
-                >
-                  {ev.coverImage?.asset ? (
-                    <img
-                      src={urlFor(ev.coverImage).width(800).height(220).auto('format').fit('crop').url()}
-                      alt={ev.coverImage.alt || ev.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <ArticleThumbnail category={ev.category} />
-                  )}
-                  {/* 左側色條 */}
-                  <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
-                  {/* 底部漸層 */}
-                  <div
-                    className="absolute inset-x-0 bottom-0 h-14 z-10"
-                    style={{ background: "linear-gradient(to bottom, transparent, rgba(var(--c-panel-rgb), 0.97))" }}
-                  />
-                </div>
-                <div className="p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start">
+                {/* 左側色條 */}
+                <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
+                <div className="pl-5 pr-6 py-6 md:pl-6 md:pr-8 md:py-8 flex flex-col md:flex-row gap-6 items-start">
                 <div className="flex-1 min-w-0 w-full">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <span
@@ -411,21 +389,32 @@ export default function ActivitiesPage({ isDarkMode }) {
                   )}
                 </div>
 
-                {ev.link && (
-                  <a
-                    href={ev.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 w-full md:w-auto mt-2 md:mt-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold font-sans shadow-sm hover:-translate-y-0.5 transition-all border"
-                    style={{
-                      background: isPast ? "rgba(107,114,128,0.85)" : cColor.color,
-                      color: "#fff",
-                      borderColor: isPast ? "rgba(107,114,128,0.85)" : cColor.color
-                    }}
-                  >
-                    查看詳情 <Icon name="ExternalLink" size={16} />
-                  </a>
-                )}
+                <div className="flex flex-col items-stretch gap-3 shrink-0 w-full md:w-auto">
+                  {ev.coverImage?.asset && (
+                    <img
+                      src={urlFor(ev.coverImage).width(240).auto('format').fit('clip').url()}
+                      alt={ev.coverImage.alt || ev.title}
+                      className="w-full md:w-44 rounded-2xl object-cover shadow-md border border-white/40 self-center"
+                      style={{ maxHeight: "280px" }}
+                      loading="lazy"
+                    />
+                  )}
+                  {ev.link && (
+                    <a
+                      href={ev.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full md:w-44 mt-2 md:mt-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold font-sans shadow-sm hover:-translate-y-0.5 transition-all border"
+                      style={{
+                        background: isPast ? "rgba(107,114,128,0.85)" : cColor.color,
+                        color: "#fff",
+                        borderColor: isPast ? "rgba(107,114,128,0.85)" : cColor.color
+                      }}
+                    >
+                      查看詳情 <Icon name="ExternalLink" size={16} />
+                    </a>
+                  )}
+                </div>
                 </div>
               </article>
             );
