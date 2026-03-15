@@ -91,7 +91,7 @@ export default function ArticlesPage({ isDarkMode }) {
   const catColors = getCategoryColors(isDarkMode);
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto animate-fade-in relative z-10">
+    <div className="w-full animate-fade-in relative z-10">
       <PageHeader title="文章專欄" />
       <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
     </div>
