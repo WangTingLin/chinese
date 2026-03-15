@@ -109,7 +109,7 @@ export default function ArticlesPage({ isDarkMode }) {
         <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={isDarkMode} />
       )}
       
-      <div className="max-w-4xl xl:max-w-6xl mx-auto space-y-10 animate-fade-in relative z-10">
+      <div className="w-full space-y-10 animate-fade-in relative z-10">
         <PageHeader title="文章專欄" />
 
         <div className="flex flex-wrap gap-2 justify-center">

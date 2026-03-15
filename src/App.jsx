@@ -647,6 +647,18 @@ const pageProps = {
           padding: 2rem 1.5rem 6rem;
           width: 100%;
         }
+        @media (min-width: 1280px) {
+          .main-content {
+            max-width: 90rem;
+            padding-left: 2.5rem;
+            padding-right: 2.5rem;
+          }
+        }
+        @media (min-width: 1536px) {
+          .main-content {
+            max-width: 110rem;
+          }
+        }
         @media (max-width: 640px) {
           .main-content {
             padding: 1.25rem 1rem 4rem;
