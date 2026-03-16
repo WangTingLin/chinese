@@ -12,8 +12,14 @@ import { PREF_OPTIONS } from './constants';
 import HomePage from './pages/HomePage';
 import ActivitiesPage from './pages/ActivitiesPage';
 
-const isNative = Capacitor.isNativePlatform() ||
-  new URLSearchParams(window.location.search).get("app") === "1";
+const isNative = Capacitor.isNativePlatform();
+
+// PWA 加到主畫面後也啟用 app 模式（splash、偏好設定、深色背景等）
+const isStandalone =
+  window.navigator.standalone === true ||
+  window.matchMedia("(display-mode: standalone)").matches;
+
+const isAppMode = isNative || isStandalone;
 
 const client = createClient({
   projectId: '6c1fauax',
@@ -482,7 +488,7 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [splashVisible, setSplashVisible] = useState(isNative);
+  const [splashVisible, setSplashVisible] = useState(isAppMode);
   const [splashExiting, setSplashExiting] = useState(false);
   const PREF_KEY = "csl_native_prefs_v1";
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
@@ -492,11 +498,11 @@ export default function App() {
   /* Native 啟動動畫：1.9s 顯示，再 500ms 淡出，共 2.4s */
   /* Native：body 加深色背景，防止 iOS overscroll 白邊 */
   useEffect(() => {
-    if (isNative) document.body.classList.add("is-native");
+    if (isAppMode) document.body.classList.add("is-native");
   }, []);
 
   useEffect(() => {
-    if (!isNative) return;
+    if (!isAppMode) return;
     const t1 = setTimeout(() => setSplashExiting(true), 1900);
     const t2 = setTimeout(() => {
       setSplashVisible(false);
@@ -556,7 +562,7 @@ export default function App() {
     { id: "submission", label: "投稿須知", icon: <Icon name="Send" size={18} /> },
   ];
   const appOnlyIds = new Set(["home"]);
-  const navItems = isNative ? allNavItems.filter(n => appOnlyIds.has(n.id)) : allNavItems;
+  const navItems = isAppMode ? allNavItems.filter(n => appOnlyIds.has(n.id)) : allNavItems;
 
   const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
 
@@ -584,7 +590,7 @@ export default function App() {
 const pageProps = {
   setPage: setCurrentPage,
   isDarkMode,
-  isNative,
+  isNative: isAppMode,
   nativeCategory,
   setNativeCategory,
   articles,
@@ -776,7 +782,7 @@ const pageProps = {
       `}} />
 
       {/* ── Native 啟動動畫（Splash Screen）── */}
-      {isNative && splashVisible && (
+      {isAppMode && splashVisible && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9999,
           background: "#1c1c1e",
@@ -822,7 +828,7 @@ const pageProps = {
       )}
 
       {/* ── Launch Onboarding（第一次開啟，splash 結束後顯示）── */}
-      {isNative && launchOnboarding && (
+      {isAppMode && launchOnboarding && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 10001,
           background: "#1c1c1e",
@@ -926,18 +932,18 @@ const pageProps = {
 
       <nav style={{
         position: "sticky", top: 0, zIndex: 50, transition: "all 500ms ease",
-        display: (isNative && launchOnboarding) ? "none" : undefined,
-        background: isNative ? "transparent" : `rgba(var(--c-panel-rgb), 0.3)`,
-        backdropFilter: isNative ? "none" : "blur(20px)",
-        borderBottom: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`,
-        boxShadow: isNative ? "none" : `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`,
-        paddingTop: isNative ? "env(safe-area-inset-top, 0px)" : 0,
+        display: (isAppMode && launchOnboarding) ? "none" : undefined,
+        background: isAppMode ? "transparent" : `rgba(var(--c-panel-rgb), 0.3)`,
+        backdropFilter: isAppMode ? "none" : "blur(20px)",
+        borderBottom: isAppMode ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`,
+        boxShadow: isAppMode ? "none" : `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`,
+        paddingTop: isAppMode ? "env(safe-area-inset-top, 0px)" : 0,
       }}>
-        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: isNative ? "0 1rem" : "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: isNative ? "3.5rem" : "5rem" }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: isAppMode ? "0 1rem" : "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: isAppMode ? "3.5rem" : "5rem" }}>
 
-            {/* ── Native 版：3 分類 Tab（置中）── */}
-            {isNative ? (
+            {/* ── App 版：3 分類 Tab（置中）── */}
+            {isAppMode ? (
               <>
                 {/* 3 分類 Tab */}
                 <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", margin: "0 auto" }}>
@@ -1034,7 +1040,7 @@ const pageProps = {
         </div>
 
         {/* 網頁版 mobile 下拉選單 */}
-        {!isNative && mobileOpen && (
+        {!isAppMode && mobileOpen && (
           <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.97' : '0.92'})`, backdropFilter: "blur(24px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
             <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
               {navItems.map((item) => (
@@ -1066,7 +1072,7 @@ const pageProps = {
         {page}
       </main>
 
-      {!isNative && <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
+      {!isAppMode && <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
         <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
           <div className="footer-grid">
             <div style={{ marginBottom: "1rem" }}>
@@ -1101,7 +1107,7 @@ const pageProps = {
         </div>
       </footer>}
 
-      {!isNative && <BackToTopButton isDarkMode={isDarkMode} />}
+      {!isAppMode && <BackToTopButton isDarkMode={isDarkMode} />}
     </div>
   );
 
