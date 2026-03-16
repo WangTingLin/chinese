@@ -308,6 +308,7 @@ export default function HomePage({
     const dragStartYRef      = React.useRef(null);
     const dragXRef           = React.useRef(0);
     const isDraggingHorizRef = React.useRef(false);  // 確認是水平滑動才攔截
+    const [showListSheet, setShowListSheet] = React.useState(false);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
@@ -522,11 +523,8 @@ export default function HomePage({
     const applyCardTransform = (x, transition = "none") => {
       const card = cardRef.current;
       if (!card) return;
-      const ratio    = Math.abs(x) / (window.innerWidth || 390);
-      const rotation = x * 0.025;                      // 輕微傾斜
-      const scale    = 1 - Math.min(ratio * 0.06, 0.05); // 最多縮 5%
       card.style.transition = transition;
-      card.style.transform  = x === 0 ? "" : `translateX(${x}px) rotate(${rotation}deg) scale(${scale})`;
+      card.style.transform  = x === 0 ? "" : `translateX(${x}px)`;
     };
 
     const handleTouchStart = (e) => {
@@ -560,16 +558,23 @@ export default function HomePage({
       const THRESHOLD = 55;
 
       if (isDraggingHorizRef.current && Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
-        /* 夠力：飛出去，再切換卡片 */
-        const flyX = dx < 0 ? -window.innerWidth : window.innerWidth;
-        applyCardTransform(flyX * 1.1, "transform 200ms ease-in");
+        /* 夠力：滑出去，新卡從對側滑入 */
+        const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
+        const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
+        applyCardTransform(flyX, "transform 220ms ease-in");
         setTimeout(() => {
           dx < 0 ? nextCatActivity() : prevCatActivity();
-          if (card) { card.style.transition = "none"; card.style.transform = ""; }
-        }, 190);
+          if (card) {
+            card.style.transition = "none";
+            card.style.transform  = `translateX(${enterX}px)`;
+            card.getBoundingClientRect(); // force reflow
+            card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
+            card.style.transform  = "";
+          }
+        }, 210);
       } else {
-        /* 不夠力：彈回（彈性曲線） */
-        applyCardTransform(0, "transform 420ms cubic-bezier(0.34,1.56,0.64,1)");
+        /* 不夠力：彈回 */
+        applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
       }
 
       touchStart.current     = null;
@@ -846,14 +851,29 @@ export default function HomePage({
               ⚠ 活動資訊僅供參考，可能存在誤植，請至活動詳情頁再次確認。
             </p>
 
-            {/* 向下提示（有活動時，且非 app 模式才顯示）*/}
-            {!isNative && displayList.length > 0 && (
-              <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
-                <div className="bounce-y" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
-                  <div style={{ width: 24, height: 2, borderRadius: 1, background: "#fff" }} />
+            {/* 向下提示（網頁版）/ 列表按鈕（app 版）*/}
+            {displayList.length > 0 && (
+              isNative ? (
+                <button
+                  onClick={() => setShowListSheet(true)}
+                  style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    gap: "0.15rem", paddingBottom: "0.5rem", width: "100%",
+                    background: "none", border: "none", cursor: "pointer",
+                    opacity: 0.35,
+                  }}
+                >
                   <Icon name="ChevronDown" size={16} />
+                  <div style={{ width: 24, height: 2, borderRadius: 1, background: "#fff" }} />
+                </button>
+              ) : (
+                <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
+                  <div className="bounce-y" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
+                    <div style={{ width: 24, height: 2, borderRadius: 1, background: "#fff" }} />
+                    <Icon name="ChevronDown" size={16} />
+                  </div>
                 </div>
-              </div>
+              )
             )}
           </div>
         </section>
@@ -988,6 +1008,55 @@ export default function HomePage({
                 >
                   {filteredList.length > 0 ? `顯示 ${filteredList.length} 筆結果` : "確認"}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 列表 Bottom Sheet ── */}
+        {showListSheet && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 300,
+            display: "flex", flexDirection: "column", justifyContent: "flex-end",
+            animation: "backdropIn 0.22s ease both",
+          }}>
+            {/* 半透明遮罩 */}
+            <div
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }}
+              onClick={() => setShowListSheet(false)}
+            />
+            {/* 面板主體 */}
+            <div style={{
+              position: "relative", zIndex: 1,
+              background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+              animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
+              maxHeight: "88dvh", display: "flex", flexDirection: "column",
+            }}>
+              {/* 拖曳把手 + 標題列 */}
+              <div style={{ padding: "0.75rem 1.25rem 0.5rem", flexShrink: 0 }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.75rem" }}>
+                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em" }}>
+                    {hasActiveFilter ? `搜尋結果・${filteredList.length} 筆` : listHeader}
+                  </p>
+                  <button onClick={() => setShowListSheet(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", cursor: "pointer", padding: "0.2rem 0.4rem", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                    關閉 ✕
+                  </button>
+                </div>
+              </div>
+              {/* 列表（可捲動）*/}
+              <div style={{ overflowY: "auto", flex: 1 }}>
+                {filteredList.length > 0
+                  ? <ActivityListItems list={filteredList} />
+                  : (
+                    <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                      <p style={{ fontSize: "0.92rem" }}>目前沒有符合條件的活動</p>
+                    </div>
+                  )
+                }
               </div>
             </div>
           </div>
