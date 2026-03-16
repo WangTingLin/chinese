@@ -343,6 +343,8 @@ export default function HomePage({
       if (!el) return;
 
       const onStart = (e) => {
+        /* sheet 開著時，觸控讓 sheet 自己處理，卡片不攔截 */
+        if (showListSheetRef.current) return;
         touchStart.current         = e.touches[0].clientX;
         dragStartYRef.current      = e.touches[0].clientY;
         dragXRef.current           = 0;
