@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { createClient } from '@sanity/client';
 import { PageHeaderBanner } from './components/ClassicalDecoration';
 import ArticlesPage from './pages/ArticlesPage';
@@ -8,6 +8,7 @@ import EventsPage from './pages/EventsPage';
 import AboutPage from './pages/AboutPage';
 import BooksPage from './pages/BooksPage';
 import SubmissionPage from './pages/SubmissionPage';
+import { PREF_OPTIONS } from './constants';
 import HomePage from './pages/HomePage';
 import ActivitiesPage from './pages/ActivitiesPage';
 
@@ -18,7 +19,7 @@ const client = createClient({
   projectId: '6c1fauax',
   dataset: 'production',
   apiVersion: '2024-01-01',
-  useCdn: true,
+  useCdn: false,
 });
 
 /* ==================== 圖示與 Logo ==================== */
@@ -204,7 +205,26 @@ export const Icon = ({ name, size = 24, className = "" }) => {
     ),
     Moon: (
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-    )
+    ),
+    Sliders: (
+      <>
+        <line x1="4" x2="4" y1="21" y2="14" />
+        <line x1="4" x2="4" y1="10" y2="3" />
+        <line x1="12" x2="12" y1="21" y2="12" />
+        <line x1="12" x2="12" y1="8" y2="3" />
+        <line x1="20" x2="20" y1="21" y2="16" />
+        <line x1="20" x2="20" y1="12" y2="3" />
+        <line x1="1" x2="7" y1="14" y2="14" />
+        <line x1="9" x2="15" y1="8" y2="8" />
+        <line x1="17" x2="23" y1="16" y2="16" />
+      </>
+    ),
+    Search: (
+      <>
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" x2="16.65" y1="21" y2="16.65" />
+      </>
+    ),
   };
 
   return (
@@ -457,30 +477,70 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [nativeCategory, setNativeCategory] = useState("lecture");
   const [articles, setArticles] = useState([]);
   const [events, setEvents] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [splashVisible, setSplashVisible] = useState(isNative);
+  const [splashExiting, setSplashExiting] = useState(false);
+  const PREF_KEY = "csl_native_prefs_v1";
+  const [launchOnboarding, setLaunchOnboarding] = useState(false);
+  const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
+  const [launchOnboardingSelected, setLaunchOnboardingSelected] = useState([]);
+
+  /* Native 啟動動畫：1.9s 顯示，再 500ms 淡出，共 2.4s */
+  /* Native：body 加深色背景，防止 iOS overscroll 白邊 */
+  useEffect(() => {
+    if (isNative) document.body.classList.add("is-native");
+  }, []);
 
   useEffect(() => {
+    if (!isNative) return;
+    const t1 = setTimeout(() => setSplashExiting(true), 1900);
+    const t2 = setTimeout(() => {
+      setSplashVisible(false);
+      /* 第一次開啟才顯示偏好設定 */
+      if (!localStorage.getItem(PREF_KEY)) setLaunchOnboarding(true);
+    }, 2400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const saveLaunchPrefs = (selected) => {
+    localStorage.setItem(PREF_KEY, JSON.stringify(selected));
+    window.dispatchEvent(new Event("launchPrefsReady"));
+    setLaunchOnboardingExiting(true);
+    setTimeout(() => setLaunchOnboarding(false), 450);
+  };
+
+  useEffect(() => {
+    const CDN = `https://6c1fauax.apicdn.sanity.io/v2024-01-01/data/query/production`;
+
+    /* Native：用 CapacitorHttp（原生 NSURLSession，不受 CORS 限制）
+       Web：用 fetch（CORS 由 Sanity CDN 處理）*/
+    const sf = async (q) => {
+      const url = `${CDN}?query=${encodeURIComponent(q)}`;
+      if (isNative) {
+        const res = await CapacitorHttp.get({ url });
+        return res.data?.result || [];
+      }
+      return fetch(url).then(r => r.json()).then(j => j.result || []);
+    };
+
     const fetchAllData = async () => {
       try {
         const [articlesData, eventsData, activitiesData] = await Promise.all([
-          client.fetch(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {
-            _id, title, author, affiliation, contact, date, category, tags, summary, blocks
-          }`),
-          client.fetch(`*[_type == "event"] | order(date desc) {
-            _id, title, date, type, status, summary, details, location, topic, papers
-          }`),
-          client.fetch(`*[_type == "promoEvent"] | order(_createdAt desc) {
-            _id, title, category, date, speaker, location, organizer, link,
-            coverImage { asset->{ _id, url }, alt }
-          }`),
+          sf(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {_id, title, author, affiliation, contact, date, category, tags, summary, blocks}`),
+          sf(`*[_type == "event"] | order(date desc) {_id, title, date, type, status, summary, details, location, topic, papers}`),
+          sf(`*[_type == "promoEvent"] | order(_createdAt desc) {_id, title, category, date, speaker, location, organizer, link, coverImage{asset->{_id,url},alt}}`),
         ]);
         setArticles(articlesData || []);
         setEvents(eventsData || []);
         setActivities(activitiesData || []);
       } catch (err) {
-        console.error("Sanity 資料讀取失敗:", err);
+        console.error("Sanity fetch 失敗:", err.message || err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchAllData();
@@ -495,18 +555,42 @@ export default function App() {
     { id: "articles", label: "文章專欄", icon: <Icon name="BookOpen" size={18} /> },
     { id: "submission", label: "投稿須知", icon: <Icon name="Send" size={18} /> },
   ];
-  const appOnlyIds = new Set(["home", "activities", "books"]);
+  const appOnlyIds = new Set(["home"]);
   const navItems = isNative ? allNavItems.filter(n => appOnlyIds.has(n.id)) : allNavItems;
 
   const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
+
+  /* Tab 計數（native 導覽列 badge 用）*/
+  const _getEndDate = (d) => {
+    if (!d) return new Date(0);
+    const t = d.trim();
+    if (t.includes("～") || t.includes("~")) {
+      const pts = t.split(/[～~]/);
+      return new Date(`${pts[pts.length-1].trim()}T23:59:59`);
+    }
+    const [dp, tp] = t.split(" ");
+    if (!dp) return new Date(0);
+    if (tp?.includes("-")) return new Date(`${dp}T${tp.split("-")[1]}:00`);
+    return new Date(`${dp}T23:59:59`);
+  };
+  const _now = new Date();
+  const _upcoming = activities.filter(a => _getEndDate(a.date) >= _now);
+  const catCounts = {
+    lecture:    _upcoming.filter(a => a.category === "學術講座").length,
+    workshop:   _upcoming.filter(a => a.category === "研討會／工作坊" || a.category === "研討會/工作坊").length,
+    submission: _upcoming.filter(a => a.category === "徵稿資訊").length,
+  };
 
 const pageProps = {
   setPage: setCurrentPage,
   isDarkMode,
   isNative,
+  nativeCategory,
+  setNativeCategory,
   articles,
   events,
   activities,
+  loading,
 };
 
 
@@ -586,6 +670,23 @@ const pageProps = {
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
         @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
         .animate-fade-in { animation: fadeIn 0.5s ease-out both; }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        .shimmer { background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.12) 50%,rgba(255,255,255,0.05) 75%); background-size:200% 100%; animation:shimmer 1.5s ease infinite; border-radius:0.5rem; }
+        .native-btn { -webkit-tap-highlight-color:transparent; transition:transform 130ms ease,opacity 130ms ease !important; }
+        .native-btn:active { transform:scale(0.94) !important; opacity:0.78 !important; }
+        @keyframes splashLogoIn { 0%{opacity:0;transform:scale(0.55)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes splashTextIn { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
+        @keyframes splashTagIn  { 0%{opacity:0;letter-spacing:0.3em} 100%{opacity:1;letter-spacing:0.14em} }
+        @keyframes bounceY { 0%,100%{transform:translateY(0)} 45%{transform:translateY(6px)} 65%{transform:translateY(2px)} }
+        .bounce-y { animation:bounceY 1.9s ease-in-out infinite; }
+        @keyframes listItemIn { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
+        .list-item-in { animation:listItemIn 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes sheetSlideUp { 0%{transform:translateY(100%)} 100%{transform:translateY(0)} }
+        @keyframes backdropIn   { 0%{opacity:0} 100%{opacity:1} }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(1) opacity(0.4); }
+        .native-input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:0.85rem; color:#fff; font-family:'Noto Sans TC',sans-serif; font-size:0.9rem; padding:0.75rem 1rem; width:100%; box-sizing:border-box; outline:none; -webkit-appearance:none; }
+        .native-input::placeholder { color:rgba(255,255,255,0.28); }
+        .native-input:focus { border-color:rgba(255,255,255,0.32); }
         @keyframes blob1Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.45} 25%{transform:translate(6vw,10vh) scale(1.22);opacity:.95} 50%{transform:translate(-4vw,16vh) scale(.88);opacity:.5} 75%{transform:translate(9vw,4vh) scale(1.18);opacity:.9} }
         @keyframes blob2Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.4} 33%{transform:translate(-8vw,13vh) scale(1.2);opacity:.9} 66%{transform:translate(5vw,-10vh) scale(.82);opacity:.45} }
         @keyframes blob3Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.4} 40%{transform:translate(8vw,-13vh) scale(1.25);opacity:.92} 80%{transform:translate(-6vw,-4vh) scale(.85);opacity:.48} }
@@ -674,6 +775,149 @@ const pageProps = {
         }
       `}} />
 
+      {/* ── Native 啟動動畫（Splash Screen）── */}
+      {isNative && splashVisible && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "#1c1c1e",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          gap: 0,
+          opacity: splashExiting ? 0 : 1,
+          transition: "opacity 500ms ease",
+          pointerEvents: splashExiting ? "none" : "auto",
+        }}>
+          {/* Logo */}
+          <div style={{ animation: "splashLogoIn 0.75s cubic-bezier(0.34,1.56,0.64,1) 0.25s both" }}>
+            <LogoImage className="w-24 h-24 rounded-[22px] shadow-2xl" />
+          </div>
+          {/* 名稱 */}
+          <p style={{
+            color: "rgba(255,255,255,0.9)", fontFamily: "'Noto Serif TC',serif",
+            fontSize: "1.25rem", fontWeight: 700, letterSpacing: "0.18em",
+            marginTop: "1.4rem", marginBottom: "0.5rem",
+            animation: "splashTextIn 0.55s ease 0.85s both",
+          }}>中文研究室</p>
+          {/* 標語 */}
+          <p style={{
+            color: "rgba(255,255,255,0.38)", fontFamily: "'Noto Serif TC',serif",
+            fontSize: "0.82rem", letterSpacing: "0.14em",
+            animation: "splashTagIn 0.7s ease 1.1s both",
+          }}>志於道・據於德・依於仁・游於藝</p>
+          {/* 底部小點點 loading */}
+          <div style={{
+            position: "absolute", bottom: "3.5rem",
+            display: "flex", gap: "0.4rem", alignItems: "center",
+            animation: "splashTextIn 0.4s ease 1.3s both",
+          }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{
+                width: 5, height: 5, borderRadius: "50%",
+                background: "rgba(255,255,255,0.28)",
+                animation: `shimmer 1.4s ease ${0.2 * i}s infinite`,
+              }} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Launch Onboarding（第一次開啟，splash 結束後顯示）── */}
+      {isNative && launchOnboarding && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 10001,
+          background: "#1c1c1e",
+          display: "flex", flexDirection: "column",
+          padding: "0 1.5rem",
+          paddingTop: "env(safe-area-inset-top, 3rem)",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2rem)",
+          opacity: launchOnboardingExiting ? 0 : 1,
+          transition: "opacity 450ms ease",
+          pointerEvents: launchOnboardingExiting ? "none" : "auto",
+          animation: "splashTextIn 0.4s ease both",
+        }}>
+          {/* 頂部 Logo 小標 */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.55rem", marginTop: "1.5rem", marginBottom: "2.5rem" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>📚</div>
+            <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.8rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.08em" }}>中文研究室</span>
+          </div>
+
+          {/* 標題 */}
+          <div style={{ marginBottom: "2rem" }}>
+            <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
+              個人化設定
+            </p>
+            <h1 style={{ color: "#fff", fontSize: "1.55rem", fontWeight: 800, fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.3, marginBottom: "0.75rem" }}>
+              你對哪些領域<br />感興趣？
+            </h1>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.88rem", fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.6 }}>
+              選擇一個或多個領域，我們會優先推薦符合偏好的活動。
+            </p>
+          </div>
+
+          {/* 選項格 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", flex: 1 }}>
+            {PREF_OPTIONS.map(opt => {
+              const selected = launchOnboardingSelected.includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setLaunchOnboardingSelected(prev =>
+                    prev.includes(opt.id) ? prev.filter(x => x !== opt.id) : [...prev, opt.id]
+                  )}
+                  style={{
+                    padding: "1.1rem 1rem",
+                    borderRadius: "1.1rem",
+                    border: `1.5px solid ${selected ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.12)"}`,
+                    background: selected ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.04)",
+                    cursor: "pointer",
+                    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.4rem",
+                    transition: "all 220ms ease",
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ fontSize: "1.4rem", fontWeight: 900, lineHeight: 1, fontFamily: "'Noto Sans TC',sans-serif", color: "rgba(255,255,255,0.55)" }}>{opt.label[0]}</span>
+                  <span style={{ color: selected ? "#fff" : "rgba(255,255,255,0.65)", fontSize: "0.9rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif" }}>
+                    {opt.label}
+                  </span>
+                  {selected && (
+                    <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.65rem", fontFamily: "'Noto Sans TC',sans-serif" }}>✓ 已選取</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 底部按鈕 */}
+          <div style={{ paddingTop: "1.75rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <button
+              onClick={() => saveLaunchPrefs(launchOnboardingSelected)}
+              style={{
+                width: "100%", padding: "0.95rem 0", borderRadius: "1rem",
+                fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "1rem",
+                background: launchOnboardingSelected.length > 0 ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.2)",
+                color: launchOnboardingSelected.length > 0 ? "#1c1c1e" : "rgba(255,255,255,0.35)",
+                border: "none", cursor: "pointer", transition: "all 220ms ease",
+              }}
+            >
+              {launchOnboardingSelected.length > 0
+                ? `開始探索（已選 ${launchOnboardingSelected.length} 項）`
+                : "請選擇至少一個領域"}
+            </button>
+            <button
+              onClick={() => saveLaunchPrefs([])}
+              style={{
+                width: "100%", padding: "0.7rem 0", borderRadius: "1rem",
+                background: "transparent", border: "none", cursor: "pointer",
+                color: "rgba(255,255,255,0.3)", fontSize: "0.85rem",
+                fontFamily: "'Noto Sans TC',sans-serif",
+              }}
+            >
+              略過，顯示全部活動
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
         <div className="blob-1" style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", borderRadius: "9999px", filter: "blur(100px)", background: "var(--c-blob-1)", transition: "background 800ms ease" }} />
         <div className="blob-2" style={{ position: "absolute", top: "20%", right: "-10%", width: "40vw", height: "40vw", borderRadius: "9999px", filter: "blur(100px)", background: "var(--c-blob-2)", transition: "background 800ms ease" }} />
@@ -682,153 +926,138 @@ const pageProps = {
 
       <nav style={{
         position: "sticky", top: 0, zIndex: 50, transition: "all 500ms ease",
+        display: (isNative && launchOnboarding) ? "none" : undefined,
         background: isNative ? "transparent" : `rgba(var(--c-panel-rgb), 0.3)`,
         backdropFilter: isNative ? "none" : "blur(20px)",
         borderBottom: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`,
         boxShadow: isNative ? "none" : `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`,
+        paddingTop: isNative ? "env(safe-area-inset-top, 0px)" : 0,
       }}>
-        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: isNative ? "0 1.25rem" : "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: isNative ? "0 1rem" : "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: isNative ? "3.5rem" : "5rem" }}>
 
-            {/* Logo / 標題：native 版隱藏 */}
-            {!isNative && (
-              <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
-                <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
-                <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark, transition: "color 500ms ease" }}>中文研究室</span>
-              </div>
+            {/* ── Native 版：3 分類 Tab（置中）── */}
+            {isNative ? (
+              <>
+                {/* 3 分類 Tab */}
+                <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", margin: "0 auto" }}>
+                  {[
+                    { key: "lecture",    label: "學術講座" },
+                    { key: "workshop",   label: "研討會/工作坊" },
+                    { key: "submission", label: "徵稿資訊" },
+                  ].map(tab => {
+                    const active = nativeCategory === tab.key;
+                    const cnt = catCounts[tab.key];
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setNativeCategory(tab.key)}
+                        className="native-btn"
+                        style={{
+                          padding: "0.3rem 0.65rem",
+                          borderRadius: "9999px",
+                          fontSize: "0.72rem",
+                          fontWeight: active ? 700 : 500,
+                          fontFamily: "'Noto Sans TC', sans-serif",
+                          cursor: "pointer",
+                          border: "none",
+                          transition: "all 220ms ease",
+                          background: active
+                            ? "rgba(255,255,255,0.95)"
+                            : "rgba(255,255,255,0.12)",
+                          color: active ? "#1c1c1e" : "rgba(255,255,255,0.8)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          display: "flex", alignItems: "center", gap: "0.3rem",
+                        }}
+                      >
+                        {tab.label}
+                        {cnt > 0 && (
+                          <span style={{
+                            background: active ? "rgba(28,28,30,0.15)" : "rgba(255,255,255,0.22)",
+                            color: active ? "#1c1c1e" : "#fff",
+                            fontSize: "0.6rem", fontWeight: 700,
+                            padding: "1px 5px", borderRadius: 9999,
+                            lineHeight: 1.4,
+                          }}>{cnt}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              /* ── 網頁版：Logo + 標題（左）+ 導覽列（右）── */
+              <>
+                <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
+                  <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
+                  <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark, transition: "color 500ms ease" }}>中文研究室</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginLeft: "auto" }}>
+                  <div className="desktop-nav" style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
+                    {navItems.map((item) => (
+                      <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>
+                        {item.icon} {item.label}
+                      </ThemedButton>
+                    ))}
+                  </div>
+
+                  {/* 日/月 模式切換 */}
+                  <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                      background: "rgba(var(--c-panel-rgb), 0.4)",
+                      border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                      color: "var(--c-primary-dark)",
+                    }}
+                    title={isDarkMode ? "切換至亮色模式" : "切換至暗色模式"}
+                  >
+                    <Icon name={isDarkMode ? "Sun" : "Moon"} size={20} />
+                  </button>
+
+                  {/* 網頁版漢堡按鈕 */}
+                  <button
+                    className="mobile-menu-btn"
+                    onClick={() => setMobileOpen(!mobileOpen)}
+                    style={{ display: "none", padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}
+                  >
+                    <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
+                  </button>
+                </div>
+              </>
             )}
-
-            {/* 右側按鈕群 */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginLeft: isNative ? 0 : "auto" }}>
-              <div className="desktop-nav" style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
-                {!isNative && navItems.map((item) => (
-                  <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>
-                    {item.icon} {item.label}
-                  </ThemedButton>
-                ))}
-              </div>
-
-              {/* 漢堡選單按鈕 */}
-              <button
-                className={isNative ? "" : "mobile-menu-btn"}
-                onClick={() => setMobileOpen(!mobileOpen)}
-                style={{
-                  display: isNative ? "flex" : "none",
-                  padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
-                  background: isNative ? "rgba(0,0,0,0.28)" : "rgba(var(--c-panel-rgb), 0.4)",
-                  backdropFilter: "blur(8px)",
-                  border: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
-                  color: isNative ? "#fff" : t.primaryDark,
-                  alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <Icon name={mobileOpen ? "X" : "Menu"} size={22} />
-              </button>
-
-              {/* 日/月 模式切換 */}
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className={isNative ? "" : "p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
-                  background: isNative ? "rgba(0,0,0,0.28)" : "rgba(var(--c-panel-rgb), 0.4)",
-                  border: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
-                  color: isNative ? "#fff" : "var(--c-primary-dark)",
-                }}
-                title={isDarkMode ? "切換至亮色模式" : "切換至暗色模式"}
-              >
-                <Icon name={isDarkMode ? "Sun" : "Moon"} size={20} />
-              </button>
-
-              {/* 網頁版漢堡按鈕 */}
-              {!isNative && (
-                <button
-                  className="mobile-menu-btn"
-                  onClick={() => setMobileOpen(!mobileOpen)}
-                  style={{ display: "none", padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}
-                >
-                  <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
-                </button>
-              )}
-            </div>
           </div>
         </div>
 
-        {mobileOpen && (
+        {/* 網頁版 mobile 下拉選單 */}
+        {!isNative && mobileOpen && (
           <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.97' : '0.92'})`, backdropFilter: "blur(24px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
-            {isNative ? (
-              /* ── Native 版：大卡片選單 ── */
-              <div style={{ padding: "1rem 1rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {/* Logo + 名稱 */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0.25rem 0.75rem", borderBottom: `1px solid rgba(var(--c-border-rgb), 0.2)`, marginBottom: "0.25rem" }}>
-                  <LogoImage className="w-10 h-10 rounded-xl border border-white/30 shadow-sm" />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: "1.1rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark }}>中文研究室</div>
-                    <div style={{ fontSize: "0.72rem", fontFamily: "'Noto Sans TC', sans-serif", color: t.textSec, opacity: 0.55 }}>Chinese Studies Lab</div>
-                  </div>
-                </div>
-                {[
-                  { id: "activities", icon: "CalendarClock", label: "近期活動", desc: "學術講座・研討工作坊" },
-                  { id: "books",      icon: "Library",       label: "資源分享", desc: "學術工具・文獻查找" },
-                ].map(card => (
-                  <button
-                    key={card.id}
-                    onClick={() => go(card.id)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "1.1rem",
-                      width: "100%", textAlign: "left",
-                      padding: "1rem 1.2rem", borderRadius: "1.25rem",
-                      cursor: "pointer", border: "1px solid",
-                      transition: "all 300ms cubic-bezier(0.34,1.56,0.64,1)",
-                      background: currentPage === card.id
-                        ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.7' : '0.95'})`
-                        : `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.35' : '0.55'})`,
-                      borderColor: currentPage === card.id
-                        ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.5' : '0.8'})`
-                        : `rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.35'})`,
-                    }}
-                  >
-                    <div style={{
-                      width: 52, height: 52, borderRadius: "0.9rem", flexShrink: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      background: isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
-                    }}>
-                      <Icon name={card.icon} size={26} style={{ color: t.primaryDark, opacity: 0.7 }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: "1.1rem", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark }}>{card.label}</div>
-                      <div style={{ fontSize: "0.8rem", fontFamily: "'Noto Sans TC', sans-serif", color: t.textSec, marginTop: 2, opacity: 0.65 }}>{card.desc}</div>
-                    </div>
-                    <Icon name="ChevronRight" size={16} style={{ color: t.textSec, opacity: 0.35, flexShrink: 0 }} />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              /* ── 網頁版：原有文字列表 ── */
-              <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => go(item.id)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "0.75rem",
-                      width: "100%", textAlign: "left",
-                      padding: "0.75rem 1rem", borderRadius: "0.75rem",
-                      fontSize: "1rem", fontWeight: 500,
-                      fontFamily: "'Noto Sans TC', sans-serif",
-                      border: "1px solid", cursor: "pointer",
-                      marginBottom: "0.25rem", transition: "all 200ms ease",
-                      background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent",
-                      borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent",
-                      color: currentPage === item.id ? t.primaryDark : t.textSec,
-                    }}
-                  >
-                    {item.icon} {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => go(item.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    width: "100%", textAlign: "left",
+                    padding: "0.75rem 1rem", borderRadius: "0.75rem",
+                    fontSize: "1rem", fontWeight: 500,
+                    fontFamily: "'Noto Sans TC', sans-serif",
+                    border: "1px solid", cursor: "pointer",
+                    marginBottom: "0.25rem", transition: "all 200ms ease",
+                    background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent",
+                    borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent",
+                    color: currentPage === item.id ? t.primaryDark : t.textSec,
+                  }}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </nav>

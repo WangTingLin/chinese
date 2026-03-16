@@ -1,16 +1,25 @@
 // 檔案路徑：src/pages/HomePage.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { Icon } from "../App";
 import { getCategoryColors } from "../data/articlesData";
 import { NavCardPattern, HeroMedallion } from "../components/ClassicalDecoration";
+import { PREF_OPTIONS } from "../constants";
+
+/* ── component 外的常數，避免每次 render 重建 ── */
+const PREF_KEY = "csl_native_prefs_v1";
 
 export default function HomePage({
   setPage,
   isDarkMode,
   isNative = false,
+  nativeCategory = "lecture",
   articles = [],
   events = [],
   activities = [],
+  loading = false,
 }) {
   /* ================= 最新文章 ================= */
   const latestArticle =
@@ -70,7 +79,90 @@ export default function HomePage({
     [activities]
   );
 
+  /* Native 分類篩選（Bug 2 fix：workshop 同時接受全形／半形斜線）*/
+  const lectureActivities    = useMemo(() => upcomingActivities.filter(a => a.category === "學術講座"), [upcomingActivities]);
+  const workshopActivities   = useMemo(() => upcomingActivities.filter(a => a.category === "研討會／工作坊" || a.category === "研討會/工作坊"), [upcomingActivities]);
+  const submissionActivities = useMemo(() => upcomingActivities.filter(a => a.category === "徵稿資訊"), [upcomingActivities]);
+
+  /* ================= 個人偏好（Native 專用）================= */
+
+  const [userPrefs, setUserPrefs] = useState(() => {
+    if (!isNative) return [];
+    try {
+      const saved = localStorage.getItem(PREF_KEY);
+      return saved !== null ? JSON.parse(saved) : null; // null = 未設定，觸發引導頁
+    } catch { return null; }
+  });
+  const [onboardingSelected, setOnboardingSelected] = useState([]);
+
+  /* 監聽 App.jsx launch onboarding 儲存後的通知 */
+  useEffect(() => {
+    const handleLaunchPrefs = () => {
+      try {
+        const saved = localStorage.getItem(PREF_KEY);
+        setUserPrefs(saved !== null ? JSON.parse(saved) : null);
+      } catch { /* ignore */ }
+    };
+    window.addEventListener("launchPrefsReady", handleLaunchPrefs);
+    return () => window.removeEventListener("launchPrefsReady", handleLaunchPrefs);
+  }, []);
+
+  const savePrefs = (prefs) => {
+    localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
+    setUserPrefs(prefs);
+  };
+
+  const scoreActivity = (ev, prefs) => {
+    if (!prefs || prefs.length === 0) return 0;
+    const text = `${ev.title || ""} ${ev.speaker || ""} ${ev.category || ""}`;
+    let score = 0;
+    prefs.forEach(prefId => {
+      const opt = PREF_OPTIONS.find(o => o.id === prefId);
+      if (opt) opt.keywords.forEach(kw => { if (text.includes(kw)) score += 1; });
+    });
+    return score;
+  };
+
+  /* 依偏好評分重排；無偏好時維持原時間排序 */
+  const rankedLectureActivities = useMemo(() => {
+    if (!userPrefs || userPrefs.length === 0) return lectureActivities;
+    return [...lectureActivities].sort((a, b) => {
+      const diff = scoreActivity(b, userPrefs) - scoreActivity(a, userPrefs);
+      return diff !== 0 ? diff : parseEventDate(a.date) - parseEventDate(b.date);
+    });
+  }, [lectureActivities, userPrefs]);
+
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+  const [sortByDate,      setSortByDate]      = useState(false);
+  const [searchQuery,     setSearchQuery]     = useState("");
+  const [filterDateFrom,  setFilterDateFrom]  = useState("");
+  const [filterDateTo,    setFilterDateTo]    = useState("");
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+
+  /* 依偏好評分重排 workshop/submission（與 lecture 相同邏輯）*/
+  const rankedWorkshopActivities = useMemo(() => {
+    if (!userPrefs || userPrefs.length === 0) return workshopActivities;
+    return [...workshopActivities].sort((a, b) => {
+      const diff = scoreActivity(b, userPrefs) - scoreActivity(a, userPrefs);
+      return diff !== 0 ? diff : parseEventDate(a.date) - parseEventDate(b.date);
+    });
+  }, [workshopActivities, userPrefs]);
+
+  const rankedSubmissionActivities = useMemo(() => {
+    if (!userPrefs || userPrefs.length === 0) return submissionActivities;
+    return [...submissionActivities].sort((a, b) => {
+      const diff = scoreActivity(b, userPrefs) - scoreActivity(a, userPrefs);
+      return diff !== 0 ? diff : parseEventDate(a.date) - parseEventDate(b.date);
+    });
+  }, [submissionActivities, userPrefs]);
+
+  /* 切換 Tab 或篩選條件改變時，重置輪播到第一筆 */
+  useEffect(() => {
+    setCurrentActivityIndex(0);
+  }, [nativeCategory]);
+  useEffect(() => {
+    setCurrentActivityIndex(0);
+  }, [searchQuery, filterDateFrom, filterDateTo]);
   const safeIdx =
     upcomingActivities.length === 0
       ? 0
@@ -206,9 +298,177 @@ export default function HomePage({
       ["#10b981","#0ea5e9"],
       ["#8b5cf6","#ec4899"],
     ];
-    const accentPair = accentGradients[safeIdx % accentGradients.length];
+    const panelBg = "#1c1c1e";
 
-    /* ── ICS 行事曆產生器 ── */
+    /* useRef 必須在任何 early return 之前呼叫，確保 hook 順序一致 */
+    const touchStart         = React.useRef(null);
+    const scrollContainerRef = React.useRef(null);   // 外層滾動容器
+    const coverAreaRef       = React.useRef(null);   // 封面圖片區
+    const cardRef            = React.useRef(null);   // 精選卡 section（拖拽用）
+    const dragStartYRef      = React.useRef(null);
+    const dragXRef           = React.useRef(0);
+    const isDraggingHorizRef = React.useRef(false);  // 確認是水平滑動才攔截
+
+    /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
+    if (loading) {
+      return (
+        <div style={{
+          margin: "calc(-3.5rem - 1.25rem) -1rem -4rem",
+          height: "100dvh", background: panelBg,
+          overflow: "hidden", display: "flex", flexDirection: "column",
+        }}>
+          <div className="shimmer" style={{ flex: 1 }} />
+          <div style={{ padding: "1.25rem 1.5rem", background: panelBg }}>
+            <div className="shimmer" style={{ height: 10, width: "28%", borderRadius: 6, marginBottom: "0.65rem" }} />
+            <div className="shimmer" style={{ height: 20, width: "88%", borderRadius: 6, marginBottom: "0.45rem" }} />
+            <div className="shimmer" style={{ height: 20, width: "65%", borderRadius: 6, marginBottom: "1rem" }} />
+            <div className="shimmer" style={{ height: 12, width: "50%", borderRadius: 6, marginBottom: "0.3rem" }} />
+            <div className="shimmer" style={{ height: 12, width: "38%", borderRadius: 6, marginBottom: "1.2rem" }} />
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <div className="shimmer" style={{ flex: 1, height: 50, borderRadius: 14 }} />
+              <div className="shimmer" style={{ flex: 1, height: 50, borderRadius: 14 }} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── 引導頁：首次開啟時顯示 ── */
+    if (userPrefs === null) {
+      const togglePref = (id) =>
+        setOnboardingSelected(prev =>
+          prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+      return (
+        <div
+          className="animate-fade-in"
+          style={{
+            position: isNative ? "fixed" : "relative",
+            inset: isNative ? 0 : undefined,
+            zIndex: isNative ? 10001 : 10,
+            margin: isNative ? 0 : "calc(-3.5rem - 1.25rem) -1rem -4rem",
+            minHeight: isNative ? undefined : "100dvh",
+            height: isNative ? "100dvh" : undefined,
+            background: panelBg,
+            display: "flex", flexDirection: "column",
+            padding: "0 1.5rem",
+            paddingTop: isNative ? "calc(env(safe-area-inset-top, 2rem) + 1.5rem)" : "calc(3.5rem + 2.5rem)",
+            paddingBottom: isNative ? "calc(env(safe-area-inset-bottom, 0px) + 2rem)" : "3rem",
+            overflowY: "auto",
+            overscrollBehavior: "none",
+          }}
+        >
+          {/* 標題區 */}
+          <div style={{ marginBottom: "2rem" }}>
+            <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
+              個人化設定
+            </p>
+            <h1 style={{ color: "#fff", fontSize: "1.55rem", fontWeight: 800, fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.3, marginBottom: "0.75rem" }}>
+              你對哪些領域<br />感興趣？
+            </h1>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.88rem", fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.6 }}>
+              選擇一個或多個領域，我們會優先在精選卡推薦符合偏好的學術講座。
+            </p>
+          </div>
+
+          {/* 選項格 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", flex: 1 }}>
+            {PREF_OPTIONS.map(opt => {
+              const selected = onboardingSelected.includes(opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => togglePref(opt.id)}
+                  style={{
+                    padding: "1.1rem 1rem",
+                    borderRadius: "1.1rem",
+                    border: `1.5px solid ${selected ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.12)"}`,
+                    background: selected ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.04)",
+                    cursor: "pointer",
+                    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.4rem",
+                    transition: "all 220ms ease",
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ fontSize: "1.4rem", fontWeight: 900, lineHeight: 1, fontFamily: "'Noto Sans TC',sans-serif", color: "rgba(255,255,255,0.55)" }}>{opt.label[0]}</span>
+                  <span style={{ color: selected ? "#fff" : "rgba(255,255,255,0.65)", fontSize: "0.9rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif" }}>
+                    {opt.label}
+                  </span>
+                  {selected && (
+                    <span style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.65rem", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                      ✓ 已選取
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 底部按鈕 */}
+          <div style={{ paddingTop: "1.75rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <button
+              onClick={() => savePrefs(onboardingSelected)}
+              style={{
+                width: "100%", padding: "0.95rem 0", borderRadius: "1rem",
+                fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "1rem",
+                background: onboardingSelected.length > 0 ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.25)",
+                color: onboardingSelected.length > 0 ? "#1c1c1e" : "rgba(255,255,255,0.4)",
+                border: "none", cursor: "pointer", transition: "all 220ms ease",
+              }}
+            >
+              {onboardingSelected.length > 0 ? `開始探索（已選 ${onboardingSelected.length} 項）` : "請選擇至少一個領域"}
+            </button>
+            <button
+              onClick={() => savePrefs([])}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: "rgba(255,255,255,0.3)", fontSize: "0.82rem",
+                fontFamily: "'Noto Sans TC',sans-serif", padding: "0.25rem 0",
+              }}
+            >
+              略過，顯示所有活動
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── 目前分類對應的活動列表（依偏好或時間排序）── */
+    const categoryList =
+      nativeCategory === "lecture"    ? (sortByDate ? lectureActivities    : rankedLectureActivities)    :
+      nativeCategory === "workshop"   ? (sortByDate ? workshopActivities   : rankedWorkshopActivities)   :
+      (sortByDate ? submissionActivities : rankedSubmissionActivities);
+
+    /* ── 搜尋 ＋ 日期篩選：有條件時精選卡也只顯示篩選後的結果 ── */
+    const hasActiveFilter = !!(searchQuery.trim() || filterDateFrom || filterDateTo);
+    const filteredList = (() => {
+      const q = searchQuery.trim().toLowerCase();
+      return categoryList.filter(ev => {
+        if (q && !`${ev.title||""} ${ev.speaker||""} ${ev.location||""}`.toLowerCase().includes(q)) return false;
+        if (filterDateFrom) { const from = new Date(filterDateFrom + "T00:00:00"); if (getEventEndDate(ev.date) < from) return false; }
+        if (filterDateTo)   { const to   = new Date(filterDateTo   + "T23:59:59"); if (parseEventDate(ev.date)  > to)   return false; }
+        return true;
+      });
+    })();
+
+    /* displayList：有篩選條件時使用 filteredList，否則用完整分類列表 */
+    const displayList     = hasActiveFilter ? filteredList : categoryList;
+    const totalInCategory = displayList.length;
+    const safeCatIdx      = totalInCategory === 0 ? 0 : Math.min(currentActivityIndex, totalInCategory - 1);
+    const currentActivity = displayList[safeCatIdx] || null;
+    const accentPair      = accentGradients[safeCatIdx % accentGradients.length];
+
+    /* ── 分類內導航（使用 totalInCategory 邊界，避免跨分類錯位）── */
+    const prevCatActivity = () => {
+      if (totalInCategory <= 1) return;
+      setCurrentActivityIndex(p => p === 0 ? totalInCategory - 1 : p - 1);
+    };
+    const nextCatActivity = () => {
+      if (totalInCategory <= 1) return;
+      setCurrentActivityIndex(p => p === totalInCategory - 1 ? 0 : p + 1);
+    };
+
+    /* ── ICS 行事曆產生器（使用本地時間，避免時區偏移）── */
     const makeICS = (ev) => {
       if (!ev?.date) return null;
       const first = ev.date.trim().split(/[~～,，]/)[0].trim();
@@ -216,13 +476,17 @@ export default function HomePage({
       if (!datePart) return null;
       const startT = timePart ? timePart.split("-")[0] : "00:00";
       const endT   = timePart && timePart.includes("-") ? timePart.split("-")[1] : null;
-      const fmt = (d) => d.toISOString().replace(/[-:.]/g,"").slice(0,15);
+      /* 使用本地時間格式化（YYYYMMDDTHHMMSS），不附加 Z，讓行事曆以本地時區解析 */
+      const fmtLocal = (d) => {
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+      };
       const start = new Date(`${datePart}T${startT}:00`);
       const end   = endT ? new Date(`${datePart}T${endT}:00`) : new Date(start.getTime() + 7200000);
       return [
         "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//中文研究室//App//ZH",
         "BEGIN:VEVENT",
-        `DTSTART:${fmt(start)}`,`DTEND:${fmt(end)}`,
+        `DTSTART:${fmtLocal(start)}`,`DTEND:${fmtLocal(end)}`,
         `SUMMARY:${(ev.title||"").replace(/\n/g," ")}`,
         ev.location ? `LOCATION:${ev.location}` : "",
         ev.speaker  ? `DESCRIPTION:講者：${ev.speaker}` : "",
@@ -230,119 +494,499 @@ export default function HomePage({
       ].filter(Boolean).join("\r\n");
     };
 
-    const addToCalendar = (ev) => {
+    const addToCalendar = async (ev) => {
       const ics = makeICS(ev);
       if (!ics) return;
-      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = `${(ev.title||"event").slice(0,30)}.ics`;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a); URL.revokeObjectURL(url);
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const fileName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
+          // base64-encode the ICS content
+          const b64 = btoa(unescape(encodeURIComponent(ics)));
+          await Filesystem.writeFile({ path: fileName, data: b64, directory: Directory.Cache });
+          const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
+          await Share.share({ title: ev.title || "行事曆事件", files: [uri] });
+        } catch (e) {
+          console.error("加入行事曆失敗:", e);
+        }
+      } else {
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement("a");
+        a.href = url; a.download = `${(ev.title||"event").slice(0,30)}.ics`;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+      }
     };
 
-    const panelBg = isDarkMode ? "#111827" : "#1c1c1e";
-    const touchStart = React.useRef(null);
-    const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
-    const handleTouchEnd   = (e) => {
-      if (touchStart.current === null || upcomingActivities.length <= 1) return;
-      const dx = e.changedTouches[0].clientX - touchStart.current;
-      if (Math.abs(dx) > 45) { dx < 0 ? nextActivity() : prevActivity(); }
-      touchStart.current = null;
+    /* ── 觸控滑動（切換精選卡）＋ 拖拽跟手互動 ── */
+    const applyCardTransform = (x, transition = "none") => {
+      const card = cardRef.current;
+      if (!card) return;
+      const ratio    = Math.abs(x) / (window.innerWidth || 390);
+      const rotation = x * 0.025;                      // 輕微傾斜
+      const scale    = 1 - Math.min(ratio * 0.06, 0.05); // 最多縮 5%
+      card.style.transition = transition;
+      card.style.transform  = x === 0 ? "" : `translateX(${x}px) rotate(${rotation}deg) scale(${scale})`;
     };
 
+    const handleTouchStart = (e) => {
+      touchStart.current     = e.touches[0].clientX;
+      dragStartYRef.current  = e.touches[0].clientY;
+      dragXRef.current       = 0;
+      isDraggingHorizRef.current = false;
+    };
+
+    const handleTouchMove = (e) => {
+      if (touchStart.current === null) return;
+      const dx = e.touches[0].clientX - touchStart.current;
+      const dy = e.touches[0].clientY - dragStartYRef.current;
+
+      /* 第一次判斷方向：dx 明顯大於 dy 才進入水平拖拽模式 */
+      if (!isDraggingHorizRef.current) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;   // 還沒移動夠
+        if (Math.abs(dy) > Math.abs(dx)) return;             // 垂直意圖 → 交給 scroll
+        isDraggingHorizRef.current = true;
+      }
+
+      dragXRef.current = dx;
+      /* 阻力：超過 ±100px 後越來越難拉 */
+      const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
+      applyCardTransform(dx * resistance);
+    };
+
+    const handleTouchEnd = () => {
+      const dx   = dragXRef.current;
+      const card = cardRef.current;
+      const THRESHOLD = 55;
+
+      if (isDraggingHorizRef.current && Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
+        /* 夠力：飛出去，再切換卡片 */
+        const flyX = dx < 0 ? -window.innerWidth : window.innerWidth;
+        applyCardTransform(flyX * 1.1, "transform 200ms ease-in");
+        setTimeout(() => {
+          dx < 0 ? nextCatActivity() : prevCatActivity();
+          if (card) { card.style.transition = "none"; card.style.transform = ""; }
+        }, 190);
+      } else {
+        /* 不夠力：彈回（彈性曲線） */
+        applyCardTransform(0, "transform 420ms cubic-bezier(0.34,1.56,0.64,1)");
+      }
+
+      touchStart.current     = null;
+      dragXRef.current       = 0;
+      isDraggingHorizRef.current = false;
+    };
+
+    /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
+    const handleContainerScroll = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      const scrollY = container.scrollTop;
+      const vh      = container.clientHeight || window.innerHeight;
+      const ratio   = Math.min(scrollY / vh, 1);
+
+      /* 封面：視差位移 ＋ 亮度漸暗 */
+      const cover = coverAreaRef.current;
+      if (cover) {
+        const inner = cover.querySelector("img") || cover.querySelector("div");
+        if (inner) inner.style.transform = `translateY(${scrollY * 0.30}px)`;
+        cover.style.filter = `brightness(${1 - ratio * 0.30})`;
+      }
+
+      /* 向下提示：淡出 */
+      const hint = container.querySelector(".scroll-hint");
+      if (hint) hint.style.opacity = String(Math.max(0, 0.3 - ratio * 2));
+    };
+
+    /* ── 共用列表元件（三個分類皆使用）── */
+    const ActivityListItems = ({ list }) => (
+      list.length === 0 ? null : (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {list.map((ev, i) => (
+            <div
+              key={ev._id}
+              className="list-item-in"
+              style={{
+                padding: "1.1rem 1.25rem",
+                borderBottom: i < list.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                animationDelay: `${Math.min(i * 0.065, 0.45)}s`,
+              }}
+            >
+              {/* 上半：縮圖 ＋ 文字 */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", marginBottom: "0.75rem" }}>
+                <div style={{ width: 64, height: 64, borderRadius: "0.75rem", flexShrink: 0, overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
+                  {ev.coverImage?.asset?.url ? (
+                    <img src={ev.coverImage.asset.url} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${accentGradients[i % 4][0]}, ${accentGradients[i % 4][1]})` }} />
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ color: "#fff", fontSize: "0.93rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.2rem", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {ev.title}
+                  </h3>
+                  {ev.date     && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.1rem" }}>📅 {ev.date}</p>}
+                  {ev.location && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.1rem" }}>📍 {ev.location}</p>}
+                  {ev.speaker  && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif" }}>🎤 {ev.speaker}</p>}
+                </div>
+              </div>
+              {/* 下半：按鈕列 */}
+              <div style={{ display: "flex", gap: "0.6rem" }}>
+                {ev.link && (
+                  <a href={ev.link} target="_blank" rel="noopener noreferrer"
+                    className="native-btn"
+                    style={{ flex: 1, padding: "0.6rem 0", borderRadius: "0.75rem", fontWeight: 600, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", background: "rgba(255,255,255,0.1)", color: "#fff", textDecoration: "none" }}
+                  >
+                    <Icon name="ExternalLink" size={15} /> 詳情
+                  </a>
+                )}
+                <button onClick={() => addToCalendar(ev)}
+                  className="native-btn"
+                  style={{ flex: 1, padding: "0.6rem 0", borderRadius: "0.75rem", fontWeight: 600, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", background: "rgba(255,255,255,0.88)", color: "#1c1c1e", border: "none", cursor: "pointer" }}
+                >
+                  <Icon name="Calendar" size={15} /> 加入行事曆
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    );
+
+    /* ── 分類名稱與列表標題 ── */
+    const catLabel = nativeCategory === "lecture" ? "學術講座" :
+                     nativeCategory === "workshop" ? "研討會／工作坊" : "徵稿資訊";
+    const listHeader =
+      sortByDate ? `全部${catLabel}（依時間）` :
+      (userPrefs && userPrefs.length > 0) ? `依偏好推薦・${catLabel}` : `全部${catLabel}`;
+
+    /* ── 三個分類統一使用全螢幕精選卡 ＋ 向下滑展開列表 ── */
     return (
-      /* 負邊距讓卡片突破 main-content 的 padding，貼齊螢幕邊緣 */
       <div
-        className="animate-fade-in relative z-10"
-        style={{ margin: "0 -1rem -4rem" }}
+        ref={scrollContainerRef}
+        onScroll={handleContainerScroll}
+        className="animate-fade-in"
+        style={{
+          margin: "calc(-3.5rem - 1.25rem) -1rem -4rem",
+          position: "relative", zIndex: 10,
+          height: "100dvh", overflowY: "auto",
+          background: panelBg,
+          scrollSnapType: "y mandatory",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
+        {/* 第一屏：全螢幕精選卡 */}
         <section
-          className="overflow-hidden"
-          style={{ borderRadius: "0 0 2.2rem 2.2rem" }}
+          ref={cardRef}
+          style={{
+            height: "100dvh", flexShrink: 0,
+            display: "flex", flexDirection: "column",
+            overflow: "hidden",
+            scrollSnapAlign: "start",
+            willChange: "transform",
+          }}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* ── 圖片區 ── */}
-          <div className="relative w-full" style={{ height: "62vmax", maxHeight: 480, minHeight: 260 }}>
+          {/* 圖片區 */}
+          <div ref={coverAreaRef} style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
             {currentActivity?.coverImage?.asset?.url ? (
               <img
                 src={currentActivity.coverImage.asset.url}
                 alt={currentActivity.coverImage.alt || currentActivity?.title}
-                className="w-full h-full object-cover"
-                style={{ transition: "opacity 400ms ease" }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", transition: "opacity 400ms ease" }}
               />
             ) : (
-              <div
-                className="w-full h-full"
-                style={{
-                  background: currentActivity
-                    ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
-                    : isDarkMode ? "linear-gradient(155deg,#1e293b,#0f172a)"
-                                 : "linear-gradient(155deg,#c7d2fe,#a5f3fc)",
-                  transition: "background 400ms ease",
-                }}
-              />
-            )}
-
-            {/* badge */}
-            {currentActivity && (
-              <div
-                className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold font-sans"
-                style={{ background: "rgba(0,0,0,0.38)", color: "rgba(255,255,255,0.92)", backdropFilter: "blur(10px)" }}
-              >
-                ✦ 即將舉辦
-              </div>
+              <div style={{
+                width: "100%", height: "100%",
+                background: currentActivity
+                  ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
+                  : "linear-gradient(155deg,#1e293b,#0f172a)",
+                transition: "background 400ms ease",
+              }} />
             )}
 
             {/* 分頁點 */}
-            {upcomingActivities.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {upcomingActivities.slice(0, 8).map((_, i) => (
-                  <div
-                    key={i}
-                    className="rounded-full transition-all duration-300"
-                    style={{ width: i === safeIdx ? 20 : 6, height: 6, background: i === safeIdx ? "#fff" : "rgba(255,255,255,0.45)" }}
-                  />
+            {totalInCategory > 1 && (
+              <div style={{ position: "absolute", bottom: "1.5rem", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "0.375rem" }}>
+                {displayList.slice(0, 8).map((_, i) => (
+                  <div key={i} style={{
+                    width: i === safeCatIdx ? 20 : 6, height: 6,
+                    borderRadius: 9999, background: i === safeCatIdx ? "#fff" : "rgba(255,255,255,0.45)",
+                    transition: "all 300ms ease",
+                  }} />
                 ))}
               </div>
             )}
 
-            {/* 圖片→文字漸層橋接 */}
-            <div
-              className="absolute bottom-0 left-0 right-0"
-              style={{ height: 80, background: `linear-gradient(to bottom, transparent, ${panelBg})` }}
-            />
+            {/* 有機漸層橋接 */}
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, right: 0,
+              height: 240, pointerEvents: "none",
+              background: `linear-gradient(to bottom,
+                transparent 0%,
+                rgba(28,28,30,0.04) 18%,
+                rgba(28,28,30,0.18) 38%,
+                rgba(28,28,30,0.52) 60%,
+                rgba(28,28,30,0.82) 78%,
+                ${panelBg} 100%)`,
+            }} />
           </div>
 
-          {/* ── 文字區 ── */}
-          <div className="px-6 pt-2 pb-8" style={{ background: panelBg }}>
+          {/* 文字資訊區 */}
+          <div style={{ background: panelBg, flexShrink: 0, padding: "0.5rem 1.5rem 0" }}>
             {currentActivity ? (
               <>
-                <p className="text-white/40 text-xs font-sans tracking-widest uppercase mb-2">
+                <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.7rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.4rem" }}>
                   {currentActivity.category}
                 </p>
-                <h2 className="text-white text-xl font-bold font-sans leading-snug mb-2 line-clamp-3">
+                <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.35, marginBottom: "0.5rem", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {currentActivity.title}
                 </h2>
-                <div className="flex flex-col gap-1 text-white/50 text-sm font-sans mb-5">
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", color: "rgba(255,255,255,0.48)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1rem" }}>
                   {currentActivity.date     && <span>📅 {currentActivity.date}</span>}
                   {currentActivity.location && <span>📍 {currentActivity.location}</span>}
                   {currentActivity.speaker  && <span>🎤 {currentActivity.speaker}</span>}
                 </div>
-                <button
-                  onClick={() => addToCalendar(currentActivity)}
-                  className="w-full py-3.5 rounded-2xl font-bold font-sans text-base flex items-center justify-center gap-2 spring-transition active:scale-[0.97]"
-                  style={{ background: "rgba(255,255,255,0.92)", color: "#1c1c1e" }}
-                >
-                  <Icon name="CalendarPlus" size={18} /> 加入行事曆
-                </button>
+                <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.65rem" }}>
+                  {currentActivity?.link && (
+                    <a href={currentActivity.link} target="_blank" rel="noopener noreferrer"
+                      className="native-btn"
+                      style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", background: "rgba(255,255,255,0.13)", color: "#fff", textDecoration: "none" }}
+                    >
+                      <Icon name="ExternalLink" size={17} /> 活動詳情
+                    </a>
+                  )}
+                  <button onClick={() => addToCalendar(currentActivity)}
+                    className="native-btn"
+                    style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", background: "rgba(255,255,255,0.92)", color: "#1c1c1e", border: "none", cursor: "pointer" }}
+                  >
+                    <Icon name="Calendar" size={17} /> 加入行事曆
+                  </button>
+                </div>
               </>
             ) : (
-              <p className="text-white/45 text-base font-sans py-6 text-center">目前暫無即將舉辦的活動</p>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.95rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", padding: "1.5rem 0 0.75rem" }}>
+                目前暫無即將舉辦的{catLabel}
+              </p>
+            )}
+
+            {/* 偏好設定 ＋ 時間排序 ＋ 搜尋篩選（三個小按鈕並排）*/}
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.55rem" }}>
+              <button
+                className="native-btn"
+                onClick={() => { setUserPrefs(null); setOnboardingSelected([]); }}
+                style={{
+                  flex: 1, padding: "0.55rem 0.7rem", borderRadius: "0.85rem",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "transparent", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem",
+                  color: "rgba(255,255,255,0.45)", fontSize: "0.78rem",
+                  fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 500,
+                  minWidth: 0,
+                }}
+              >
+                <Icon name="Sliders" size={13} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {userPrefs && userPrefs.length > 0
+                    ? `偏好：${userPrefs.map(id => PREF_OPTIONS.find(o => o.id === id)?.label).filter(Boolean).join("・")}`
+                    : "設定偏好"}
+                </span>
+              </button>
+              <button
+                className="native-btn"
+                onClick={() => setSortByDate(s => !s)}
+                style={{
+                  flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
+                  border: `1px solid ${sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
+                  background: sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
+                  color: sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
+                  fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: "0.3rem",
+                  cursor: "pointer",
+                }}
+              >
+                <Icon name="Clock" size={13} />
+                時間
+              </button>
+              {/* 搜尋篩選按鈕（有篩選條件時高亮）*/}
+              <button
+                className="native-btn"
+                onClick={() => setShowFilterSheet(true)}
+                style={{
+                  flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
+                  border: `1px solid ${hasActiveFilter ? "rgba(251,191,36,0.7)" : "rgba(255,255,255,0.12)"}`,
+                  background: hasActiveFilter ? "rgba(251,191,36,0.14)" : "transparent",
+                  color: hasActiveFilter ? "#fbbf24" : "rgba(255,255,255,0.4)",
+                  fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: "0.3rem",
+                  cursor: "pointer", position: "relative",
+                }}
+              >
+                <Icon name="Search" size={13} />
+                搜尋
+                {hasActiveFilter && (
+                  <span style={{
+                    position: "absolute", top: -4, right: -4,
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: "#fbbf24",
+                  }} />
+                )}
+              </button>
+            </div>
+
+            {/* 警示語 */}
+            <p style={{ color: "rgba(255,255,255,0.22)", fontSize: "0.67rem", fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.6, textAlign: "center", marginBottom: "0.5rem" }}>
+              ⚠ 活動資訊僅供參考，可能存在誤植，請至活動詳情頁再次確認。
+            </p>
+
+            {/* 向下提示（有活動時才顯示）*/}
+            {displayList.length > 0 && (
+              <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
+                <div className="bounce-y" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
+                  <div style={{ width: 24, height: 2, borderRadius: 1, background: "#fff" }} />
+                  <Icon name="ChevronDown" size={16} />
+                </div>
+              </div>
             )}
           </div>
         </section>
+
+        {/* 第二屏以後：完整活動列表 */}
+        {(categoryList.length > 0 || hasActiveFilter) && (
+          <div style={{ background: panelBg, paddingBottom: "4rem", scrollSnapAlign: "start", minHeight: "100dvh" }}>
+            {/* 篩選結果標題列 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem 0.5rem" }}>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>
+                {hasActiveFilter
+                  ? `搜尋結果・${filteredList.length} 筆`
+                  : listHeader}
+              </p>
+              {hasActiveFilter && (
+                <button
+                  className="native-btn"
+                  onClick={() => { setSearchQuery(""); setFilterDateFrom(""); setFilterDateTo(""); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#fbbf24", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", padding: "0.1rem 0.2rem" }}
+                >
+                  清除篩選 ✕
+                </button>
+              )}
+            </div>
+            {filteredList.length > 0
+              ? <ActivityListItems list={filteredList} />
+              : (
+                <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                  <p style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔍</p>
+                  <p style={{ fontSize: "0.92rem", marginBottom: "0.4rem" }}>找不到符合條件的活動</p>
+                  <p style={{ fontSize: "0.78rem" }}>試試調整關鍵字或日期範圍</p>
+                </div>
+              )
+            }
+          </div>
+        )}
+
+        {/* ── 搜尋篩選底部面板 ── */}
+        {showFilterSheet && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 300,
+            display: "flex", flexDirection: "column", justifyContent: "flex-end",
+            animation: "backdropIn 0.22s ease both",
+          }}>
+            {/* 半透明遮罩 */}
+            <div
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }}
+              onClick={() => setShowFilterSheet(false)}
+            />
+            {/* 面板主體 */}
+            <div style={{
+              position: "relative", zIndex: 1,
+              background: "#2c2c2e", borderRadius: "1.4rem 1.4rem 0 0",
+              padding: "0 1.5rem calc(env(safe-area-inset-bottom, 0px) + 2rem)",
+              animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
+              maxHeight: "85dvh", overflowY: "auto",
+            }}>
+              {/* 拖曳把手 */}
+              <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 1.25rem" }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
+              </div>
+
+              <h3 style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1.4rem" }}>
+                搜尋與篩選
+              </h3>
+
+              {/* 關鍵字搜尋 */}
+              <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                關鍵字
+              </p>
+              <input
+                className="native-input"
+                type="text"
+                placeholder="搜尋標題、講者、地點…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ marginBottom: "1.25rem" }}
+              />
+
+              {/* 日期範圍 */}
+              <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                日期範圍
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.5rem" }}>
+                <input
+                  className="native-input"
+                  type="date"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>—</span>
+                <input
+                  className="native-input"
+                  type="date"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+              </div>
+
+              {/* 結果預覽 */}
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", marginBottom: "1.25rem" }}>
+                {filteredList.length > 0
+                  ? `找到 ${filteredList.length} 筆活動`
+                  : "目前沒有符合條件的活動"}
+              </p>
+
+              {/* 操作按鈕 */}
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                <button
+                  className="native-btn"
+                  onClick={() => { setSearchQuery(""); setFilterDateFrom(""); setFilterDateTo(""); }}
+                  style={{
+                    flex: 1, padding: "0.85rem 0", borderRadius: "1rem",
+                    border: "1px solid rgba(255,255,255,0.15)", background: "transparent",
+                    color: "rgba(255,255,255,0.5)", fontFamily: "'Noto Sans TC',sans-serif",
+                    fontWeight: 600, fontSize: "0.92rem", cursor: "pointer",
+                  }}
+                >
+                  清除
+                </button>
+                <button
+                  className="native-btn"
+                  onClick={() => setShowFilterSheet(false)}
+                  style={{
+                    flex: 2, padding: "0.85rem 0", borderRadius: "1rem",
+                    background: "rgba(255,255,255,0.92)", color: "#1c1c1e",
+                    border: "none", fontFamily: "'Noto Sans TC',sans-serif",
+                    fontWeight: 700, fontSize: "0.92rem", cursor: "pointer",
+                  }}
+                >
+                  {filteredList.length > 0 ? `顯示 ${filteredList.length} 筆結果` : "確認"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
