@@ -669,9 +669,9 @@ export default function HomePage({
         style={{
           margin: "calc(-3.5rem - 1.25rem) -1rem -4rem",
           position: "relative", zIndex: 10,
-          height: "100dvh", overflowY: "auto",
+          height: "100dvh", overflowY: isNative ? "hidden" : "auto",
           background: panelBg,
-          scrollSnapType: "y mandatory",
+          scrollSnapType: isNative ? "none" : "y mandatory",
           WebkitOverflowScrolling: "touch",
         }}
       >
@@ -841,8 +841,8 @@ export default function HomePage({
               ⚠ 活動資訊僅供參考，可能存在誤植，請至活動詳情頁再次確認。
             </p>
 
-            {/* 向下提示（有活動時才顯示）*/}
-            {displayList.length > 0 && (
+            {/* 向下提示（有活動時，且非 app 模式才顯示）*/}
+            {!isNative && displayList.length > 0 && (
               <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
                 <div className="bounce-y" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
                   <div style={{ width: 24, height: 2, borderRadius: 1, background: "#fff" }} />
