@@ -316,6 +316,7 @@ export default function HomePage({
     const listSheetRef                                = React.useRef(null);
     const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
     const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
+    const [listPage, setListPage] = React.useState(1);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
@@ -461,6 +462,7 @@ export default function HomePage({
 
     /* displayList：有篩選條件時使用 filteredList，否則用完整分類列表 */
     const displayList     = hasActiveFilter ? filteredList : categoryList;
+    const shownList       = filteredList.slice(0, listPage * 15);
     const totalInCategory = displayList.length;
     const safeCatIdx      = totalInCategory === 0 ? 0 : Math.min(currentActivityIndex, totalInCategory - 1);
     const currentActivity = displayList[safeCatIdx] || null;
@@ -475,6 +477,17 @@ export default function HomePage({
       if (totalInCategory <= 1) return;
       setCurrentActivityIndex(p => p === totalInCategory - 1 ? 0 : p + 1);
     };
+    /* ref 版本：讓 useEffect closure 讀最新值，避免重新綁定監聽器 */
+    const totalInCategoryRef  = React.useRef(totalInCategory);
+    const nextCatActivityRef  = React.useRef(nextCatActivity);
+    const prevCatActivityRef  = React.useRef(prevCatActivity);
+    React.useEffect(() => {
+      totalInCategoryRef.current = totalInCategory;
+      nextCatActivityRef.current = nextCatActivity;
+      prevCatActivityRef.current = prevCatActivity;
+    });
+    /* 列表分頁：篩選結果改變時重設到第一頁 */
+    React.useEffect(() => { setListPage(1); }, [filteredList.length]);
 
     /* ── ICS 行事曆產生器（使用本地時間，避免時區偏移）── */
     const makeICS = (ev) => {
@@ -581,12 +594,12 @@ export default function HomePage({
 
         if (isDraggingHorizRef.current) {
           const THRESHOLD = 55;
-          if (Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
+          if (Math.abs(dx) > THRESHOLD && totalInCategoryRef.current > 1) {
             const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
             const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
             applyCardTransform(flyX, "transform 220ms ease-in");
             setTimeout(() => {
-              dx < 0 ? nextCatActivity() : prevCatActivity();
+              dx < 0 ? nextCatActivityRef.current() : prevCatActivityRef.current();
               if (card) {
                 card.style.transition = "none";
                 card.style.transform  = `translateX(${enterX}px)`;
@@ -620,8 +633,7 @@ export default function HomePage({
         el.removeEventListener("touchmove",  onMove);
         el.removeEventListener("touchend",   onEnd);
       };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [totalInCategory]);
+    }, []); // 只綁定一次，透過 ref 讀最新值
 
     /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）*/
     React.useEffect(() => {
@@ -1130,10 +1142,20 @@ export default function HomePage({
                   </button>
                 </div>
               </div>
-              {/* 列表（可捲動）*/}
+              {/* 列表（可捲動，分頁避免一次渲染太多）*/}
               <div style={{ overflowY: "auto", flex: 1 }}>
                 {filteredList.length > 0
-                  ? <ActivityListItems list={filteredList} />
+                  ? <>
+                      <ActivityListItems list={shownList} />
+                      {shownList.length < filteredList.length && (
+                        <div style={{ padding: "1rem", textAlign: "center" }}>
+                          <button onClick={() => setListPage(p => p + 1)}
+                            style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "2rem", padding: "0.6rem 1.8rem", color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                            載入更多（剩 {filteredList.length - shownList.length} 筆）
+                          </button>
+                        </div>
+                      )}
+                    </>
                   : (
                     <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
                       <p style={{ fontSize: "0.92rem" }}>目前沒有符合條件的活動</p>
