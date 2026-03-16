@@ -17,7 +17,7 @@
     <title>中文研究室</title>
   </head>
   <body class="bg-slate-50">
-    <script>try{if(window.Capacitor&&window.Capacitor.isNativePlatform()){document.documentElement.style.background='#1c1c1e';document.body.style.background='#1c1c1e';}}catch(e){}</script>
+    <script>try{var _app=((window.Capacitor&&window.Capacitor.isNativePlatform())||window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));if(_app){document.documentElement.style.background='#1c1c1e';document.documentElement.classList.add('is-native');document.body.style.background='#1c1c1e';}}catch(e){}</script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

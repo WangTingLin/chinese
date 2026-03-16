@@ -498,7 +498,10 @@ export default function App() {
   /* Native 啟動動畫：1.9s 顯示，再 500ms 淡出，共 2.4s */
   /* Native：body 加深色背景，防止 iOS overscroll 白邊 */
   useEffect(() => {
-    if (isAppMode) document.body.classList.add("is-native");
+    if (isAppMode) {
+      document.body.classList.add("is-native");
+      document.documentElement.classList.add("is-native");
+    }
   }, []);
 
   useEffect(() => {

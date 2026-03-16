@@ -14,8 +14,9 @@ body {
   background: rgb(249 250 251);
 }
 
-/* Native app：深色背景防止 iOS overscroll 露白 */
-body.is-native {
+/* Native / PWA app：深色背景防止 iOS overscroll 露白 */
+body.is-native,
+html.is-native {
   background: #1c1c1e !important;
   overscroll-behavior: none;
 }
