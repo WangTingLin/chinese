@@ -302,14 +302,18 @@ export default function HomePage({
 
     /* useRef 必須在任何 early return 之前呼叫，確保 hook 順序一致 */
     const touchStart         = React.useRef(null);
-    const scrollContainerRef = React.useRef(null);   // 外層滾動容器
-    const coverAreaRef       = React.useRef(null);   // 封面圖片區
-    const cardRef            = React.useRef(null);   // 精選卡 section（拖拽用）
+    const scrollContainerRef = React.useRef(null);
+    const coverAreaRef       = React.useRef(null);
+    const cardRef            = React.useRef(null);
     const dragStartYRef      = React.useRef(null);
     const dragXRef           = React.useRef(0);
-    const isDraggingHorizRef = React.useRef(false);  // 確認是水平滑動才攔截
-    const [showListSheet, setShowListSheet] = React.useState(false);
-    const [showPrefsSheet, setShowPrefsSheet] = React.useState(false);
+    const dragYRef           = React.useRef(0);
+    const isDraggingHorizRef = React.useRef(false);
+    const isDraggingVertRef  = React.useRef(false);
+    const [showListSheet, setShowListSheet]       = React.useState(false);
+    const [sheetDragY, setSheetDragY]             = React.useState(0);  // 列表 sheet 拖拽偏移
+    const sheetDragStartY                         = React.useRef(null);
+    const [showPrefsSheet, setShowPrefsSheet]     = React.useState(false);
     const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
@@ -530,58 +534,93 @@ export default function HomePage({
     };
 
     const handleTouchStart = (e) => {
-      touchStart.current     = e.touches[0].clientX;
-      dragStartYRef.current  = e.touches[0].clientY;
-      dragXRef.current       = 0;
+      touchStart.current         = e.touches[0].clientX;
+      dragStartYRef.current      = e.touches[0].clientY;
+      dragXRef.current           = 0;
+      dragYRef.current           = 0;
       isDraggingHorizRef.current = false;
+      isDraggingVertRef.current  = false;
     };
 
     const handleTouchMove = (e) => {
       if (touchStart.current === null) return;
       const dx = e.touches[0].clientX - touchStart.current;
       const dy = e.touches[0].clientY - dragStartYRef.current;
+      dragXRef.current = dx;
+      dragYRef.current = dy;
 
-      /* 第一次判斷方向：dx 明顯大於 dy 才進入水平拖拽模式 */
-      if (!isDraggingHorizRef.current) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;   // 還沒移動夠
-        if (Math.abs(dy) > Math.abs(dx)) return;             // 垂直意圖 → 交給 scroll
-        isDraggingHorizRef.current = true;
+      /* 方向尚未確定：等移動夠再判斷 */
+      if (!isDraggingHorizRef.current && !isDraggingVertRef.current) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          isDraggingVertRef.current = true;
+        } else {
+          isDraggingHorizRef.current = true;
+        }
       }
 
-      dragXRef.current = dx;
-      /* 阻力：超過 ±100px 後越來越難拉 */
-      const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
-      applyCardTransform(dx * resistance);
+      if (isDraggingHorizRef.current) {
+        const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
+        applyCardTransform(dx * resistance);
+      }
+      /* 垂直方向不做視覺回饋，留到 touchEnd 判斷 */
     };
 
     const handleTouchEnd = () => {
-      const dx   = dragXRef.current;
+      const dx = dragXRef.current;
+      const dy = dragYRef.current;
       const card = cardRef.current;
-      const THRESHOLD = 55;
 
-      if (isDraggingHorizRef.current && Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
-        /* 夠力：滑出去，新卡從對側滑入 */
-        const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
-        const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
-        applyCardTransform(flyX, "transform 220ms ease-in");
-        setTimeout(() => {
-          dx < 0 ? nextCatActivity() : prevCatActivity();
-          if (card) {
-            card.style.transition = "none";
-            card.style.transform  = `translateX(${enterX}px)`;
-            card.getBoundingClientRect(); // force reflow
-            card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
-            card.style.transform  = "";
-          }
-        }, 210);
-      } else {
-        /* 不夠力：彈回 */
-        applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
+      if (isDraggingHorizRef.current) {
+        const THRESHOLD = 55;
+        if (Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
+          /* 夠力：滑出，新卡從對側滑入 */
+          const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
+          const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
+          applyCardTransform(flyX, "transform 220ms ease-in");
+          setTimeout(() => {
+            dx < 0 ? nextCatActivity() : prevCatActivity();
+            if (card) {
+              card.style.transition = "none";
+              card.style.transform  = `translateX(${enterX}px)`;
+              card.getBoundingClientRect();
+              card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
+              card.style.transform  = "";
+            }
+          }, 210);
+        } else {
+          applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
+        }
+      } else if (isDraggingVertRef.current) {
+        /* 上滑 → 展開列表；下滑時列表已開則關閉 */
+        if (dy < -40 && !showListSheet && displayList.length > 0) {
+          setShowListSheet(true);
+        }
       }
 
-      touchStart.current     = null;
-      dragXRef.current       = 0;
+      touchStart.current         = null;
+      dragXRef.current           = 0;
+      dragYRef.current           = 0;
       isDraggingHorizRef.current = false;
+      isDraggingVertRef.current  = false;
+    };
+
+    /* ── 列表 sheet 的拖拽關閉 ── */
+    const handleSheetTouchStart = (e) => {
+      sheetDragStartY.current = e.touches[0].clientY;
+      setSheetDragY(0);
+    };
+    const handleSheetTouchMove = (e) => {
+      if (sheetDragStartY.current === null) return;
+      const dy = e.touches[0].clientY - sheetDragStartY.current;
+      if (dy > 0) setSheetDragY(dy); // 只追蹤向下
+    };
+    const handleSheetTouchEnd = () => {
+      if (sheetDragY > 80) {
+        setShowListSheet(false);
+      }
+      setSheetDragY(0);
+      sheetDragStartY.current = null;
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
@@ -676,7 +715,7 @@ export default function HomePage({
         style={isNative ? {
           position: "fixed", inset: 0, zIndex: 10,
           overflow: "hidden",
-          touchAction: "pan-x",
+          touchAction: "none",
           background: panelBg,
         } : {
           margin: "calc(-3.5rem - 1.25rem) -1rem -4rem",
@@ -856,20 +895,17 @@ export default function HomePage({
             {/* 向下提示（網頁版）/ 列表按鈕（app 版）*/}
             {displayList.length > 0 && (
               isNative ? (
-                <button
-                  onClick={() => setShowListSheet(true)}
-                  style={{
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    gap: "0.15rem",
-                    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
-                    width: "100%",
-                    background: "none", border: "none", cursor: "pointer",
-                    opacity: 0.35,
-                  }}
-                >
-                  <Icon name="ChevronDown" size={16} />
-                  <div style={{ width: 24, height: 2, borderRadius: 1, background: "#fff" }} />
-                </button>
+                <div style={{
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: "0.2rem",
+                  paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+                  opacity: 0.4,
+                  animation: "bounce-y 1.8s ease infinite",
+                  pointerEvents: "none",
+                }}>
+                  <Icon name="ChevronUp" size={14} />
+                  <div style={{ width: 28, height: 3, borderRadius: 2, background: "#fff" }} />
+                </div>
               ) : (
                 <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
                   <div className="bounce-y" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
@@ -1026,21 +1062,27 @@ export default function HomePage({
           }}>
             {/* 半透明遮罩 */}
             <div
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }}
+              style={{ position: "absolute", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.55 - sheetDragY / 300)})` }}
               onClick={() => setShowListSheet(false)}
             />
-            {/* 面板主體 */}
-            <div style={{
-              position: "relative", zIndex: 1,
-              background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0",
-              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
-              animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
-              maxHeight: "88dvh", display: "flex", flexDirection: "column",
-            }}>
+            {/* 面板主體（可向下拖拽關閉）*/}
+            <div
+              onTouchStart={handleSheetTouchStart}
+              onTouchMove={handleSheetTouchMove}
+              onTouchEnd={handleSheetTouchEnd}
+              style={{
+                position: "relative", zIndex: 1,
+                background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0",
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+                animation: sheetDragY > 0 ? "none" : "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
+                transform: sheetDragY > 0 ? `translateY(${sheetDragY}px)` : undefined,
+                transition: sheetDragY > 0 ? "none" : "transform 300ms cubic-bezier(0.22,1,0.36,1)",
+                maxHeight: "88dvh", display: "flex", flexDirection: "column",
+              }}>
               {/* 拖曳把手 + 標題列 */}
               <div style={{ padding: "0.75rem 1.25rem 0.5rem", flexShrink: 0 }}>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.75rem" }}>
-                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
+                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.28)" }} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                   <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em" }}>
