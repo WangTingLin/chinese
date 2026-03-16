@@ -506,12 +506,15 @@ export default function App() {
 
   useEffect(() => {
     if (!isAppMode) return;
-    const t1 = setTimeout(() => setSplashExiting(true), 1900);
+    // 動畫時間軸：logo 1s、名稱 1.4s、標語 1.8s
+    // 2600ms：動畫全部完成後再停留 800ms
+    // 3200ms：500ms 淡出後隱藏並進入下一步
+    const t1 = setTimeout(() => setSplashExiting(true), 2600);
     const t2 = setTimeout(() => {
       setSplashVisible(false);
       /* 第一次開啟才顯示偏好設定 */
       if (!localStorage.getItem(PREF_KEY)) setLaunchOnboarding(true);
-    }, 2400);
+    }, 3200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
