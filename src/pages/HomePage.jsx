@@ -666,12 +666,17 @@ export default function HomePage({
         ref={scrollContainerRef}
         onScroll={handleContainerScroll}
         className="animate-fade-in"
-        style={{
+        style={isNative ? {
+          position: "fixed", inset: 0, zIndex: 10,
+          overflow: "hidden",
+          touchAction: "pan-x",
+          background: panelBg,
+        } : {
           margin: "calc(-3.5rem - 1.25rem) -1rem -4rem",
           position: "relative", zIndex: 10,
-          height: "100dvh", overflowY: isNative ? "hidden" : "auto",
+          height: "100dvh", overflowY: "auto",
           background: panelBg,
-          scrollSnapType: isNative ? "none" : "y mandatory",
+          scrollSnapType: "y mandatory",
           WebkitOverflowScrolling: "touch",
         }}
       >
@@ -679,10 +684,10 @@ export default function HomePage({
         <section
           ref={cardRef}
           style={{
-            height: "100dvh", flexShrink: 0,
+            height: isNative ? "100%" : "100dvh", flexShrink: 0,
             display: "flex", flexDirection: "column",
             overflow: "hidden",
-            scrollSnapAlign: "start",
+            scrollSnapAlign: isNative ? "none" : "start",
             willChange: "transform",
           }}
           onTouchStart={handleTouchStart}
