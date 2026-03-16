@@ -310,10 +310,11 @@ export default function HomePage({
     const dragYRef           = React.useRef(0);
     const isDraggingHorizRef = React.useRef(false);
     const isDraggingVertRef  = React.useRef(false);
-    const [showListSheet, setShowListSheet]       = React.useState(false);
-    const [sheetDragY, setSheetDragY]             = React.useState(0);  // 列表 sheet 拖拽偏移
-    const sheetDragStartY                         = React.useRef(null);
-    const [showPrefsSheet, setShowPrefsSheet]     = React.useState(false);
+    const [showListSheet, setShowListSheet]           = React.useState(false);
+    const sheetDragYRef                               = React.useRef(0);   // 直接操作 DOM，不用 state
+    const sheetDragStartY                             = React.useRef(null);
+    const listSheetRef                                = React.useRef(null);
+    const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
     const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
@@ -525,7 +526,7 @@ export default function HomePage({
       }
     };
 
-    /* ── 觸控滑動（切換精選卡）＋ 拖拽跟手互動 ── */
+    /* ── 觸控滑動（原生 non-passive 監聽，iOS PWA 才能正確攔截）── */
     const applyCardTransform = (x, transition = "none") => {
       const card = cardRef.current;
       if (!card) return;
@@ -533,95 +534,134 @@ export default function HomePage({
       card.style.transform  = x === 0 ? "" : `translateX(${x}px)`;
     };
 
-    const handleTouchStart = (e) => {
-      touchStart.current         = e.touches[0].clientX;
-      dragStartYRef.current      = e.touches[0].clientY;
-      dragXRef.current           = 0;
-      dragYRef.current           = 0;
-      isDraggingHorizRef.current = false;
-      isDraggingVertRef.current  = false;
-    };
+    /* 用 ref 包住最新的 showListSheet，讓 useEffect 內的 closure 能讀到 */
+    const showListSheetRef = React.useRef(showListSheet);
+    React.useEffect(() => { showListSheetRef.current = showListSheet; }, [showListSheet]);
 
-    const handleTouchMove = (e) => {
-      if (touchStart.current === null) return;
-      const dx = e.touches[0].clientX - touchStart.current;
-      const dy = e.touches[0].clientY - dragStartYRef.current;
-      dragXRef.current = dx;
-      dragYRef.current = dy;
+    /* 精選卡觸控（non-passive，可 preventDefault 防橡皮筋）*/
+    React.useEffect(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
 
-      /* 方向尚未確定：等移動夠再判斷 */
-      if (!isDraggingHorizRef.current && !isDraggingVertRef.current) {
-        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-        if (Math.abs(dy) > Math.abs(dx)) {
-          isDraggingVertRef.current = true;
+      const onStart = (e) => {
+        touchStart.current         = e.touches[0].clientX;
+        dragStartYRef.current      = e.touches[0].clientY;
+        dragXRef.current           = 0;
+        dragYRef.current           = 0;
+        isDraggingHorizRef.current = false;
+        isDraggingVertRef.current  = false;
+      };
+
+      const onMove = (e) => {
+        if (touchStart.current === null) return;
+        const dx = e.touches[0].clientX - touchStart.current;
+        const dy = e.touches[0].clientY - dragStartYRef.current;
+        dragXRef.current = dx;
+        dragYRef.current = dy;
+
+        if (!isDraggingHorizRef.current && !isDraggingVertRef.current) {
+          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+          if (Math.abs(dy) > Math.abs(dx)) {
+            isDraggingVertRef.current = true;
+          } else {
+            isDraggingHorizRef.current = true;
+          }
+        }
+        e.preventDefault(); // 防止 iOS 橡皮筋 / 捲動
+        if (isDraggingHorizRef.current) {
+          const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
+          applyCardTransform(dx * resistance);
+        }
+      };
+
+      const onEnd = () => {
+        const dx   = dragXRef.current;
+        const dy   = dragYRef.current;
+        const card = cardRef.current;
+
+        if (isDraggingHorizRef.current) {
+          const THRESHOLD = 55;
+          if (Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
+            const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
+            const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
+            applyCardTransform(flyX, "transform 220ms ease-in");
+            setTimeout(() => {
+              dx < 0 ? nextCatActivity() : prevCatActivity();
+              if (card) {
+                card.style.transition = "none";
+                card.style.transform  = `translateX(${enterX}px)`;
+                card.getBoundingClientRect();
+                card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
+                card.style.transform  = "";
+              }
+            }, 210);
+          } else {
+            applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
+          }
+        } else if (isDraggingVertRef.current) {
+          /* 上滑 → 展開列表 */
+          if (dy < -40 && !showListSheetRef.current) {
+            setShowListSheet(true);
+          }
+        }
+
+        touchStart.current         = null;
+        dragXRef.current           = 0;
+        dragYRef.current           = 0;
+        isDraggingHorizRef.current = false;
+        isDraggingVertRef.current  = false;
+      };
+
+      el.addEventListener("touchstart", onStart, { passive: true });
+      el.addEventListener("touchmove",  onMove,  { passive: false });
+      el.addEventListener("touchend",   onEnd,   { passive: true });
+      return () => {
+        el.removeEventListener("touchstart", onStart);
+        el.removeEventListener("touchmove",  onMove);
+        el.removeEventListener("touchend",   onEnd);
+      };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [totalInCategory]);
+
+    /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）*/
+    React.useEffect(() => {
+      const el = listSheetRef.current;
+      if (!el || !showListSheet) return;
+
+      const onStart = (e) => {
+        sheetDragStartY.current = e.touches[0].clientY;
+        sheetDragYRef.current   = 0;
+      };
+      const onMove = (e) => {
+        if (sheetDragStartY.current === null) return;
+        const dy = e.touches[0].clientY - sheetDragStartY.current;
+        if (dy > 0) {
+          e.preventDefault();
+          sheetDragYRef.current = dy;
+          el.style.transform    = `translateY(${dy}px)`;
+          el.style.transition   = "none";
+        }
+      };
+      const onEnd = () => {
+        if (sheetDragYRef.current > 100) {
+          setShowListSheet(false);
         } else {
-          isDraggingHorizRef.current = true;
+          el.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
+          el.style.transform  = "";
         }
-      }
+        sheetDragYRef.current   = 0;
+        sheetDragStartY.current = null;
+      };
 
-      if (isDraggingHorizRef.current) {
-        const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
-        applyCardTransform(dx * resistance);
-      }
-      /* 垂直方向不做視覺回饋，留到 touchEnd 判斷 */
-    };
-
-    const handleTouchEnd = () => {
-      const dx = dragXRef.current;
-      const dy = dragYRef.current;
-      const card = cardRef.current;
-
-      if (isDraggingHorizRef.current) {
-        const THRESHOLD = 55;
-        if (Math.abs(dx) > THRESHOLD && totalInCategory > 1) {
-          /* 夠力：滑出，新卡從對側滑入 */
-          const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
-          const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
-          applyCardTransform(flyX, "transform 220ms ease-in");
-          setTimeout(() => {
-            dx < 0 ? nextCatActivity() : prevCatActivity();
-            if (card) {
-              card.style.transition = "none";
-              card.style.transform  = `translateX(${enterX}px)`;
-              card.getBoundingClientRect();
-              card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
-              card.style.transform  = "";
-            }
-          }, 210);
-        } else {
-          applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
-        }
-      } else if (isDraggingVertRef.current) {
-        /* 上滑 → 展開列表；下滑時列表已開則關閉 */
-        if (dy < -40 && !showListSheet && displayList.length > 0) {
-          setShowListSheet(true);
-        }
-      }
-
-      touchStart.current         = null;
-      dragXRef.current           = 0;
-      dragYRef.current           = 0;
-      isDraggingHorizRef.current = false;
-      isDraggingVertRef.current  = false;
-    };
-
-    /* ── 列表 sheet 的拖拽關閉 ── */
-    const handleSheetTouchStart = (e) => {
-      sheetDragStartY.current = e.touches[0].clientY;
-      setSheetDragY(0);
-    };
-    const handleSheetTouchMove = (e) => {
-      if (sheetDragStartY.current === null) return;
-      const dy = e.touches[0].clientY - sheetDragStartY.current;
-      if (dy > 0) setSheetDragY(dy); // 只追蹤向下
-    };
-    const handleSheetTouchEnd = () => {
-      if (sheetDragY > 80) {
-        setShowListSheet(false);
-      }
-      setSheetDragY(0);
-      sheetDragStartY.current = null;
-    };
+      el.addEventListener("touchstart", onStart, { passive: true });
+      el.addEventListener("touchmove",  onMove,  { passive: false });
+      el.addEventListener("touchend",   onEnd,   { passive: true });
+      return () => {
+        el.removeEventListener("touchstart", onStart);
+        el.removeEventListener("touchmove",  onMove);
+        el.removeEventListener("touchend",   onEnd);
+      };
+    }, [showListSheet]);
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
     const handleContainerScroll = () => {
@@ -736,9 +776,6 @@ export default function HomePage({
             scrollSnapAlign: isNative ? "none" : "start",
             willChange: "transform",
           }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
         >
           {/* 圖片區 */}
           <div ref={coverAreaRef} style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
@@ -895,17 +932,21 @@ export default function HomePage({
             {/* 向下提示（網頁版）/ 列表按鈕（app 版）*/}
             {displayList.length > 0 && (
               isNative ? (
-                <div style={{
-                  display: "flex", flexDirection: "column", alignItems: "center",
-                  gap: "0.2rem",
-                  paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
-                  opacity: 0.4,
-                  animation: "bounce-y 1.8s ease infinite",
-                  pointerEvents: "none",
-                }}>
-                  <Icon name="ChevronUp" size={14} />
+                <button
+                  onClick={() => setShowListSheet(true)}
+                  style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    gap: "0.2rem",
+                    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+                    paddingTop: "0.5rem",
+                    width: "100%",
+                    background: "none", border: "none", cursor: "pointer",
+                    opacity: 0.45,
+                  }}
+                >
+                  <Icon name="ChevronUp" size={16} />
                   <div style={{ width: 28, height: 3, borderRadius: 2, background: "#fff" }} />
-                </div>
+                </button>
               ) : (
                 <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
                   <div className="bounce-y" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
@@ -1062,21 +1103,17 @@ export default function HomePage({
           }}>
             {/* 半透明遮罩 */}
             <div
-              style={{ position: "absolute", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.55 - sheetDragY / 300)})` }}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }}
               onClick={() => setShowListSheet(false)}
             />
             {/* 面板主體（可向下拖拽關閉）*/}
             <div
-              onTouchStart={handleSheetTouchStart}
-              onTouchMove={handleSheetTouchMove}
-              onTouchEnd={handleSheetTouchEnd}
+              ref={listSheetRef}
               style={{
                 position: "relative", zIndex: 1,
                 background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0",
                 paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
-                animation: sheetDragY > 0 ? "none" : "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
-                transform: sheetDragY > 0 ? `translateY(${sheetDragY}px)` : undefined,
-                transition: sheetDragY > 0 ? "none" : "transform 300ms cubic-bezier(0.22,1,0.36,1)",
+                animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
                 maxHeight: "88dvh", display: "flex", flexDirection: "column",
               }}>
               {/* 拖曳把手 + 標題列 */}
