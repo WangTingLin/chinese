@@ -241,28 +241,36 @@ export default function HomePage({
       document.body.removeChild(a); URL.revokeObjectURL(url);
     };
 
-    return (
-      <div className="animate-fade-in relative z-10 flex flex-col gap-0 px-1">
+    const panelBg = isDarkMode ? "#111827" : "#1c1c1e";
+    const touchStart = React.useRef(null);
+    const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
+    const handleTouchEnd   = (e) => {
+      if (touchStart.current === null || upcomingActivities.length <= 1) return;
+      const dx = e.changedTouches[0].clientX - touchStart.current;
+      if (Math.abs(dx) > 45) { dx < 0 ? nextActivity() : prevActivity(); }
+      touchStart.current = null;
+    };
 
-        {/* ── 精選卡：圖片上 + 深色文字區下 ── */}
+    return (
+      /* 負邊距讓卡片突破 main-content 的 padding，貼齊螢幕邊緣 */
+      <div
+        className="animate-fade-in relative z-10"
+        style={{ margin: "0 -1rem -4rem" }}
+      >
         <section
-          className="rounded-[2.2rem] overflow-hidden spring-transition active:scale-[0.985]"
-          style={{
-            boxShadow: isDarkMode
-              ? "0 24px 60px rgba(0,0,0,0.6)"
-              : "0 24px 60px rgba(0,0,0,0.18)",
-          }}
+          className="overflow-hidden"
+          style={{ borderRadius: "0 0 2.2rem 2.2rem" }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
-          {/* 圖片區 */}
-          <div
-            className="relative w-full overflow-hidden"
-            style={{ height: 280 }}
-          >
+          {/* ── 圖片區 ── */}
+          <div className="relative w-full" style={{ height: "62vmax", maxHeight: 480, minHeight: 260 }}>
             {currentActivity?.coverImage?.asset?.url ? (
               <img
                 src={currentActivity.coverImage.asset.url}
                 alt={currentActivity.coverImage.alt || currentActivity?.title}
                 className="w-full h-full object-cover"
+                style={{ transition: "opacity 400ms ease" }}
               />
             ) : (
               <div
@@ -270,14 +278,14 @@ export default function HomePage({
                 style={{
                   background: currentActivity
                     ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
-                    : isDarkMode
-                      ? "linear-gradient(155deg,#1e293b,#0f172a)"
-                      : "linear-gradient(155deg,#e0f2fe,#ddd6fe)",
+                    : isDarkMode ? "linear-gradient(155deg,#1e293b,#0f172a)"
+                                 : "linear-gradient(155deg,#c7d2fe,#a5f3fc)",
+                  transition: "background 400ms ease",
                 }}
               />
             )}
 
-            {/* 左上角 badge */}
+            {/* badge */}
             {currentActivity && (
               <div
                 className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold font-sans"
@@ -287,90 +295,54 @@ export default function HomePage({
               </div>
             )}
 
-            {/* 右上角頁碼 */}
+            {/* 分頁點 */}
             {upcomingActivities.length > 1 && (
-              <div
-                className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-xs font-bold font-sans"
-                style={{ background: "rgba(0,0,0,0.38)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(10px)" }}
-              >
-                {safeIdx + 1} / {upcomingActivities.length}
-              </div>
-            )}
-
-            {/* 分頁點（置中在圖片底部） */}
-            {upcomingActivities.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {upcomingActivities.slice(0, 8).map((_, i) => (
-                  <button
+                  <div
                     key={i}
-                    onClick={() => setCurrentActivityIndex(i)}
                     className="rounded-full transition-all duration-300"
-                    style={{
-                      width: i === safeIdx ? 20 : 6, height: 6,
-                      background: i === safeIdx ? "#fff" : "rgba(255,255,255,0.5)",
-                    }}
+                    style={{ width: i === safeIdx ? 20 : 6, height: 6, background: i === safeIdx ? "#fff" : "rgba(255,255,255,0.45)" }}
                   />
                 ))}
               </div>
             )}
+
+            {/* 圖片→文字漸層橋接 */}
+            <div
+              className="absolute bottom-0 left-0 right-0"
+              style={{ height: 80, background: `linear-gradient(to bottom, transparent, ${panelBg})` }}
+            />
           </div>
 
-          {/* 文字區（深色面板，融入圖片下方） */}
-          <div
-            className="px-6 pt-5 pb-6"
-            style={{
-              background: isDarkMode ? "#111827" : "#1c1c1e",
-            }}
-          >
+          {/* ── 文字區 ── */}
+          <div className="px-6 pt-2 pb-8" style={{ background: panelBg }}>
             {currentActivity ? (
               <>
-                <p className="text-white/45 text-xs font-sans tracking-widest uppercase mb-2">
+                <p className="text-white/40 text-xs font-sans tracking-widest uppercase mb-2">
                   {currentActivity.category}
                 </p>
-                <h2 className="text-white text-xl font-bold font-sans leading-snug mb-1 line-clamp-3">
+                <h2 className="text-white text-xl font-bold font-sans leading-snug mb-2 line-clamp-3">
                   {currentActivity.title}
                 </h2>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-white/55 text-sm font-sans mb-5 mt-2">
+                <div className="flex flex-col gap-1 text-white/50 text-sm font-sans mb-5">
                   {currentActivity.date     && <span>📅 {currentActivity.date}</span>}
                   {currentActivity.location && <span>📍 {currentActivity.location}</span>}
                   {currentActivity.speaker  && <span>🎤 {currentActivity.speaker}</span>}
                 </div>
-
-                {/* 左右切換 + 加入行事曆 */}
-                <div className="flex gap-3 items-center">
-                  {upcomingActivities.length > 1 && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={prevActivity}
-                        className="w-11 h-11 rounded-2xl flex items-center justify-center spring-transition active:scale-90"
-                        style={{ background: "rgba(255,255,255,0.1)", color: "#fff" }}
-                      >
-                        <Icon name="ChevronLeft" size={20} />
-                      </button>
-                      <button
-                        onClick={nextActivity}
-                        className="w-11 h-11 rounded-2xl flex items-center justify-center spring-transition active:scale-90"
-                        style={{ background: "rgba(255,255,255,0.1)", color: "#fff" }}
-                      >
-                        <Icon name="ChevronRight" size={20} />
-                      </button>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => addToCalendar(currentActivity)}
-                    className="flex-1 py-3 rounded-2xl font-bold font-sans text-base spring-transition active:scale-[0.97] flex items-center justify-center gap-2"
-                    style={{ background: "rgba(255,255,255,0.92)", color: "#1c1c1e" }}
-                  >
-                    <Icon name="CalendarPlus" size={18} /> 加入行事曆
-                  </button>
-                </div>
+                <button
+                  onClick={() => addToCalendar(currentActivity)}
+                  className="w-full py-3.5 rounded-2xl font-bold font-sans text-base flex items-center justify-center gap-2 spring-transition active:scale-[0.97]"
+                  style={{ background: "rgba(255,255,255,0.92)", color: "#1c1c1e" }}
+                >
+                  <Icon name="CalendarPlus" size={18} /> 加入行事曆
+                </button>
               </>
             ) : (
-              <p className="text-white/50 text-base font-sans py-4 text-center">目前暫無即將舉辦的活動</p>
+              <p className="text-white/45 text-base font-sans py-6 text-center">目前暫無即將舉辦的活動</p>
             )}
           </div>
         </section>
-
       </div>
     );
   }

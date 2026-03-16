@@ -680,45 +680,77 @@ const pageProps = {
         <div className="blob-3" style={{ position: "absolute", bottom: "-10%", left: "10%", width: "45vw", height: "45vw", borderRadius: "9999px", filter: "blur(120px)", background: "var(--c-blob-3)", transition: "background 800ms ease" }} />
       </div>
 
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(var(--c-panel-rgb), 0.3)", backdropFilter: "blur(20px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`, boxShadow: `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`, transition: "all 500ms ease" }}>
-        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
-              <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
-              <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark, transition: "color 500ms ease" }}>中文研究室</span>
-            </div>
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 50, transition: "all 500ms ease",
+        background: isNative ? "transparent" : `rgba(var(--c-panel-rgb), 0.3)`,
+        backdropFilter: isNative ? "none" : "blur(20px)",
+        borderBottom: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`,
+        boxShadow: isNative ? "none" : `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`,
+      }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: isNative ? "0 1.25rem" : "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: isNative ? "3.5rem" : "5rem" }}>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            {/* Logo / 標題：native 版隱藏 */}
+            {!isNative && (
+              <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
+                <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
+                <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark, transition: "color 500ms ease" }}>中文研究室</span>
+              </div>
+            )}
+
+            {/* 右側按鈕群 */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginLeft: isNative ? 0 : "auto" }}>
               <div className="desktop-nav" style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
-                {navItems.map((item) => (
+                {!isNative && navItems.map((item) => (
                   <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>
                     {item.icon} {item.label}
                   </ThemedButton>
                 ))}
               </div>
-              
-              {/* 日/月 模式切換按鈕 */}
+
+              {/* 漢堡選單按鈕 */}
+              <button
+                className={isNative ? "" : "mobile-menu-btn"}
+                onClick={() => setMobileOpen(!mobileOpen)}
+                style={{
+                  display: isNative ? "flex" : "none",
+                  padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                  background: isNative ? "rgba(0,0,0,0.28)" : "rgba(var(--c-panel-rgb), 0.4)",
+                  backdropFilter: "blur(8px)",
+                  border: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                  color: isNative ? "#fff" : t.primaryDark,
+                  alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <Icon name={mobileOpen ? "X" : "Menu"} size={22} />
+              </button>
+
+              {/* 日/月 模式切換 */}
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95 flex items-center justify-center"
+                className={isNative ? "" : "p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"}
                 style={{
-                  background: "rgba(var(--c-panel-rgb), 0.4)",
-                  borderColor: `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
-                  color: "var(--c-primary-dark)",
-                  boxShadow: `0 2px 8px rgba(0,0,0,${isDarkMode ? '0.2' : '0.05'})`
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                  background: isNative ? "rgba(0,0,0,0.28)" : "rgba(var(--c-panel-rgb), 0.4)",
+                  border: isNative ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                  color: isNative ? "#fff" : "var(--c-primary-dark)",
                 }}
                 title={isDarkMode ? "切換至亮色模式" : "切換至暗色模式"}
               >
                 <Icon name={isDarkMode ? "Sun" : "Moon"} size={20} />
               </button>
 
-              <button
-                className="mobile-menu-btn"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                style={{ display: "none", padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}
-              >
-                <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
-              </button>
+              {/* 網頁版漢堡按鈕 */}
+              {!isNative && (
+                <button
+                  className="mobile-menu-btn"
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  style={{ display: "none", padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}
+                >
+                  <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -728,6 +760,14 @@ const pageProps = {
             {isNative ? (
               /* ── Native 版：大卡片選單 ── */
               <div style={{ padding: "1rem 1rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {/* Logo + 名稱 */}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0.25rem 0.75rem", borderBottom: `1px solid rgba(var(--c-border-rgb), 0.2)`, marginBottom: "0.25rem" }}>
+                  <LogoImage className="w-10 h-10 rounded-xl border border-white/30 shadow-sm" />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "1.1rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark }}>中文研究室</div>
+                    <div style={{ fontSize: "0.72rem", fontFamily: "'Noto Sans TC', sans-serif", color: t.textSec, opacity: 0.55 }}>Chinese Studies Lab</div>
+                  </div>
+                </div>
                 {[
                   { id: "activities", icon: "CalendarClock", label: "近期活動", desc: "學術講座・研討工作坊" },
                   { id: "books",      icon: "Library",       label: "資源分享", desc: "學術工具・文獻查找" },
@@ -797,7 +837,7 @@ const pageProps = {
         {page}
       </main>
 
-      <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
+      {!isNative && <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
         <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
           <div className="footer-grid">
             <div style={{ marginBottom: "1rem" }}>
@@ -830,9 +870,9 @@ const pageProps = {
         <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "1.5rem 1.5rem 0", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "2rem", textAlign: "center", fontSize: "0.875rem", color: "rgba(255,255,255,0.3)", fontFamily: "'Noto Sans TC', sans-serif" }}>
           &copy; {new Date().getFullYear()} 中文研究室. All rights reserved.
         </div>
-      </footer>
+      </footer>}
 
-      <BackToTopButton isDarkMode={isDarkMode} />
+      {!isNative && <BackToTopButton isDarkMode={isDarkMode} />}
     </div>
   );
 
