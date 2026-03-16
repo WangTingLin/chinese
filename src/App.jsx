@@ -2,8 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { Capacitor } from '@capacitor/core';
 import { createClient } from '@sanity/client';
 import { PageHeaderBanner } from './components/ClassicalDecoration';
-
-const isNative = Capacitor.isNativePlatform();
 import ArticlesPage from './pages/ArticlesPage';
 import { getCategoryColors } from './data/articlesData';
 import EventsPage from './pages/EventsPage';
@@ -12,6 +10,9 @@ import BooksPage from './pages/BooksPage';
 import SubmissionPage from './pages/SubmissionPage';
 import HomePage from './pages/HomePage';
 import ActivitiesPage from './pages/ActivitiesPage';
+
+const isNative = Capacitor.isNativePlatform() ||
+  new URLSearchParams(window.location.search).get("app") === "1";
 
 const client = createClient({
   projectId: '6c1fauax',
