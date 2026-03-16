@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
+import { Capacitor } from '@capacitor/core';
 import { createClient } from '@sanity/client';
 import { PageHeaderBanner } from './components/ClassicalDecoration';
+
+const isNative = Capacitor.isNativePlatform();
 import ArticlesPage from './pages/ArticlesPage';
 import { getCategoryColors } from './data/articlesData';
 import EventsPage from './pages/EventsPage';
@@ -481,7 +484,7 @@ export default function App() {
     fetchAllData();
   }, []);
 
-  const navItems = [
+  const allNavItems = [
     { id: "home", label: "首頁", icon: <Icon name="Home" size={18} /> },
     { id: "about", label: "關於讀書會", icon: <Icon name="Info" size={18} /> },
     { id: "books", label: "資源分享", icon: <Icon name="Library" size={18} /> },
@@ -490,12 +493,15 @@ export default function App() {
     { id: "articles", label: "文章專欄", icon: <Icon name="BookOpen" size={18} /> },
     { id: "submission", label: "投稿須知", icon: <Icon name="Send" size={18} /> },
   ];
+  const appOnlyIds = new Set(["home", "activities", "books"]);
+  const navItems = isNative ? allNavItems.filter(n => appOnlyIds.has(n.id)) : allNavItems;
 
   const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
 
 const pageProps = {
   setPage: setCurrentPage,
   isDarkMode,
+  isNative,
   articles,
   events,
   activities,

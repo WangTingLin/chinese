@@ -7,6 +7,7 @@ import { NavCardPattern, HeroMedallion } from "../components/ClassicalDecoration
 export default function HomePage({
   setPage,
   isDarkMode,
+  isNative = false,
   articles = [],
   events = [],
   activities = [],
@@ -251,34 +252,49 @@ export default function HomePage({
           </h1>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => setPage("about")}
-              className="text-white px-8 py-3 rounded-full font-medium font-sans shadow-lg flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
-              style={{
-                background: "var(--c-nav-active-bg)",
-                borderColor: "var(--c-nav-active-border)",
-              }}
-            >
-              探索研究室 <Icon name="ChevronRight" size={20} />
-            </button>
+            {!isNative && (
+              <button
+                onClick={() => setPage("about")}
+                className="text-white px-8 py-3 rounded-full font-medium font-sans shadow-lg flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
+                style={{
+                  background: "var(--c-nav-active-bg)",
+                  borderColor: "var(--c-nav-active-border)",
+                }}
+              >
+                探索研究室 <Icon name="ChevronRight" size={20} />
+              </button>
+            )}
             <button
               onClick={() => setPage("activities")}
               className="px-8 py-3 rounded-full font-medium font-sans flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
               style={{
-                background: "rgba(var(--c-panel-rgb),0.45)",
-                borderColor: "rgba(var(--c-border-rgb),0.6)",
-                color: "var(--c-primary-dark)",
+                background: isNative ? "var(--c-nav-active-bg)" : "rgba(var(--c-panel-rgb),0.45)",
+                borderColor: isNative ? "var(--c-nav-active-border)" : "rgba(var(--c-border-rgb),0.6)",
+                color: isNative ? "#fff" : "var(--c-primary-dark)",
               }}
             >
               查看近期活動 <Icon name="Megaphone" size={20} />
             </button>
+            {isNative && (
+              <button
+                onClick={() => setPage("books")}
+                className="px-8 py-3 rounded-full font-medium font-sans flex items-center justify-center gap-2 border spring-transition hover:scale-105 active:scale-95"
+                style={{
+                  background: "rgba(var(--c-panel-rgb),0.45)",
+                  borderColor: "rgba(var(--c-border-rgb),0.6)",
+                  color: "var(--c-primary-dark)",
+                }}
+              >
+                資源分享 <Icon name="Library" size={20} />
+              </button>
+            )}
           </div>
         </div>
       </section>
 
       {/* ===================== 快速導覽卡片 ===================== */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-        {navCards.map((nav) => (
+      <section className="grid grid-cols-2 gap-4 md:gap-5">
+        {(isNative ? navCards.filter(n => n.id === "activities" || n.id === "books") : navCards).map((nav) => (
           <button
             key={nav.id}
             onClick={() => setPage(nav.id)}
@@ -580,8 +596,8 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* ===================== 近期研討 ＋ 最新上架 ===================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+      {/* ===================== 近期研討 ＋ 最新上架（網頁版限定）===================== */}
+      {!isNative && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {/* 近期研討 */}
         <section
           className="rounded-3xl overflow-hidden glass-panel glass-card-hover transition-all duration-500 hover:shadow-xl cursor-pointer flex flex-col"
@@ -815,7 +831,7 @@ export default function HomePage({
             </div>
           </section>
         )}
-      </div>
+      </div>}
 
       {/* ===================== 跑馬燈 ===================== */}
       <div
