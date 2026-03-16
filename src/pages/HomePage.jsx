@@ -309,6 +309,8 @@ export default function HomePage({
     const dragXRef           = React.useRef(0);
     const isDraggingHorizRef = React.useRef(false);  // 確認是水平滑動才攔截
     const [showListSheet, setShowListSheet] = React.useState(false);
+    const [showPrefsSheet, setShowPrefsSheet] = React.useState(false);
+    const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
@@ -335,7 +337,7 @@ export default function HomePage({
     }
 
     /* ── 引導頁：首次開啟時顯示 ── */
-    if (userPrefs === null) {
+    if (userPrefs === null && !isNative) {
       const togglePref = (id) =>
         setOnboardingSelected(prev =>
           prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -786,7 +788,7 @@ export default function HomePage({
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.55rem" }}>
               <button
                 className="native-btn"
-                onClick={() => { setUserPrefs(null); setOnboardingSelected([]); }}
+                onClick={() => { setPrefsSheetSelected(userPrefs || []); setShowPrefsSheet(true); }}
                 style={{
                   flex: 1, padding: "0.55rem 0.7rem", borderRadius: "0.85rem",
                   border: "1px solid rgba(255,255,255,0.12)",
@@ -858,7 +860,9 @@ export default function HomePage({
                   onClick={() => setShowListSheet(true)}
                   style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
-                    gap: "0.15rem", paddingBottom: "0.5rem", width: "100%",
+                    gap: "0.15rem",
+                    paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+                    width: "100%",
                     background: "none", border: "none", cursor: "pointer",
                     opacity: 0.35,
                   }}
@@ -1057,6 +1061,64 @@ export default function HomePage({
                     </div>
                   )
                 }
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 偏好設定 Bottom Sheet ── */}
+        {showPrefsSheet && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 350,
+            display: "flex", flexDirection: "column", justifyContent: "flex-end",
+            animation: "backdropIn 0.22s ease both",
+          }}>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} onClick={() => setShowPrefsSheet(false)} />
+            <div style={{
+              position: "relative", zIndex: 1,
+              background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0",
+              padding: "0 1.5rem calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
+              animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
+              maxHeight: "80dvh", display: "flex", flexDirection: "column",
+            }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 1.25rem", flexShrink: 0 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
+              </div>
+              <h3 style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem", flexShrink: 0 }}>
+                選擇感興趣的領域
+              </h3>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1.2rem", flexShrink: 0 }}>
+                可選多個，將優先推薦相關活動
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem", overflowY: "auto", flex: 1, paddingBottom: "1rem" }}>
+                {PREF_OPTIONS.map(opt => {
+                  const sel = prefsSheetSelected.includes(opt.id);
+                  return (
+                    <button key={opt.id}
+                      onClick={() => setPrefsSheetSelected(prev => prev.includes(opt.id) ? prev.filter(x => x !== opt.id) : [...prev, opt.id])}
+                      style={{
+                        padding: "0.9rem 1rem", borderRadius: "1rem",
+                        border: `1.5px solid ${sel ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.12)"}`,
+                        background: sel ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.04)",
+                        cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.3rem",
+                        transition: "all 180ms ease", textAlign: "left",
+                      }}
+                    >
+                      <span style={{ fontSize: "1.2rem", fontWeight: 900, fontFamily: "'Noto Sans TC',sans-serif", color: "rgba(255,255,255,0.55)" }}>{opt.label[0]}</span>
+                      <span style={{ color: sel ? "#fff" : "rgba(255,255,255,0.65)", fontSize: "0.88rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif" }}>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", gap: "0.6rem", paddingTop: "1rem", flexShrink: 0 }}>
+                <button onClick={() => { savePrefs([]); setShowPrefsSheet(false); }}
+                  style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
+                  顯示全部
+                </button>
+                <button onClick={() => { savePrefs(prefsSheetSelected); setShowPrefsSheet(false); }}
+                  style={{ flex: 2, padding: "0.85rem 0", borderRadius: "1rem", background: prefsSheetSelected.length > 0 ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.2)", border: "none", color: prefsSheetSelected.length > 0 ? "#1c1c1e" : "rgba(255,255,255,0.35)", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
+                  {prefsSheetSelected.length > 0 ? `套用（${prefsSheetSelected.length} 項）` : "請選擇"}
+                </button>
               </div>
             </div>
           </div>
