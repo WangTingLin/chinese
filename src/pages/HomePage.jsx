@@ -337,7 +337,7 @@ export default function HomePage({
     };
 
     /* 精選卡觸控（non-passive，可 preventDefault 防橡皮筋）
-       loading 時 scrollContainerRef.current === null，effect 直接 return，安全 */
+       deps 含 loading：loading 結束後 el 才存在，effect 重跑才能綁上監聽器 */
     React.useEffect(() => {
       const el = scrollContainerRef.current;
       if (!el) return;
@@ -419,7 +419,8 @@ export default function HomePage({
         el.removeEventListener("touchmove",  onMove);
         el.removeEventListener("touchend",   onEnd);
       };
-    }, []); // 只綁定一次，透過 ref 讀最新值
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]); // loading 結束後 scrollContainerRef 才有 DOM，重跑一次綁上監聽器
 
     /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）
        loading 時 listSheetRef.current === null，effect 直接 return，安全 */
