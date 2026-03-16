@@ -724,31 +724,71 @@ const pageProps = {
         </div>
 
         {mobileOpen && (
-          <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.95' : '0.85'})`, backdropFilter: "blur(20px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
-            <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => go(item.id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "0.75rem",
-                    width: "100%", textAlign: "left",
-                    padding: "0.75rem 1rem", borderRadius: "0.75rem",
-                    fontSize: "1rem", fontWeight: 500,
-                    fontFamily: "'Noto Sans TC', sans-serif",
-                    border: "1px solid",
-                    cursor: "pointer",
-                    marginBottom: "0.25rem",
-                    transition: "all 200ms ease",
-                    background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent",
-                    borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent",
-                    color: currentPage === item.id ? t.primaryDark : t.textSec,
-                  }}
-                >
-                  {item.icon} {item.label}
-                </button>
-              ))}
-            </div>
+          <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.97' : '0.92'})`, backdropFilter: "blur(24px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
+            {isNative ? (
+              /* ── Native 版：大卡片選單 ── */
+              <div style={{ padding: "1rem 1rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {[
+                  { id: "activities", icon: "CalendarClock", label: "近期活動", desc: "學術講座・研討工作坊" },
+                  { id: "books",      icon: "Library",       label: "資源分享", desc: "學術工具・文獻查找" },
+                ].map(card => (
+                  <button
+                    key={card.id}
+                    onClick={() => go(card.id)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "1.1rem",
+                      width: "100%", textAlign: "left",
+                      padding: "1rem 1.2rem", borderRadius: "1.25rem",
+                      cursor: "pointer", border: "1px solid",
+                      transition: "all 300ms cubic-bezier(0.34,1.56,0.64,1)",
+                      background: currentPage === card.id
+                        ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.7' : '0.95'})`
+                        : `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.35' : '0.55'})`,
+                      borderColor: currentPage === card.id
+                        ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.5' : '0.8'})`
+                        : `rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.35'})`,
+                    }}
+                  >
+                    <div style={{
+                      width: 52, height: 52, borderRadius: "0.9rem", flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
+                    }}>
+                      <Icon name={card.icon} size={26} style={{ color: t.primaryDark, opacity: 0.7 }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: "1.1rem", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark }}>{card.label}</div>
+                      <div style={{ fontSize: "0.8rem", fontFamily: "'Noto Sans TC', sans-serif", color: t.textSec, marginTop: 2, opacity: 0.65 }}>{card.desc}</div>
+                    </div>
+                    <Icon name="ChevronRight" size={16} style={{ color: t.textSec, opacity: 0.35, flexShrink: 0 }} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              /* ── 網頁版：原有文字列表 ── */
+              <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => go(item.id)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "0.75rem",
+                      width: "100%", textAlign: "left",
+                      padding: "0.75rem 1rem", borderRadius: "0.75rem",
+                      fontSize: "1rem", fontWeight: 500,
+                      fontFamily: "'Noto Sans TC', sans-serif",
+                      border: "1px solid", cursor: "pointer",
+                      marginBottom: "0.25rem", transition: "all 200ms ease",
+                      background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent",
+                      borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent",
+                      color: currentPage === item.id ? t.primaryDark : t.textSec,
+                    }}
+                  >
+                    {item.icon} {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </nav>
