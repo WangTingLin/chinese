@@ -472,7 +472,8 @@ export default function App() {
             _id, title, date, type, status, summary, details, location, topic, papers
           }`),
           client.fetch(`*[_type == "promoEvent"] | order(_createdAt desc) {
-            _id, title, category, date, speaker, location, organizer, link
+            _id, title, category, date, speaker, location, organizer, link,
+            coverImage { asset->{ _id, url }, alt }
           }`),
         ]);
         setArticles(articlesData || []);

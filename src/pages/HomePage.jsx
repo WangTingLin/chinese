@@ -198,6 +198,179 @@ export default function HomePage({
     },
   ];
 
+  /* ================= App 版（native）專屬首頁 ================= */
+  if (isNative) {
+    const featuredAccentColors = [
+      ["#0ea5e9","#6366f1"],
+      ["#f59e0b","#ef4444"],
+      ["#10b981","#0ea5e9"],
+      ["#8b5cf6","#ec4899"],
+    ];
+    const accentPair = featuredAccentColors[safeIdx % featuredAccentColors.length];
+
+    const nativeNavCards = [
+      { id: "activities", icon: "CalendarClock", label: "近期活動", desc: "學術講座・研討工作坊" },
+      { id: "books",      icon: "Library",       label: "資源分享", desc: "學術工具・文獻查找" },
+    ];
+
+    return (
+      <div className="animate-fade-in relative z-10 flex flex-col gap-5 px-1">
+
+        {/* ── Apple Music 精選卡 ── */}
+        <section
+          className="relative rounded-[2rem] overflow-hidden cursor-pointer"
+          style={{ minHeight: 300 }}
+          onClick={() => setPage("activities")}
+        >
+          {/* 背景：有海報用海報，否則用漸層 */}
+          {currentActivity?.coverImage?.asset?.url ? (
+            <img
+              src={currentActivity.coverImage.asset.url}
+              alt={currentActivity.coverImage.alt || currentActivity?.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: currentActivity
+                  ? `linear-gradient(145deg, ${accentPair[0]}, ${accentPair[1]})`
+                  : isDarkMode
+                    ? "linear-gradient(145deg,#1e293b,#0f172a)"
+                    : "linear-gradient(145deg,#e0f2fe,#ddd6fe)",
+              }}
+            />
+          )}
+
+          {/* 暗色漸層覆蓋層 */}
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.62) 100%)" }}
+          />
+
+          {/* 右上角頁碼 */}
+          {upcomingActivities.length > 1 && (
+            <div
+              className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-xs font-bold font-sans"
+              style={{ background: "rgba(0,0,0,0.35)", color: "rgba(255,255,255,0.85)" }}
+            >
+              {safeIdx + 1} / {upcomingActivities.length}
+            </div>
+          )}
+
+          {/* 左上角 badge */}
+          {currentActivity && (
+            <div
+              className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold font-sans"
+              style={{ background: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)" }}
+            >
+              ✦ 即將舉辦
+            </div>
+          )}
+
+          {/* 內文 */}
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            {currentActivity ? (
+              <>
+                <p className="text-white/60 text-xs font-sans mb-1.5 tracking-widest uppercase">
+                  {currentActivity.category}
+                </p>
+                <h2 className="text-white text-xl font-bold font-sans leading-snug mb-2 line-clamp-3">
+                  {currentActivity.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 text-white/70 text-sm font-sans">
+                  {currentActivity.date && <span>📅 {currentActivity.date}</span>}
+                  {currentActivity.location && <span>📍 {currentActivity.location}</span>}
+                </div>
+              </>
+            ) : (
+              <p className="text-white/60 text-base font-sans">目前暫無即將舉辦的活動</p>
+            )}
+          </div>
+
+          {/* 左右滑動箭頭 */}
+          {upcomingActivities.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prevActivity(); }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(0,0,0,0.28)", color: "#fff" }}
+              >
+                <Icon name="ChevronLeft" size={20} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); nextActivity(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(0,0,0,0.28)", color: "#fff" }}
+              >
+                <Icon name="ChevronRight" size={20} />
+              </button>
+            </>
+          )}
+
+          {/* 底部分頁點 */}
+          {upcomingActivities.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {upcomingActivities.slice(0, 8).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => { e.stopPropagation(); setCurrentActivityIndex(i); }}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width: i === safeIdx ? 20 : 6,
+                    height: 6,
+                    background: i === safeIdx ? "#fff" : "rgba(255,255,255,0.45)",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ── 導覽卡 ── */}
+        <div className="flex flex-col gap-3">
+          {nativeNavCards.map(card => (
+            <button
+              key={card.id}
+              onClick={() => setPage(card.id)}
+              className="w-full flex items-center gap-5 px-5 py-4 rounded-3xl spring-transition active:scale-[0.97]"
+              style={{
+                background: isDarkMode ? "rgba(30,41,59,0.85)" : "rgba(255,255,255,0.92)",
+                boxShadow: isDarkMode ? "0 2px 12px rgba(0,0,0,0.35)" : "0 2px 12px rgba(0,0,0,0.07)",
+                border: isDarkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.05)",
+              }}
+            >
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                style={{
+                  background: isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.04)",
+                }}
+              >
+                <Icon name={card.icon} size={28} style={{ color: isDarkMode ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.45)" }} />
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <h3
+                  className="text-xl font-bold font-sans"
+                  style={{ color: isDarkMode ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.82)" }}
+                >
+                  {card.label}
+                </h3>
+                <p
+                  className="text-sm font-sans mt-0.5"
+                  style={{ color: isDarkMode ? "rgba(255,255,255,0.38)" : "rgba(0,0,0,0.38)" }}
+                >
+                  {card.desc}
+                </p>
+              </div>
+              <Icon name="ChevronRight" size={18} style={{ color: isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)", flexShrink: 0 }} />
+            </button>
+          ))}
+        </div>
+
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 md:space-y-14 animate-fade-in relative z-10">
 
