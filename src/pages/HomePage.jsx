@@ -611,6 +611,14 @@ export default function HomePage({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNative, loading]);
 
+  /* applyCardTransform：card touch effect 用，必須在頂層 */
+  const applyCardTransform = (x, transition = "none") => {
+    const card = cardRef.current;
+    if (!card) return;
+    card.style.transition = transition;
+    card.style.transform  = x === 0 ? "" : `translateX(${x}px)`;
+  };
+
   /* ================= App 版（native）專屬首頁 ================= */
   if (isNative) {
     const accentGradients = [
@@ -622,13 +630,6 @@ export default function HomePage({
     const panelBg = "#1c1c1e";
 
 
-    /* applyCardTransform helper */
-    const applyCardTransform = (x, transition = "none") => {
-      const card = cardRef.current;
-      if (!card) return;
-      card.style.transition = transition;
-      card.style.transform  = x === 0 ? "" : `translateX(${x}px)`;
-    };
 
 
 
@@ -867,7 +868,14 @@ export default function HomePage({
         speaker:  ev.speaker  || "",
         uid:      (ev._id || ev.title || "") + "@chinese-coral",
       });
-      window.open(`/api/ics?${params}`, "_blank");
+      /* iOS PWA: 用 <a> 而非 window.open 避免離開 app；
+         href 指向 Vercel API，iOS Safari 偵測到 text/calendar 回應後跳行事曆 */
+      const a = document.createElement("a");
+      a.href = `/api/ics?${params}`;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 1000);
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
