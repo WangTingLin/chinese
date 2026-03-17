@@ -817,14 +817,30 @@ export default function HomePage({
       ].filter(Boolean).join("\r\n");
     };
 
+    /* ── ICS 參數序列化（供 API endpoint 使用）── */
+    const fmtDTLocal = (d) => {
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
+    };
+
     const addToCalendar = async (ev) => {
-      const ics = makeICS(ev);
-      if (!ics) return;
+      if (!ev?.date) return;
       const safeName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
+
+      /* ── 解析日期時間 ── */
+      const first = ev.date.trim().split(/[~～,，]/)[0].trim();
+      const [datePart, timePart] = first.split(" ");
+      if (!datePart) return;
+      const startT = timePart ? timePart.split("-")[0] : "00:00";
+      const endT   = timePart && timePart.includes("-") ? timePart.split("-")[1] : null;
+      const startD = new Date(`${datePart}T${startT}:00`);
+      const endD   = endT ? new Date(`${datePart}T${endT}:00`) : new Date(startD.getTime() + 7200000);
 
       /* ── Capacitor 原生 App ── */
       if (Capacitor.isNativePlatform()) {
         try {
+          const ics = makeICS(ev);
+          if (!ics) return;
           const b64 = btoa(unescape(encodeURIComponent(ics)));
           await Filesystem.writeFile({ path: safeName, data: b64, directory: Directory.Cache });
           const { uri } = await Filesystem.getUri({ path: safeName, directory: Directory.Cache });
@@ -833,25 +849,18 @@ export default function HomePage({
         return;
       }
 
-      /* ── iOS（Safari / PWA）：data: URI → iOS 直接跳出「加入行事曆」對話框 ── */
-      const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent) ||
-                    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-      if (isIOS) {
-        window.open(
-          `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`,
-          "_blank"
-        );
-        return;
-      }
-
-      /* ── Android / 桌機：下載 .ics，Android 點一下自動用 Google 日曆開啟 ── */
-      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = safeName;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 8000);
+      /* ── PWA / 網頁：透過 Vercel API endpoint 回傳正式 text/calendar HTTP 回應
+         iOS Safari 偵測到 Content-Type: text/calendar → 直接彈「加入行事曆」
+         Android Chrome → 下載後點一下用 Google 日曆開啟               ── */
+      const params = new URLSearchParams({
+        title:    ev.title    || "",
+        date:     fmtDTLocal(startD),
+        end:      fmtDTLocal(endD),
+        location: ev.location || "",
+        speaker:  ev.speaker  || "",
+        uid:      (ev._id || ev.title || "") + "@chinese-coral",
+      });
+      window.open(`/api/ics?${params}`, "_blank");
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
