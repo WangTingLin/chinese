@@ -340,20 +340,22 @@ export default function HomePage({
     const nextCatActivityRef = React.useRef(() => {});
     const prevCatActivityRef = React.useRef(() => {});
     const showListSheetRef   = React.useRef(false);
+    const displayListRef     = React.useRef([]); // 讓 early-return 前的 effect 也能讀到
 
     /* listPage 重設：篩選條件（真正的根源）改變時重設 */
     React.useEffect(() => { setListPage(1); }, [searchQuery, filterDateFrom, filterDateTo, nativeCategory]);
 
-    /* 預載相鄰卡片圖片，讓滑動時不等待 */
+    /* 預載相鄰卡片圖片（用 ref 避免 TDZ，deps 只用 early-return 前就存在的值）*/
     React.useEffect(() => {
-      if (!displayList || displayList.length <= 1) return;
-      const n = displayList.length;
-      [(safeCatIdx + 1) % n, (safeCatIdx - 1 + n) % n].forEach(idx => {
-        const url = displayList[idx]?.coverImage?.asset?.url;
+      const list = displayListRef.current;
+      if (!list || list.length <= 1) return;
+      const n   = list.length;
+      const idx = Math.min(currentActivityIndex, n - 1);
+      [(idx + 1) % n, (idx - 1 + n) % n].forEach(i => {
+        const url = list[i]?.coverImage?.asset?.url;
         if (url) { const img = new window.Image(); img.src = sanityImg(url, { w: 800, q: 72 }); }
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [safeCatIdx]);
+    }, [currentActivityIndex, nativeCategory]);
 
     /* applyCardTransform helper */
     const applyCardTransform = (x, transition = "none") => {
@@ -682,6 +684,7 @@ export default function HomePage({
 
     /* displayList：有篩選條件時使用 filteredList，否則用完整分類列表 */
     const displayList     = hasActiveFilter ? filteredList : categoryList;
+    displayListRef.current = displayList; // 同步給 early-return 前的 preload effect 讀取
     const shownList       = filteredList.slice(0, listPage * 15);
     const totalInCategory = displayList.length;
     const safeCatIdx      = totalInCategory === 0 ? 0 : Math.min(currentActivityIndex, totalInCategory - 1);
