@@ -459,10 +459,12 @@ export default function HomePage({
       const el = listSheetRef.current;
       if (el) {
         const bd = el.parentElement?.querySelector("[data-backdrop]");
-        el.style.transition = "transform 300ms cubic-bezier(0.4,0,1,1)";
+        /* animation-fill-mode:both 會蓋掉 inline transform，必須先清除 */
+        el.style.animation  = "none";
+        el.style.transition = "transform 320ms cubic-bezier(0.22,1,0.36,1)";
         el.style.transform  = "translateY(110%)";
-        if (bd) { bd.style.transition = "opacity 280ms ease"; bd.style.opacity = "0"; }
-        setTimeout(() => setShowListSheet(false), 295);
+        if (bd) { bd.style.transition = "opacity 300ms ease"; bd.style.opacity = "0"; }
+        setTimeout(() => setShowListSheet(false), 315);
       } else {
         setShowListSheet(false);
       }
@@ -563,12 +565,16 @@ export default function HomePage({
       /* ── touchend ── */
       const onEnd = () => {
         if (mode === "drag") {
-          if (panelDy > 80 || vel > 0.35) {   /* vel 單位 px/ms，0.35 ≈ 快速下滑 */
-            panel.style.transition = "transform 280ms cubic-bezier(0.4,0,1,1)";
+          /* animation-fill-mode:both 會蓋掉 inline transform，先清除 */
+          panel.style.animation = "none";
+          if (panelDy > 80 || vel > 0.35) {
+            /* 關閉：與開啟同樣 easing，方向相反 */
+            panel.style.transition = "transform 320ms cubic-bezier(0.22,1,0.36,1)";
             panel.style.transform  = "translateY(110%)";
-            if (backdrop) { backdrop.style.transition = "opacity 260ms ease"; backdrop.style.opacity = "0"; }
-            setTimeout(() => setShowListSheet(false), 275);
+            if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = "0"; }
+            setTimeout(() => setShowListSheet(false), 315);
           } else {
+            /* 彈回：spring 彈回原位 */
             panel.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
             panel.style.transform  = "";
             if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = ""; }
