@@ -868,14 +868,26 @@ export default function HomePage({
         speaker:  ev.speaker  || "",
         uid:      (ev._id || ev.title || "") + "@chinese-coral",
       });
-      /* iOS PWA: 用 <a> 而非 window.open 避免離開 app；
-         href 指向 Vercel API，iOS Safari 偵測到 text/calendar 回應後跳行事曆 */
-      const a = document.createElement("a");
-      a.href = `/api/ics?${params}`;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => document.body.removeChild(a), 1000);
+      /* ── PWA / 網頁：Web Share API 傳 .ics 檔案
+         iOS 分享面板有「日曆」選項，點一下即加入，全程不離開 app
+         Android Chrome 89+：分享後可選 Google 日曆
+         不支援 Web Share：fallback 下載 .ics ── */
+      const ics = makeICS(ev);
+      if (!ics) return;
+      const file = new File([ics], safeName, { type: "text/calendar" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ title: ev.title || "行事曆事件", files: [file] }); }
+        catch (e) { if (e.name !== "AbortError") console.error(e); }
+        return;
+      }
+      /* fallback：桌機直接下載 */
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = safeName;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
