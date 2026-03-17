@@ -424,8 +424,18 @@ export default function HomePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loading]); // loading 結束後 scrollContainerRef 才有 DOM，重跑一次綁上監聽器
 
-    /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）
-       loading 時 listSheetRef.current === null，effect 直接 return，安全 */
+    /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）*/
+    const closeSheetAnimated = React.useCallback(() => {
+      const el = listSheetRef.current;
+      if (el) {
+        el.style.transition = "transform 300ms cubic-bezier(0.4,0,1,1)";
+        el.style.transform  = "translateY(110%)";
+        setTimeout(() => setShowListSheet(false), 290);
+      } else {
+        setShowListSheet(false);
+      }
+    }, []);
+
     React.useEffect(() => {
       const el = listSheetRef.current;
       if (!el || !showListSheet) return;
@@ -437,18 +447,23 @@ export default function HomePage({
       const onMove = (e) => {
         if (sheetDragStartY.current === null) return;
         const dy = e.touches[0].clientY - sheetDragStartY.current;
-        if (dy > 0) {
-          e.preventDefault();
-          sheetDragYRef.current = dy;
-          el.style.transform    = `translateY(${dy}px)`;
-          el.style.transition   = "none";
-        }
+        if (dy <= 0) return; // 往上滑：讓列表正常捲動
+        /* 只有列表已在頂端，才接管手勢讓 sheet 跟著走 */
+        const scrollEl = el.querySelector(".sheet-scroll");
+        if (scrollEl && scrollEl.scrollTop > 0) return;
+        e.preventDefault();
+        sheetDragYRef.current = dy;
+        el.style.transform    = `translateY(${dy}px)`;
+        el.style.transition   = "none";
       };
       const onEnd = () => {
-        if (sheetDragYRef.current > 100) {
-          setShowListSheet(false);
-        } else {
-          el.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
+        if (sheetDragYRef.current > 80) {
+          /* 飛出去再 unmount */
+          el.style.transition = "transform 300ms cubic-bezier(0.4,0,1,1)";
+          el.style.transform  = "translateY(110%)";
+          setTimeout(() => setShowListSheet(false), 290);
+        } else if (sheetDragYRef.current > 0) {
+          el.style.transition = "transform 320ms cubic-bezier(0.22,1,0.36,1)";
           el.style.transform  = "";
         }
         sheetDragYRef.current   = 0;
@@ -463,7 +478,7 @@ export default function HomePage({
         el.removeEventListener("touchmove",  onMove);
         el.removeEventListener("touchend",   onEnd);
       };
-    }, [showListSheet]);
+    }, [showListSheet, closeSheetAnimated]);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
@@ -1147,7 +1162,7 @@ export default function HomePage({
             {/* 半透明遮罩 */}
             <div
               style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }}
-              onClick={() => setShowListSheet(false)}
+              onClick={closeSheetAnimated}
             />
             {/* 面板主體（可向下拖拽關閉）*/}
             <div
@@ -1168,13 +1183,13 @@ export default function HomePage({
                   <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em" }}>
                     {hasActiveFilter ? `搜尋結果・${filteredList.length} 筆` : listHeader}
                   </p>
-                  <button onClick={() => setShowListSheet(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", cursor: "pointer", padding: "0.2rem 0.4rem", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                  <button onClick={closeSheetAnimated} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", cursor: "pointer", padding: "0.2rem 0.4rem", fontFamily: "'Noto Sans TC',sans-serif" }}>
                     關閉 ✕
                   </button>
                 </div>
               </div>
               {/* 列表（可捲動，分頁避免一次渲染太多）*/}
-              <div style={{ overflowY: "auto", flex: 1 }}>
+              <div className="sheet-scroll" style={{ overflowY: "auto", flex: 1 }}>
                 {filteredList.length > 0
                   ? <>
                       <ActivityListItems list={shownList} />
