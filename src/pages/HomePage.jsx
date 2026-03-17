@@ -327,8 +327,9 @@ export default function HomePage({
     const [showListSheet, setShowListSheet]           = React.useState(false);
     const sheetDragYRef                               = React.useRef(0);
     const sheetDragStartY                             = React.useRef(null);
-    const sheetDragFromHandle                         = React.useRef(false); // 是否從把手區開始拖
-    const sheetVelocityRef                            = React.useRef({ y: 0, t: 0 }); // 速度追蹤
+    const sheetDragFromHandle                         = React.useRef(false);
+    const sheetStartedAtTop                           = React.useRef(false); // touchstart 時內層是否在頂端
+    const sheetVelocityRef                            = React.useRef({ y: 0, t: 0 });
     const listSheetRef                                = React.useRef(null);
     const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
     const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
@@ -468,75 +469,81 @@ export default function HomePage({
     React.useEffect(() => {
       const el = listSheetRef.current;
       if (!el || !showListSheet) return;
+      const scrollEl = el.querySelector(".sheet-scroll");
+      const backdrop = el.parentElement?.querySelector("[data-backdrop]");
 
-      /* 橡皮筋阻力：前 60px 1:1，之後逐漸增加阻力 */
       const rubbery = (dy) => dy <= 60 ? dy : 60 + (dy - 60) * 0.38;
 
       const onStart = (e) => {
         const touch = e.touches[0];
-        sheetDragStartY.current        = touch.clientY;
-        sheetDragYRef.current          = 0;
-        sheetVelocityRef.current       = { y: touch.clientY, t: Date.now() };
-        /* 判斷是否從把手區（sheet 頂端 56px）開始拖 */
+        sheetDragStartY.current  = touch.clientY;
+        sheetDragYRef.current    = 0;
+        sheetVelocityRef.current = { y: touch.clientY, t: Date.now(), velocity: 0 };
         const rect = el.getBoundingClientRect();
-        sheetDragFromHandle.current    = (touch.clientY - rect.top) < 56;
+        sheetDragFromHandle.current = (touch.clientY - rect.top) < 56;
+        /* touchstart 時就決定內層是否在頂端，之後不再重判 */
+        sheetStartedAtTop.current = sheetDragFromHandle.current ||
+          !scrollEl || scrollEl.scrollTop <= 0;
+      };
+
+      /* 直接掛在 inner scroll div：iOS touchstart 認領前先 preventDefault */
+      const onScrollDivMove = (e) => {
+        if (!sheetStartedAtTop.current) return;
+        const dy = e.touches[0].clientY - (sheetDragStartY.current ?? e.touches[0].clientY);
+        if (dy > 0) e.preventDefault();
       };
 
       const onMove = (e) => {
-        if (sheetDragStartY.current === null) return;
+        if (sheetDragStartY.current === null || !sheetStartedAtTop.current) return;
         const touch = e.touches[0];
         const dy    = touch.clientY - sheetDragStartY.current;
         if (dy <= 0) return;
-
-        /* 把手區：永遠可拖；列表區：需在頂端 */
-        if (!sheetDragFromHandle.current) {
-          const scrollEl = el.querySelector(".sheet-scroll");
-          if (scrollEl && scrollEl.scrollTop > 0) return;
-        }
-
         e.preventDefault();
-        sheetDragYRef.current = dy;
-        el.style.transform    = `translateY(${rubbery(dy)}px)`;
-        el.style.transition   = "none";
 
-        /* 更新速度（最近一幀的 px/ms）*/
-        const now = Date.now();
-        const dt  = now - sheetVelocityRef.current.t;
-        if (dt > 8) {
-          sheetVelocityRef.current = {
-            velocity: (touch.clientY - sheetVelocityRef.current.y) / dt,
-            y: touch.clientY, t: now,
-          };
-        }
+        sheetDragYRef.current = dy;
+        const visual = rubbery(dy);
+        el.style.transform  = `translateY(${visual}px)`;
+        el.style.transition = "none";
+
+        /* backdrop 隨拖曳淡出（拖 200px 時完全透明）*/
+        if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - visual / 200));
+
+        const now = Date.now(), dt = now - sheetVelocityRef.current.t;
+        if (dt > 8) sheetVelocityRef.current = {
+          velocity: (touch.clientY - sheetVelocityRef.current.y) / dt,
+          y: touch.clientY, t: now,
+        };
       };
 
       const onEnd = () => {
-        const dy       = sheetDragYRef.current;
-        const velocity = sheetVelocityRef.current.velocity ?? 0;
+        const dy  = sheetDragYRef.current;
+        const vel = sheetVelocityRef.current.velocity ?? 0;
+        if (backdrop) backdrop.style.opacity = "";
 
-        /* 距離超過 72px 或快速往下甩（速度 > 0.45px/ms）→ 關閉 */
-        if (dy > 72 || velocity > 0.45) {
+        if (dy > 72 || vel > 0.45) {
           el.style.transition = "transform 260ms cubic-bezier(0.4,0,1,1)";
           el.style.transform  = "translateY(110%)";
           setTimeout(() => setShowListSheet(false), 255);
         } else if (dy > 0) {
-          /* spring 彈回 */
           el.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
           el.style.transform  = "";
         }
         sheetDragYRef.current       = 0;
         sheetDragStartY.current     = null;
         sheetDragFromHandle.current = false;
-        sheetVelocityRef.current    = { y: 0, t: 0 };
+        sheetStartedAtTop.current   = false;
+        sheetVelocityRef.current    = { y: 0, t: 0, velocity: 0 };
       };
 
       el.addEventListener("touchstart", onStart, { passive: true });
       el.addEventListener("touchmove",  onMove,  { passive: false });
       el.addEventListener("touchend",   onEnd,   { passive: true });
+      if (scrollEl) scrollEl.addEventListener("touchmove", onScrollDivMove, { passive: false });
       return () => {
         el.removeEventListener("touchstart", onStart);
         el.removeEventListener("touchmove",  onMove);
         el.removeEventListener("touchend",   onEnd);
+        if (scrollEl) scrollEl.removeEventListener("touchmove", onScrollDivMove);
       };
     }, [showListSheet, closeSheetAnimated]);
 
@@ -1225,10 +1232,11 @@ export default function HomePage({
           }}>
             {/* 半透明遮罩 */}
             <div
-              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }}
+              data-backdrop
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", transition: "opacity 60ms linear" }}
               onClick={closeSheetAnimated}
             />
-            {/* 面板主體（可向下拖拽關閉）*/}
+            {/* 面板主體（can向下拖拽關閉）*/}
             <div
               ref={listSheetRef}
               style={{
@@ -1237,6 +1245,7 @@ export default function HomePage({
                 paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
                 animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both",
                 maxHeight: "88dvh", display: "flex", flexDirection: "column",
+                willChange: "transform",
               }}>
               {/* 拖曳把手 + 標題列 */}
               <div style={{ padding: "0.75rem 1.25rem 0.5rem", flexShrink: 0 }}>
