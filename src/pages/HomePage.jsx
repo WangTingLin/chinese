@@ -1,5 +1,19 @@
 // 檔案路徑：src/pages/HomePage.jsx
 import React, { useState, useMemo, useEffect } from "react";
+
+/* Sanity Image CDN 轉換 — 自動縮尺寸、轉 WebP */
+const sanityImg = (url, { w, h, q = 75, fm = "webp", fit } = {}) => {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (w)   u.searchParams.set("w",   String(w));
+    if (h)   u.searchParams.set("h",   String(h));
+    if (fit) u.searchParams.set("fit", fit);
+    u.searchParams.set("q",  String(q));
+    u.searchParams.set("fm", fm);
+    return u.toString();
+  } catch { return url; }
+};
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
@@ -327,6 +341,17 @@ export default function HomePage({
 
     /* listPage 重設：篩選條件（真正的根源）改變時重設 */
     React.useEffect(() => { setListPage(1); }, [searchQuery, filterDateFrom, filterDateTo, nativeCategory]);
+
+    /* 預載相鄰卡片圖片，讓滑動時不等待 */
+    React.useEffect(() => {
+      if (!displayList || displayList.length <= 1) return;
+      const n = displayList.length;
+      [(safeCatIdx + 1) % n, (safeCatIdx - 1 + n) % n].forEach(idx => {
+        const url = displayList[idx]?.coverImage?.asset?.url;
+        if (url) { const img = new window.Image(); img.src = sanityImg(url, { w: 800, q: 72 }); }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [safeCatIdx]);
 
     /* applyCardTransform helper */
     const applyCardTransform = (x, transition = "none") => {
@@ -734,7 +759,13 @@ export default function HomePage({
               <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", marginBottom: "0.75rem" }}>
                 <div style={{ width: 64, height: 64, borderRadius: "0.75rem", flexShrink: 0, overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
                   {ev.coverImage?.asset?.url ? (
-                    <img src={ev.coverImage.asset.url} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img
+                      src={sanityImg(ev.coverImage.asset.url, { w: 128, h: 128, fit: "crop", q: 70 })}
+                      alt={ev.title}
+                      loading="lazy"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 250ms ease" }}
+                      onLoad={e => { e.currentTarget.style.opacity = "1"; }}
+                    />
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${accentGradients[i % 4][0]}, ${accentGradients[i % 4][1]})` }} />
                   )}
@@ -823,28 +854,23 @@ export default function HomePage({
             willChange: "transform",
           }}
         >
-          {/* 圖片區 */}
-          <div ref={coverAreaRef} style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
+          {/* 圖片區：以漸層色為 loading placeholder，圖片載完後淡入 */}
+          <div ref={coverAreaRef} style={{
+            flex: 1, minHeight: 0, position: "relative", overflow: "hidden",
+            background: currentActivity
+              ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
+              : "linear-gradient(155deg,#1e293b,#0f172a)",
+            transition: "background 400ms ease",
+          }}>
             {currentActivity?.coverImage?.asset?.url ? (
               <img
                 key={currentActivity._id}
-                src={currentActivity.coverImage.asset.url}
+                src={sanityImg(currentActivity.coverImage.asset.url, { w: 800, q: 72 })}
                 alt={currentActivity.coverImage.alt || currentActivity?.title}
-                className="img-fade-in"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 350ms ease" }}
+                onLoad={e => { e.currentTarget.style.opacity = "1"; }}
               />
-            ) : (
-              <div
-                key={currentActivity?._id ?? "empty"}
-                className="img-fade-in"
-                style={{
-                  width: "100%", height: "100%",
-                  background: currentActivity
-                    ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
-                    : "linear-gradient(155deg,#1e293b,#0f172a)",
-                }}
-              />
-            )}
+            ) : null}
 
             {/* 分頁點 */}
             {totalInCategory > 1 && (
