@@ -488,20 +488,21 @@ export default function HomePage({
       };
 
       /* ── 手勢狀態（closure 變數，不用 React state）── */
-      let startY    = 0, lastY = 0, lastT = 0;
-      let vel       = 0;          // px / frame（16ms）
-      let mode      = "idle";     // "idle" | "scroll" | "drag"
+      let lastY = 0, lastT = 0;
+      let vel   = 0;            // px/ms，用於動量
+      let mode  = "idle";       // "idle" | "scroll" | "drag"
       let panelDy   = 0;
-      let rafId     = null;
+      let dragStartY = 0;       // drag 模式的起點（可中途重設）
+      let topHitY    = null;    // 碰到頂部那一刻的手指 Y（用來算往下多少才切 drag）
+      let rafId = null;
       const cancelRAF = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
 
-      /* ── touchstart：passive: false，可隨時 preventDefault ── */
+      /* ── touchstart：passive: false，iOS 無法啟動原生 scroll ── */
       const onStart = (e) => {
         cancelRAF();
-        startY = lastY = e.touches[0].clientY;
-        lastT  = Date.now();
-        vel    = 0; mode = "idle"; panelDy = 0;
-        /* 立刻宣告主權，iOS 無法啟動原生 scroll */
+        lastY = e.touches[0].clientY;
+        lastT = Date.now();
+        vel = 0; mode = "idle"; panelDy = 0; topHitY = null;
         e.preventDefault();
       };
 
@@ -510,45 +511,48 @@ export default function HomePage({
         e.preventDefault();
         const cy  = e.touches[0].clientY;
         const now = Date.now(), dt = Math.max(1, now - lastT);
-        vel   = (cy - lastY) / dt * 16;   // 換算成每幀位移
+        const delta = cy - lastY;     // 這一幀的原始位移（px）
+        vel   = delta / dt;           // px/ms，供動量使用
         lastY = cy; lastT = now;
 
-        const totalDy = cy - startY;       // 從 touchstart 的總位移
-
-        /* 決定模式（移動超過 4px 後判定）*/
+        /* 決定模式 */
         if (mode === "idle") {
-          if (Math.abs(totalDy) < 4) return;
-          mode = (totalDy > 0 && getScroll() <= 1) ? "drag" : "scroll";
-          if (mode === "drag") panelDy = 0;
+          if (Math.abs(delta) < 1 && getScroll() > 0) return;
+          mode = (delta > 0 && getScroll() <= 1) ? "drag" : "scroll";
+          if (mode === "drag") { dragStartY = cy; panelDy = 0; }
         }
 
         if (mode === "scroll") {
           const cur  = getScroll();
-          const next = cur - vel;          // delta 滾動（每幀增量）
+          const next = cur - delta;   // 1:1 跟手指（負值 = 滾動方向）
           const max  = maxScroll();
-          if (next < 0) {
-            /* 超過頂部 + 手指向下 → 切換成 drag */
-            if (totalDy > 8) {
-              mode   = "drag";
-              startY = cy;
-              panelDy = 0;
-              setScroll(0);
-              content.style.transition = "";
+
+          if (next <= 0) {
+            /* 剛到頂部：記錄位置 */
+            if (topHitY === null) topHitY = cy;
+            const downFromTop = cy - topHitY;   // 碰頂後往下移了多少
+            if (downFromTop > 6) {
+              /* 超過 6px：切換 drag 模式 */
+              mode = "drag"; dragStartY = cy; panelDy = 0; topHitY = null;
+              setScroll(0); content.style.transition = "";
             } else {
               /* 橡皮筋（頂部）*/
-              content.style.transform = `translateY(${Math.min(-next * 0.25, 30)}px)`;
+              content.style.transform = `translateY(${Math.min(downFromTop * 0.4, 20)}px)`;
             }
-          } else if (next > max) {
-            /* 橡皮筋（底部）*/
-            const overflow = next - max;
-            content.style.transform = `translateY(${-(max + overflow * 0.25)}px)`;
           } else {
-            setScroll(next);
+            topHitY = null;   // 離開頂部，重設
+            if (next > max) {
+              /* 橡皮筋（底部）*/
+              const overflow = next - max;
+              content.style.transform = `translateY(${-(max + overflow * 0.25)}px)`;
+            } else {
+              setScroll(next);
+            }
           }
         }
 
         if (mode === "drag") {
-          panelDy = Math.max(0, cy - startY);
+          panelDy = Math.max(0, cy - dragStartY);
           const vis = rubbery(panelDy);
           panel.style.transform  = `translateY(${vis}px)`;
           panel.style.transition = "none";
@@ -559,7 +563,7 @@ export default function HomePage({
       /* ── touchend ── */
       const onEnd = () => {
         if (mode === "drag") {
-          if (panelDy > 80 || vel > 0.55) {
+          if (panelDy > 80 || vel > 0.35) {   /* vel 單位 px/ms，0.35 ≈ 快速下滑 */
             panel.style.transition = "transform 280ms cubic-bezier(0.4,0,1,1)";
             panel.style.transform  = "translateY(110%)";
             if (backdrop) { backdrop.style.transition = "opacity 260ms ease"; backdrop.style.opacity = "0"; }
@@ -580,11 +584,11 @@ export default function HomePage({
             setTimeout(() => { content.style.transition = ""; }, 390);
             return;
           }
-          /* 動量慣性 */
-          let v = vel;
+          /* 動量慣性：vel 是 px/ms，乘 16 轉成每幀位移，衰減係數 0.92 */
+          let v = vel * 16;
           const tick = () => {
-            v *= 0.935;
-            if (Math.abs(v) < 0.4) {
+            v *= 0.92;
+            if (Math.abs(v) < 0.5) {
               const c = getScroll(), m = maxScroll();
               if (c < 0 || c > m) {
                 const t = Math.max(0, Math.min(c, m));
