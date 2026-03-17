@@ -458,9 +458,11 @@ export default function HomePage({
     const closeSheetAnimated = React.useCallback(() => {
       const el = listSheetRef.current;
       if (el) {
+        const bd = el.parentElement?.querySelector("[data-backdrop]");
         el.style.transition = "transform 300ms cubic-bezier(0.4,0,1,1)";
         el.style.transform  = "translateY(110%)";
-        setTimeout(() => setShowListSheet(false), 290);
+        if (bd) { bd.style.transition = "opacity 280ms ease"; bd.style.opacity = "0"; }
+        setTimeout(() => setShowListSheet(false), 295);
       } else {
         setShowListSheet(false);
       }
@@ -537,15 +539,18 @@ export default function HomePage({
       const onEnd = () => {
         const dy  = sheetDragYRef.current;
         const vel = sheetVelocityRef.current.velocity ?? 0;
-        if (backdrop) backdrop.style.opacity = "";
 
         if (dy > 72 || vel > 0.45) {
+          /* 關閉：sheet 飛出 + backdrop 同步淡出 */
           el.style.transition = "transform 260ms cubic-bezier(0.4,0,1,1)";
           el.style.transform  = "translateY(110%)";
+          if (backdrop) { backdrop.style.transition = "opacity 240ms ease"; backdrop.style.opacity = "0"; }
           setTimeout(() => setShowListSheet(false), 255);
         } else if (dy > 0) {
+          /* 彈回：backdrop 恢復 */
           el.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
           el.style.transform  = "";
+          if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = ""; }
         }
         sheetDragYRef.current       = 0;
         sheetDragStartY.current     = null;
