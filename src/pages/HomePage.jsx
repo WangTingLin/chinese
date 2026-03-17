@@ -324,6 +324,7 @@ export default function HomePage({
   const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
   const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
   const [listPage, setListPage]                     = React.useState(1);
+  const [calMenuEv, setCalMenuEv]                   = React.useState(null); // 行事曆選單目標活動
   const totalInCategoryRef = React.useRef(0);
   const nextCatActivityRef = React.useRef(() => {});
   const prevCatActivityRef = React.useRef(() => {});
@@ -831,11 +832,9 @@ export default function HomePage({
       return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
     };
 
-    const addToCalendar = async (ev) => {
+    /* ── Google 日曆 URL 直接加入事件 ── */
+    const addToGoogleCalendar = (ev) => {
       if (!ev?.date) return;
-      const safeName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
-
-      /* ── 解析日期時間 ── */
       const first = ev.date.trim().split(/[~～,，]/)[0].trim();
       const [datePart, timePart] = first.split(" ");
       if (!datePart) return;
@@ -843,8 +842,22 @@ export default function HomePage({
       const endT   = timePart && timePart.includes("-") ? timePart.split("-")[1] : null;
       const startD = new Date(`${datePart}T${startT}:00`);
       const endD   = endT ? new Date(`${datePart}T${endT}:00`) : new Date(startD.getTime() + 7200000);
+      const fmt = (d) => { const p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`; };
+      const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text:     ev.title    || "",
+        dates:   `${fmt(startD)}/${fmt(endD)}`,
+        location: ev.location || "",
+        details:  ev.speaker ? `講者：${ev.speaker}` : "",
+      });
+      window.open(`https://calendar.google.com/calendar/render?${params}`, "_blank");
+      setCalMenuEv(null);
+    };
 
-      /* ── Capacitor 原生 App ── */
+    /* ── Apple 日曆：Web Share API 傳 .ics，iOS 分享面板有「日曆」選項 ── */
+    const addToAppleCalendar = async (ev) => {
+      if (!ev?.date) return;
+      const safeName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
       if (Capacitor.isNativePlatform()) {
         try {
           const ics = makeICS(ev);
@@ -854,33 +867,16 @@ export default function HomePage({
           const { uri } = await Filesystem.getUri({ path: safeName, directory: Directory.Cache });
           await Share.share({ title: ev.title || "行事曆事件", files: [uri] });
         } catch (e) { console.error("加入行事曆失敗:", e); }
-        return;
+        setCalMenuEv(null); return;
       }
-
-      /* ── PWA / 網頁：透過 Vercel API endpoint 回傳正式 text/calendar HTTP 回應
-         iOS Safari 偵測到 Content-Type: text/calendar → 直接彈「加入行事曆」
-         Android Chrome → 下載後點一下用 Google 日曆開啟               ── */
-      const params = new URLSearchParams({
-        title:    ev.title    || "",
-        date:     fmtDTLocal(startD),
-        end:      fmtDTLocal(endD),
-        location: ev.location || "",
-        speaker:  ev.speaker  || "",
-        uid:      (ev._id || ev.title || "") + "@chinese-coral",
-      });
-      /* ── PWA / 網頁：Web Share API 傳 .ics 檔案
-         iOS 分享面板有「日曆」選項，點一下即加入，全程不離開 app
-         Android Chrome 89+：分享後可選 Google 日曆
-         不支援 Web Share：fallback 下載 .ics ── */
       const ics = makeICS(ev);
       if (!ics) return;
       const file = new File([ics], safeName, { type: "text/calendar" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ title: ev.title || "行事曆事件", files: [file] }); }
         catch (e) { if (e.name !== "AbortError") console.error(e); }
-        return;
+        setCalMenuEv(null); return;
       }
-      /* fallback：桌機直接下載 */
       const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
@@ -888,7 +884,10 @@ export default function HomePage({
       document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setCalMenuEv(null);
     };
+
+    const addToCalendar = (ev) => setCalMenuEv(ev);
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
     const handleContainerScroll = () => {
@@ -1476,6 +1475,72 @@ export default function HomePage({
                   {prefsSheetSelected.length > 0 ? `套用（${prefsSheetSelected.length} 項）` : "請選擇"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 行事曆選單 ── */}
+        {calMenuEv && (
+          <div
+            onClick={() => setCalMenuEv(null)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 20001,
+              background: "rgba(0,0,0,0.55)",
+              display: "flex", alignItems: "flex-end",
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: "100%",
+                background: "#2c2c2e",
+                borderRadius: "1.4rem 1.4rem 0 0",
+                padding: "1.5rem 1.25rem",
+                paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 1.5rem)",
+                display: "flex", flexDirection: "column", gap: "0.75rem",
+              }}
+            >
+              <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", marginBottom: "0.25rem" }}>
+                加入行事曆
+              </div>
+              <button
+                onClick={() => addToAppleCalendar(calMenuEv)}
+                style={{
+                  width: "100%", padding: "0.95rem",
+                  borderRadius: "1rem", border: "none",
+                  background: "rgba(255,255,255,0.1)",
+                  color: "#fff", fontSize: "1rem", fontWeight: 600,
+                  fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem",
+                }}
+              >
+                🍎 Apple 日曆
+              </button>
+              <button
+                onClick={() => addToGoogleCalendar(calMenuEv)}
+                style={{
+                  width: "100%", padding: "0.95rem",
+                  borderRadius: "1rem", border: "none",
+                  background: "rgba(255,255,255,0.1)",
+                  color: "#fff", fontSize: "1rem", fontWeight: 600,
+                  fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem",
+                }}
+              >
+                🗓 Google 日曆
+              </button>
+              <button
+                onClick={() => setCalMenuEv(null)}
+                style={{
+                  width: "100%", padding: "0.85rem",
+                  borderRadius: "1rem", border: "none",
+                  background: "none",
+                  color: "rgba(255,255,255,0.4)", fontSize: "0.9rem",
+                  fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer",
+                }}
+              >
+                取消
+              </button>
             </div>
           </div>
         )}
