@@ -19,6 +19,22 @@
   <body class="bg-slate-50">
     <script>try{var _app=((window.Capacitor&&window.Capacitor.isNativePlatform())||window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));if(_app){document.documentElement.style.background='#1c1c1e';document.documentElement.classList.add('is-native');document.body.style.background='#1c1c1e';}}catch(e){}</script>
     <div id="root"></div>
+    <script>
+      /* 最底層錯誤攔截：在 React 掛載前就能顯示錯誤 */
+      window.__earlyErrors = [];
+      window.onerror = function(msg, src, line, col, err) {
+        var d = document.createElement('div');
+        d.style.cssText = 'position:fixed;inset:0;background:#1c1c1e;color:#fff;padding:2rem;font-family:system-ui;z-index:99999;overflow:auto';
+        d.innerHTML = '<b style="font-size:1.1rem">⚠️ 錯誤（請截圖回報）</b><br><br>' +
+          '<code style="font-size:0.75rem;word-break:break-all;white-space:pre-wrap">' +
+          (msg||'') + '\n\n' + (src||'') + ':' + (line||'') + ':' + (col||'') +
+          (err&&err.stack ? '\n\n' + err.stack : '') + '</code>';
+        document.body.appendChild(d);
+      };
+      window.onunhandledrejection = function(e) {
+        window.onerror && window.onerror(String(e.reason), 'Promise', 0, 0, e.reason instanceof Error ? e.reason : null);
+      };
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
