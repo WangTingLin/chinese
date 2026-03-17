@@ -798,29 +798,38 @@ export default function HomePage({
           <div ref={coverAreaRef} style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden" }}>
             {currentActivity?.coverImage?.asset?.url ? (
               <img
+                key={currentActivity._id}
                 src={currentActivity.coverImage.asset.url}
                 alt={currentActivity.coverImage.alt || currentActivity?.title}
-                style={{ width: "100%", height: "100%", objectFit: "cover", transition: "opacity 400ms ease" }}
+                className="img-fade-in"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <div style={{
-                width: "100%", height: "100%",
-                background: currentActivity
-                  ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
-                  : "linear-gradient(155deg,#1e293b,#0f172a)",
-                transition: "background 400ms ease",
-              }} />
+              <div
+                key={currentActivity?._id ?? "empty"}
+                className="img-fade-in"
+                style={{
+                  width: "100%", height: "100%",
+                  background: currentActivity
+                    ? `linear-gradient(155deg, ${accentPair[0]}, ${accentPair[1]})`
+                    : "linear-gradient(155deg,#1e293b,#0f172a)",
+                }}
+              />
             )}
 
             {/* 分頁點 */}
             {totalInCategory > 1 && (
               <div style={{ position: "absolute", bottom: "1.5rem", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "0.375rem" }}>
                 {displayList.slice(0, 8).map((_, i) => (
-                  <div key={i} style={{
-                    width: i === safeCatIdx ? 20 : 6, height: 6,
-                    borderRadius: 9999, background: i === safeCatIdx ? "#fff" : "rgba(255,255,255,0.45)",
-                    transition: "all 300ms ease",
-                  }} />
+                  <div
+                    key={i}
+                    className={i === safeCatIdx ? "dot-active" : undefined}
+                    style={{
+                      width: i === safeCatIdx ? 20 : 6, height: 6,
+                      borderRadius: 9999, background: i === safeCatIdx ? "#fff" : "rgba(255,255,255,0.45)",
+                      transition: "width 300ms cubic-bezier(0.34,1.56,0.64,1), background 300ms ease",
+                    }}
+                  />
                 ))}
               </div>
             )}
@@ -842,7 +851,7 @@ export default function HomePage({
           {/* 文字資訊區 */}
           <div style={{ background: panelBg, flexShrink: 0, padding: "0.5rem 1.5rem 0" }}>
             {currentActivity ? (
-              <>
+              <div key={currentActivity._id} className="card-info-in">
                 <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.7rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.4rem" }}>
                   {currentActivity.category}
                 </p>
@@ -870,7 +879,7 @@ export default function HomePage({
                     <Icon name="Calendar" size={17} /> 加入行事曆
                   </button>
                 </div>
-              </>
+              </div>
             ) : (
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.95rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", padding: "1.5rem 0 0.75rem" }}>
                 目前暫無即將舉辦的{catLabel}
@@ -951,6 +960,7 @@ export default function HomePage({
               isNative ? (
                 <button
                   onClick={() => setShowListSheet(true)}
+                  className="native-btn"
                   style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
                     gap: "0.2rem",
@@ -961,8 +971,10 @@ export default function HomePage({
                     opacity: 0.45,
                   }}
                 >
-                  <Icon name="ChevronUp" size={16} />
-                  <div style={{ width: 28, height: 3, borderRadius: 2, background: "#fff" }} />
+                  <div className="hint-float" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem" }}>
+                    <Icon name="ChevronUp" size={16} />
+                    <div style={{ width: 28, height: 3, borderRadius: 2, background: "#fff" }} />
+                  </div>
                 </button>
               ) : (
                 <div className="scroll-hint" style={{ display: "flex", justifyContent: "center", paddingBottom: "0.5rem", opacity: 0.3, transition: "opacity 200ms ease" }}>
@@ -1031,7 +1043,7 @@ export default function HomePage({
             }}>
               {/* 拖曳把手 */}
               <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 1.25rem" }}>
-                <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
+                <div className="handle-in" style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
               </div>
 
               <h3 style={{ color: "#fff", fontSize: "1.05rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1.4rem" }}>
@@ -1136,7 +1148,7 @@ export default function HomePage({
               {/* 拖曳把手 + 標題列 */}
               <div style={{ padding: "0.75rem 1.25rem 0.5rem", flexShrink: 0 }}>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.75rem" }}>
-                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.28)" }} />
+                  <div className="handle-in" style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.28)" }} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                   <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em" }}>

@@ -695,6 +695,16 @@ const pageProps = {
         .list-item-in { animation:listItemIn 0.42s cubic-bezier(0.22,1,0.36,1) both; }
         @keyframes sheetSlideUp { 0%{transform:translateY(100%)} 100%{transform:translateY(0)} }
         @keyframes backdropIn   { 0%{opacity:0} 100%{opacity:1} }
+        @keyframes cardInfoIn   { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
+        .card-info-in { animation:cardInfoIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes imgFadeIn    { 0%{opacity:0} 100%{opacity:1} }
+        .img-fade-in { animation:imgFadeIn 0.45s ease both; }
+        @keyframes hintFloat    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .hint-float { animation:hintFloat 2.4s cubic-bezier(0.45,0,0.55,1) infinite; }
+        @keyframes dotPop       { 0%{transform:scaleX(0.4)} 60%{transform:scaleX(1.15)} 100%{transform:scaleX(1)} }
+        .dot-active { animation:dotPop 0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
+        @keyframes handleWiggle { 0%,100%{transform:scaleX(1)} 30%{transform:scaleX(0.7)} 60%{transform:scaleX(1.18)} }
+        .handle-in { animation:handleWiggle 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(1) opacity(0.4); }
         .native-input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:0.85rem; color:#fff; font-family:'Noto Sans TC',sans-serif; font-size:0.9rem; padding:0.75rem 1rem; width:100%; box-sizing:border-box; outline:none; -webkit-appearance:none; }
         .native-input::placeholder { color:rgba(255,255,255,0.28); }
