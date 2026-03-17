@@ -492,46 +492,53 @@ export default function HomePage({
         };
       };
 
+      /* scroll div 的 touchstart：scrollTop===0 時立刻宣告主權，
+         iOS 還來不及啟動 scroll 序列就被我們搶先 preventDefault        */
+      const onScrollDivStart = (e) => {
+        const touch = e.touches[0];
+        sheetDragStartY.current  = touch.clientY;
+        sheetDragYRef.current    = 0;
+        sheetVelocityRef.current = { y: touch.clientY, t: Date.now(), velocity: 0 };
+        sheetDragFromHandle.current = false;
+        sheetStartedAtTop.current   = false;
+
+        if (!scrollEl || scrollEl.scrollTop <= 0) {
+          /* 在頂部：預先阻止 iOS 的 scroll 認領，手勢完全交給我們 */
+          e.preventDefault();
+          sheetStartedAtTop.current = true;
+        }
+      };
+
+      /* panel 本身的 touchstart（把手區或 panel 背景）*/
       const onStart = (e) => {
+        /* 若事件來源是 scrollEl，已由 onScrollDivStart 處理 */
+        if (scrollEl && scrollEl.contains(e.target)) return;
         const touch = e.touches[0];
         sheetDragStartY.current  = touch.clientY;
         sheetDragYRef.current    = 0;
         sheetVelocityRef.current = { y: touch.clientY, t: Date.now(), velocity: 0 };
         const rect = el.getBoundingClientRect();
         sheetDragFromHandle.current = (touch.clientY - rect.top) < 56;
-        sheetStartedAtTop.current   = false; // 由 move 動態判斷
-      };
-
-      /* 掛在 inner scroll div：實時判斷 scrollTop，在 iOS 認領之前 preventDefault */
-      const onScrollDivMove = (e) => {
-        if (sheetDragStartY.current === null) return;
-        const touch = e.touches[0];
-        const dy = touch.clientY - sheetDragStartY.current;
-        if (dy <= 0) { sheetStartedAtTop.current = false; return; }
-
-        const atTop = !scrollEl || scrollEl.scrollTop <= 0;
-        if (!atTop) return; // 還沒到頂，讓列表正常捲動
-
-        /* 已到頂並往下拉：接管手勢 */
-        e.preventDefault();
-        sheetStartedAtTop.current = true;
-        applyDrag(touch);
+        sheetStartedAtTop.current   = sheetDragFromHandle.current;
       };
 
       const onMove = (e) => {
         if (sheetDragStartY.current === null) return;
         const touch = e.touches[0];
-        /* 把手區：永遠可拖（不管列表位置）*/
-        if (sheetDragFromHandle.current) {
-          const dy = touch.clientY - sheetDragStartY.current;
-          if (dy <= 0) return;
-          e.preventDefault();
-          sheetStartedAtTop.current = true;
-          applyDrag(touch);
-          return;
+        const dy    = touch.clientY - sheetDragStartY.current;
+
+        if (!sheetStartedAtTop.current) {
+          /* 列表區且未到頂：檢查是否此刻剛到頂 */
+          if (scrollEl && scrollEl.scrollTop <= 0 && dy > 0) {
+            sheetStartedAtTop.current   = true;
+            sheetDragStartY.current     = touch.clientY; // 重設起點，消除跳動
+            sheetDragYRef.current       = 0;
+          } else {
+            return;
+          }
         }
-        /* 列表區：由 onScrollDivMove 處理，這裡只防重複 */
-        if (!sheetStartedAtTop.current) return;
+
+        if (dy <= 0) return;
         e.preventDefault();
         applyDrag(touch);
       };
@@ -541,13 +548,11 @@ export default function HomePage({
         const vel = sheetVelocityRef.current.velocity ?? 0;
 
         if (dy > 72 || vel > 0.45) {
-          /* 關閉：sheet 飛出 + backdrop 同步淡出 */
           el.style.transition = "transform 260ms cubic-bezier(0.4,0,1,1)";
           el.style.transform  = "translateY(110%)";
           if (backdrop) { backdrop.style.transition = "opacity 240ms ease"; backdrop.style.opacity = "0"; }
           setTimeout(() => setShowListSheet(false), 255);
         } else if (dy > 0) {
-          /* 彈回：backdrop 恢復 */
           el.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
           el.style.transform  = "";
           if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = ""; }
@@ -559,15 +564,21 @@ export default function HomePage({
         sheetVelocityRef.current    = { y: 0, t: 0, velocity: 0 };
       };
 
-      el.addEventListener("touchstart", onStart, { passive: true });
-      el.addEventListener("touchmove",  onMove,  { passive: false });
-      el.addEventListener("touchend",   onEnd,   { passive: true });
-      if (scrollEl) scrollEl.addEventListener("touchmove", onScrollDivMove, { passive: false });
+      el.addEventListener("touchstart",    onStart,          { passive: true });
+      el.addEventListener("touchmove",     onMove,           { passive: false });
+      el.addEventListener("touchend",      onEnd,            { passive: true });
+      if (scrollEl) {
+        scrollEl.addEventListener("touchstart", onScrollDivStart, { passive: false });
+        scrollEl.addEventListener("touchend",   onEnd,            { passive: true });
+      }
       return () => {
-        el.removeEventListener("touchstart", onStart);
-        el.removeEventListener("touchmove",  onMove);
-        el.removeEventListener("touchend",   onEnd);
-        if (scrollEl) scrollEl.removeEventListener("touchmove", onScrollDivMove);
+        el.removeEventListener("touchstart",    onStart);
+        el.removeEventListener("touchmove",     onMove);
+        el.removeEventListener("touchend",      onEnd);
+        if (scrollEl) {
+          scrollEl.removeEventListener("touchstart", onScrollDivStart);
+          scrollEl.removeEventListener("touchend",   onEnd);
+        }
       };
     }, [showListSheet, closeSheetAnimated]);
 
