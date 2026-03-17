@@ -304,6 +304,313 @@ export default function HomePage({
     },
   ];
 
+  /* ── App 模式專屬 hooks（必須在頂層無條件呼叫，React Rules of Hooks）── */
+  const touchStart         = React.useRef(null);
+  const scrollContainerRef = React.useRef(null);
+  const coverAreaRef       = React.useRef(null);
+  const cardRef            = React.useRef(null);
+  const dragStartYRef      = React.useRef(null);
+  const dragXRef           = React.useRef(0);
+  const dragYRef           = React.useRef(0);
+  const isDraggingHorizRef = React.useRef(false);
+  const isDraggingVertRef  = React.useRef(false);
+  const [showListSheet, setShowListSheet]           = React.useState(false);
+  const sheetDragYRef                               = React.useRef(0);
+  const sheetDragStartY                             = React.useRef(null);
+  const sheetDragFromHandle                         = React.useRef(false);
+  const sheetStartedAtTop                           = React.useRef(false);
+  const sheetVelocityRef                            = React.useRef({ y: 0, t: 0 });
+  const listSheetRef                                = React.useRef(null);
+  const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
+  const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
+  const [listPage, setListPage]                     = React.useState(1);
+  const totalInCategoryRef = React.useRef(0);
+  const nextCatActivityRef = React.useRef(() => {});
+  const prevCatActivityRef = React.useRef(() => {});
+  const showListSheetRef   = React.useRef(false);
+  const displayListRef     = React.useRef([]);
+
+  /* listPage 重設 */
+  React.useEffect(() => {
+    if (!isNative) return;
+    setListPage(1);
+  }, [isNative, searchQuery, filterDateFrom, filterDateTo, nativeCategory]);
+
+  /* 預載相鄰卡片圖片 */
+  React.useEffect(() => {
+    if (!isNative) return;
+    const list = displayListRef.current;
+    if (!list || list.length <= 1) return;
+    const n   = list.length;
+    const idx = Math.min(currentActivityIndex, n - 1);
+    [(idx + 1) % n, (idx - 1 + n) % n].forEach(i => {
+      const url = list[i]?.coverImage?.asset?.url;
+      if (url) { const img = new window.Image(); img.src = sanityImg(url, { w: 800, q: 72 }); }
+    });
+  }, [isNative, currentActivityIndex, nativeCategory]);
+
+    /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）*/
+  const closeSheetAnimated = React.useCallback(() => {
+    if (!isNative) { setShowListSheet(false); return; }
+    const el = listSheetRef.current;
+    if (el) {
+    const bd = el.parentElement?.querySelector("[data-backdrop]");
+    /* animation-fill-mode:both 會蓋掉 inline transform，必須先清除 */
+    el.style.animation  = "none";
+    el.style.transition = "transform 500ms cubic-bezier(0.4,0,0.6,1)";
+    el.style.transform  = "translateY(110%)";
+    if (bd) { bd.style.transition = "opacity 460ms ease"; bd.style.opacity = "0"; }
+    setTimeout(() => setShowListSheet(false), 490);
+    } else {
+    setShowListSheet(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const panel    = listSheetRef.current;
+    if (!panel || !showListSheet) return;
+    const backdrop = panel.parentElement?.querySelector("[data-backdrop]");
+    const cont     = panel.querySelector(".sheet-scroll-cont");
+    const content  = panel.querySelector(".sheet-scroll-content");
+    if (!cont || !content) return;
+
+    /* ── 工具函式 ── */
+    const rubbery  = (d) => d <= 60 ? d : 60 + (d - 60) * 0.4;
+    const getScroll = () => {
+    const m = content.style.transform?.match(/-?[\d.]+/);
+    return m ? -parseFloat(m[0]) : 0;
+    };
+    const maxScroll = () => Math.max(0, content.scrollHeight - cont.clientHeight);
+    const setScroll = (y) => {
+    content.style.transform = `translateY(${-y}px)`;
+    };
+
+    /* ── 手勢狀態（closure 變數，不用 React state）── */
+    let lastY = 0, lastT = 0;
+    let vel   = 0;            // px/ms，用於動量
+    let mode  = "idle";       // "idle" | "scroll" | "drag"
+    let panelDy   = 0;
+    let dragStartY = 0;       // drag 模式的起點（可中途重設）
+    let topHitY    = null;    // 碰到頂部那一刻的手指 Y（用來算往下多少才切 drag）
+    let rafId = null;
+    const cancelRAF = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
+
+    /* ── touchstart：passive: true，保留 click 事件（按鈕才能點擊）── */
+    const onStart = (e) => {
+    cancelRAF();
+    lastY = e.touches[0].clientY;
+    lastT = Date.now();
+    vel = 0; mode = "idle"; panelDy = 0; topHitY = null;
+    };
+
+    /* ── touchmove ── */
+    const onMove = (e) => {
+    e.preventDefault();
+    const cy  = e.touches[0].clientY;
+    const now = Date.now(), dt = Math.max(1, now - lastT);
+    const delta = cy - lastY;     // 這一幀的原始位移（px）
+    vel   = delta / dt;           // px/ms，供動量使用
+    lastY = cy; lastT = now;
+
+    /* 決定模式 */
+    if (mode === "idle") {
+      if (Math.abs(delta) < 1 && getScroll() > 0) return;
+      mode = (delta > 0 && getScroll() <= 1) ? "drag" : "scroll";
+      if (mode === "drag") { dragStartY = cy; panelDy = 0; }
+    }
+
+    if (mode === "scroll") {
+      const cur  = getScroll();
+      const next = cur - delta;   // 1:1 跟手指（負值 = 滾動方向）
+      const max  = maxScroll();
+
+      if (next <= 0) {
+      /* 剛到頂部：記錄位置 */
+      if (topHitY === null) topHitY = cy;
+      const downFromTop = cy - topHitY;   // 碰頂後往下移了多少
+      if (downFromTop > 6) {
+        /* 超過 6px：切換 drag 模式 */
+        mode = "drag"; dragStartY = cy; panelDy = 0; topHitY = null;
+        setScroll(0); content.style.transition = "";
+      } else {
+        /* 橡皮筋（頂部）*/
+        content.style.transform = `translateY(${Math.min(downFromTop * 0.4, 20)}px)`;
+      }
+      } else {
+      topHitY = null;   // 離開頂部，重設
+      if (next > max) {
+        /* 橡皮筋（底部）*/
+        const overflow = next - max;
+        content.style.transform = `translateY(${-(max + overflow * 0.25)}px)`;
+      } else {
+        setScroll(next);
+      }
+      }
+    }
+
+    if (mode === "drag") {
+      panelDy = Math.max(0, cy - dragStartY);
+      const vis = rubbery(panelDy);
+      panel.style.transform  = `translateY(${vis}px)`;
+      panel.style.transition = "none";
+      if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - vis / 180));
+    }
+    };
+
+    /* ── touchend ── */
+    const onEnd = () => {
+    if (mode === "drag") {
+      /* animation-fill-mode:both 會蓋掉 inline transform，先清除 */
+      panel.style.animation = "none";
+      if (panelDy > 80 || vel > 0.35) {
+      /* 關閉：慢收，重力感 ease-in */
+      panel.style.transition = "transform 500ms cubic-bezier(0.4,0,0.6,1)";
+      panel.style.transform  = "translateY(110%)";
+      if (backdrop) { backdrop.style.transition = "opacity 460ms ease"; backdrop.style.opacity = "0"; }
+      setTimeout(() => setShowListSheet(false), 490);
+      } else {
+      /* 彈回：明顯 overshoot spring，Y2=1.72 讓它彈過頭再回來 */
+      panel.style.transition = "transform 500ms cubic-bezier(0.34,1.72,0.64,1)";
+      panel.style.transform  = "";
+      if (backdrop) { backdrop.style.transition = "opacity 400ms ease"; backdrop.style.opacity = ""; }
+      }
+    } else if (mode === "scroll") {
+      const max = maxScroll();
+      const cur = getScroll();
+      /* 邊界彈回 */
+      if (cur < 0 || cur > max) {
+      const target = Math.max(0, Math.min(cur, max));
+      content.style.transition = "transform 380ms cubic-bezier(0.34,1.4,0.64,1)";
+      setScroll(target);
+      setTimeout(() => { content.style.transition = ""; }, 390);
+      return;
+      }
+      /* 動量慣性：vel 是 px/ms，乘 16 轉成每幀位移，衰減係數 0.92 */
+      let v = vel * 16;
+      const tick = () => {
+      v *= 0.92;
+      if (Math.abs(v) < 0.5) {
+        const c = getScroll(), m = maxScroll();
+        if (c < 0 || c > m) {
+        const t = Math.max(0, Math.min(c, m));
+        content.style.transition = "transform 350ms cubic-bezier(0.22,1,0.36,1)";
+        setScroll(t);
+        setTimeout(() => { content.style.transition = ""; }, 360);
+        }
+        return;
+      }
+      const next = getScroll() - v, m = maxScroll();
+      if (next < 0)      { setScroll(0); v = 0; }
+      else if (next > m) { setScroll(m); v = 0; }
+      else               { setScroll(next); }
+      rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+    }
+    mode = "idle";
+    };
+
+    panel.addEventListener("touchstart", onStart, { passive: true });
+    panel.addEventListener("touchmove",  onMove,  { passive: false });
+    panel.addEventListener("touchend",   onEnd,   { passive: true });
+    return () => {
+    cancelRAF();
+    panel.removeEventListener("touchstart", onStart);
+    panel.removeEventListener("touchmove",  onMove);
+    panel.removeEventListener("touchend",   onEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNative, showListSheet, closeSheetAnimated]);
+
+    /* 精選卡觸控 */
+  React.useEffect(() => {
+    if (!isNative) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const onStart = (e) => {
+    /* sheet 開著時，觸控讓 sheet 自己處理，卡片不攔截 */
+    if (showListSheetRef.current) return;
+    touchStart.current         = e.touches[0].clientX;
+    dragStartYRef.current      = e.touches[0].clientY;
+    dragXRef.current           = 0;
+    dragYRef.current           = 0;
+    isDraggingHorizRef.current = false;
+    isDraggingVertRef.current  = false;
+    };
+
+    const onMove = (e) => {
+    if (touchStart.current === null) return;
+    const dx = e.touches[0].clientX - touchStart.current;
+    const dy = e.touches[0].clientY - dragStartYRef.current;
+    dragXRef.current = dx;
+    dragYRef.current = dy;
+
+    if (!isDraggingHorizRef.current && !isDraggingVertRef.current) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if (Math.abs(dy) > Math.abs(dx)) {
+      isDraggingVertRef.current = true;
+      } else {
+      isDraggingHorizRef.current = true;
+      }
+    }
+    e.preventDefault(); // 防止 iOS 橡皮筋 / 捲動
+    if (isDraggingHorizRef.current) {
+      const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
+      applyCardTransform(dx * resistance);
+    }
+    };
+
+    const onEnd = () => {
+    const dx   = dragXRef.current;
+    const dy   = dragYRef.current;
+    const card = cardRef.current;
+
+    if (isDraggingHorizRef.current) {
+      const THRESHOLD = 55;
+      if (Math.abs(dx) > THRESHOLD && totalInCategoryRef.current > 1) {
+      const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
+      const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
+      applyCardTransform(flyX, "transform 220ms ease-in");
+      setTimeout(() => {
+        dx < 0 ? nextCatActivityRef.current() : prevCatActivityRef.current();
+        if (card) {
+        card.style.transition = "none";
+        card.style.transform  = `translateX(${enterX}px)`;
+        card.getBoundingClientRect();
+        card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
+        card.style.transform  = "";
+        }
+      }, 210);
+      } else {
+      applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
+      }
+    } else if (isDraggingVertRef.current) {
+      /* 上滑 → 展開列表 */
+      if (dy < -40 && !showListSheetRef.current) {
+      setShowListSheet(true);
+      }
+    }
+
+    touchStart.current         = null;
+    dragXRef.current           = 0;
+    dragYRef.current           = 0;
+    isDraggingHorizRef.current = false;
+    isDraggingVertRef.current  = false;
+    };
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove",  onMove,  { passive: false });
+    el.addEventListener("touchend",   onEnd,   { passive: true });
+    return () => {
+    el.removeEventListener("touchstart", onStart);
+    el.removeEventListener("touchmove",  onMove);
+    el.removeEventListener("touchend",   onEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNative, loading]);
+
   /* ================= App 版（native）專屬首頁 ================= */
   if (isNative) {
     const accentGradients = [
@@ -314,49 +621,6 @@ export default function HomePage({
     ];
     const panelBg = "#1c1c1e";
 
-    /* useRef 必須在任何 early return 之前呼叫，確保 hook 順序一致 */
-    const touchStart         = React.useRef(null);
-    const scrollContainerRef = React.useRef(null);
-    const coverAreaRef       = React.useRef(null);
-    const cardRef            = React.useRef(null);
-    const dragStartYRef      = React.useRef(null);
-    const dragXRef           = React.useRef(0);
-    const dragYRef           = React.useRef(0);
-    const isDraggingHorizRef = React.useRef(false);
-    const isDraggingVertRef  = React.useRef(false);
-    const [showListSheet, setShowListSheet]           = React.useState(false);
-    const sheetDragYRef                               = React.useRef(0);
-    const sheetDragStartY                             = React.useRef(null);
-    const sheetDragFromHandle                         = React.useRef(false);
-    const sheetStartedAtTop                           = React.useRef(false); // touchstart 時內層是否在頂端
-    const sheetVelocityRef                            = React.useRef({ y: 0, t: 0 });
-    const listSheetRef                                = React.useRef(null);
-    const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
-    const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
-    const [listPage, setListPage] = React.useState(1);
-
-    /* ── React rules of hooks：所有 hooks 必須在 early return 之前呼叫 ── */
-    /* ref mirrors — 值在 computed section 中 inline 更新，不需要 useEffect sync */
-    const totalInCategoryRef = React.useRef(0);
-    const nextCatActivityRef = React.useRef(() => {});
-    const prevCatActivityRef = React.useRef(() => {});
-    const showListSheetRef   = React.useRef(false);
-    const displayListRef     = React.useRef([]); // 讓 early-return 前的 effect 也能讀到
-
-    /* listPage 重設：篩選條件（真正的根源）改變時重設 */
-    React.useEffect(() => { setListPage(1); }, [searchQuery, filterDateFrom, filterDateTo, nativeCategory]);
-
-    /* 預載相鄰卡片圖片（用 ref 避免 TDZ，deps 只用 early-return 前就存在的值）*/
-    React.useEffect(() => {
-      const list = displayListRef.current;
-      if (!list || list.length <= 1) return;
-      const n   = list.length;
-      const idx = Math.min(currentActivityIndex, n - 1);
-      [(idx + 1) % n, (idx - 1 + n) % n].forEach(i => {
-        const url = list[i]?.coverImage?.asset?.url;
-        if (url) { const img = new window.Image(); img.src = sanityImg(url, { w: 800, q: 72 }); }
-      });
-    }, [currentActivityIndex, nativeCategory]);
 
     /* applyCardTransform helper */
     const applyCardTransform = (x, transition = "none") => {
@@ -366,264 +630,7 @@ export default function HomePage({
       card.style.transform  = x === 0 ? "" : `translateX(${x}px)`;
     };
 
-    /* 精選卡觸控（non-passive，可 preventDefault 防橡皮筋）
-       deps 含 loading：loading 結束後 el 才存在，effect 重跑才能綁上監聽器 */
-    React.useEffect(() => {
-      const el = scrollContainerRef.current;
-      if (!el) return;
 
-      const onStart = (e) => {
-        /* sheet 開著時，觸控讓 sheet 自己處理，卡片不攔截 */
-        if (showListSheetRef.current) return;
-        touchStart.current         = e.touches[0].clientX;
-        dragStartYRef.current      = e.touches[0].clientY;
-        dragXRef.current           = 0;
-        dragYRef.current           = 0;
-        isDraggingHorizRef.current = false;
-        isDraggingVertRef.current  = false;
-      };
-
-      const onMove = (e) => {
-        if (touchStart.current === null) return;
-        const dx = e.touches[0].clientX - touchStart.current;
-        const dy = e.touches[0].clientY - dragStartYRef.current;
-        dragXRef.current = dx;
-        dragYRef.current = dy;
-
-        if (!isDraggingHorizRef.current && !isDraggingVertRef.current) {
-          if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-          if (Math.abs(dy) > Math.abs(dx)) {
-            isDraggingVertRef.current = true;
-          } else {
-            isDraggingHorizRef.current = true;
-          }
-        }
-        e.preventDefault(); // 防止 iOS 橡皮筋 / 捲動
-        if (isDraggingHorizRef.current) {
-          const resistance = Math.abs(dx) > 100 ? 0.35 : 1;
-          applyCardTransform(dx * resistance);
-        }
-      };
-
-      const onEnd = () => {
-        const dx   = dragXRef.current;
-        const dy   = dragYRef.current;
-        const card = cardRef.current;
-
-        if (isDraggingHorizRef.current) {
-          const THRESHOLD = 55;
-          if (Math.abs(dx) > THRESHOLD && totalInCategoryRef.current > 1) {
-            const flyX   = dx < 0 ? -window.innerWidth : window.innerWidth;
-            const enterX = dx < 0 ?  window.innerWidth : -window.innerWidth;
-            applyCardTransform(flyX, "transform 220ms ease-in");
-            setTimeout(() => {
-              dx < 0 ? nextCatActivityRef.current() : prevCatActivityRef.current();
-              if (card) {
-                card.style.transition = "none";
-                card.style.transform  = `translateX(${enterX}px)`;
-                card.getBoundingClientRect();
-                card.style.transition = "transform 300ms cubic-bezier(0.22,1,0.36,1)";
-                card.style.transform  = "";
-              }
-            }, 210);
-          } else {
-            applyCardTransform(0, "transform 350ms cubic-bezier(0.22,1,0.36,1)");
-          }
-        } else if (isDraggingVertRef.current) {
-          /* 上滑 → 展開列表 */
-          if (dy < -40 && !showListSheetRef.current) {
-            setShowListSheet(true);
-          }
-        }
-
-        touchStart.current         = null;
-        dragXRef.current           = 0;
-        dragYRef.current           = 0;
-        isDraggingHorizRef.current = false;
-        isDraggingVertRef.current  = false;
-      };
-
-      el.addEventListener("touchstart", onStart, { passive: true });
-      el.addEventListener("touchmove",  onMove,  { passive: false });
-      el.addEventListener("touchend",   onEnd,   { passive: true });
-      return () => {
-        el.removeEventListener("touchstart", onStart);
-        el.removeEventListener("touchmove",  onMove);
-        el.removeEventListener("touchend",   onEnd);
-      };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [loading]); // loading 結束後 scrollContainerRef 才有 DOM，重跑一次綁上監聽器
-
-    /* 列表 sheet 拖拽關閉（non-passive，直接操作 DOM 避免重渲染）*/
-    const closeSheetAnimated = React.useCallback(() => {
-      const el = listSheetRef.current;
-      if (el) {
-        const bd = el.parentElement?.querySelector("[data-backdrop]");
-        /* animation-fill-mode:both 會蓋掉 inline transform，必須先清除 */
-        el.style.animation  = "none";
-        el.style.transition = "transform 500ms cubic-bezier(0.4,0,0.6,1)";
-        el.style.transform  = "translateY(110%)";
-        if (bd) { bd.style.transition = "opacity 460ms ease"; bd.style.opacity = "0"; }
-        setTimeout(() => setShowListSheet(false), 490);
-      } else {
-        setShowListSheet(false);
-      }
-    }, []);
-
-    React.useEffect(() => {
-      const panel    = listSheetRef.current;
-      if (!panel || !showListSheet) return;
-      const backdrop = panel.parentElement?.querySelector("[data-backdrop]");
-      const cont     = panel.querySelector(".sheet-scroll-cont");
-      const content  = panel.querySelector(".sheet-scroll-content");
-      if (!cont || !content) return;
-
-      /* ── 工具函式 ── */
-      const rubbery  = (d) => d <= 60 ? d : 60 + (d - 60) * 0.4;
-      const getScroll = () => {
-        const m = content.style.transform?.match(/-?[\d.]+/);
-        return m ? -parseFloat(m[0]) : 0;
-      };
-      const maxScroll = () => Math.max(0, content.scrollHeight - cont.clientHeight);
-      const setScroll = (y) => {
-        content.style.transform = `translateY(${-y}px)`;
-      };
-
-      /* ── 手勢狀態（closure 變數，不用 React state）── */
-      let lastY = 0, lastT = 0;
-      let vel   = 0;            // px/ms，用於動量
-      let mode  = "idle";       // "idle" | "scroll" | "drag"
-      let panelDy   = 0;
-      let dragStartY = 0;       // drag 模式的起點（可中途重設）
-      let topHitY    = null;    // 碰到頂部那一刻的手指 Y（用來算往下多少才切 drag）
-      let rafId = null;
-      const cancelRAF = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
-
-      /* ── touchstart：passive: true，保留 click 事件（按鈕才能點擊）── */
-      const onStart = (e) => {
-        cancelRAF();
-        lastY = e.touches[0].clientY;
-        lastT = Date.now();
-        vel = 0; mode = "idle"; panelDy = 0; topHitY = null;
-      };
-
-      /* ── touchmove ── */
-      const onMove = (e) => {
-        e.preventDefault();
-        const cy  = e.touches[0].clientY;
-        const now = Date.now(), dt = Math.max(1, now - lastT);
-        const delta = cy - lastY;     // 這一幀的原始位移（px）
-        vel   = delta / dt;           // px/ms，供動量使用
-        lastY = cy; lastT = now;
-
-        /* 決定模式 */
-        if (mode === "idle") {
-          if (Math.abs(delta) < 1 && getScroll() > 0) return;
-          mode = (delta > 0 && getScroll() <= 1) ? "drag" : "scroll";
-          if (mode === "drag") { dragStartY = cy; panelDy = 0; }
-        }
-
-        if (mode === "scroll") {
-          const cur  = getScroll();
-          const next = cur - delta;   // 1:1 跟手指（負值 = 滾動方向）
-          const max  = maxScroll();
-
-          if (next <= 0) {
-            /* 剛到頂部：記錄位置 */
-            if (topHitY === null) topHitY = cy;
-            const downFromTop = cy - topHitY;   // 碰頂後往下移了多少
-            if (downFromTop > 6) {
-              /* 超過 6px：切換 drag 模式 */
-              mode = "drag"; dragStartY = cy; panelDy = 0; topHitY = null;
-              setScroll(0); content.style.transition = "";
-            } else {
-              /* 橡皮筋（頂部）*/
-              content.style.transform = `translateY(${Math.min(downFromTop * 0.4, 20)}px)`;
-            }
-          } else {
-            topHitY = null;   // 離開頂部，重設
-            if (next > max) {
-              /* 橡皮筋（底部）*/
-              const overflow = next - max;
-              content.style.transform = `translateY(${-(max + overflow * 0.25)}px)`;
-            } else {
-              setScroll(next);
-            }
-          }
-        }
-
-        if (mode === "drag") {
-          panelDy = Math.max(0, cy - dragStartY);
-          const vis = rubbery(panelDy);
-          panel.style.transform  = `translateY(${vis}px)`;
-          panel.style.transition = "none";
-          if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - vis / 180));
-        }
-      };
-
-      /* ── touchend ── */
-      const onEnd = () => {
-        if (mode === "drag") {
-          /* animation-fill-mode:both 會蓋掉 inline transform，先清除 */
-          panel.style.animation = "none";
-          if (panelDy > 80 || vel > 0.35) {
-            /* 關閉：慢收，重力感 ease-in */
-            panel.style.transition = "transform 500ms cubic-bezier(0.4,0,0.6,1)";
-            panel.style.transform  = "translateY(110%)";
-            if (backdrop) { backdrop.style.transition = "opacity 460ms ease"; backdrop.style.opacity = "0"; }
-            setTimeout(() => setShowListSheet(false), 490);
-          } else {
-            /* 彈回：明顯 overshoot spring，Y2=1.72 讓它彈過頭再回來 */
-            panel.style.transition = "transform 500ms cubic-bezier(0.34,1.72,0.64,1)";
-            panel.style.transform  = "";
-            if (backdrop) { backdrop.style.transition = "opacity 400ms ease"; backdrop.style.opacity = ""; }
-          }
-        } else if (mode === "scroll") {
-          const max = maxScroll();
-          const cur = getScroll();
-          /* 邊界彈回 */
-          if (cur < 0 || cur > max) {
-            const target = Math.max(0, Math.min(cur, max));
-            content.style.transition = "transform 380ms cubic-bezier(0.34,1.4,0.64,1)";
-            setScroll(target);
-            setTimeout(() => { content.style.transition = ""; }, 390);
-            return;
-          }
-          /* 動量慣性：vel 是 px/ms，乘 16 轉成每幀位移，衰減係數 0.92 */
-          let v = vel * 16;
-          const tick = () => {
-            v *= 0.92;
-            if (Math.abs(v) < 0.5) {
-              const c = getScroll(), m = maxScroll();
-              if (c < 0 || c > m) {
-                const t = Math.max(0, Math.min(c, m));
-                content.style.transition = "transform 350ms cubic-bezier(0.22,1,0.36,1)";
-                setScroll(t);
-                setTimeout(() => { content.style.transition = ""; }, 360);
-              }
-              return;
-            }
-            const next = getScroll() - v, m = maxScroll();
-            if (next < 0)      { setScroll(0); v = 0; }
-            else if (next > m) { setScroll(m); v = 0; }
-            else               { setScroll(next); }
-            rafId = requestAnimationFrame(tick);
-          };
-          rafId = requestAnimationFrame(tick);
-        }
-        mode = "idle";
-      };
-
-      panel.addEventListener("touchstart", onStart, { passive: true });
-      panel.addEventListener("touchmove",  onMove,  { passive: false });
-      panel.addEventListener("touchend",   onEnd,   { passive: true });
-      return () => {
-        cancelRAF();
-        panel.removeEventListener("touchstart", onStart);
-        panel.removeEventListener("touchmove",  onMove);
-        panel.removeEventListener("touchend",   onEnd);
-      };
-    }, [showListSheet, closeSheetAnimated]);
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
