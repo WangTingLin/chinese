@@ -833,21 +833,25 @@ export default function HomePage({
         return;
       }
 
-      /* ── PWA / 網頁：開啟 .ics blob，iOS/Android 自動提示「加入行事曆」── */
+      /* ── iOS（Safari / PWA）：data: URI → iOS 直接跳出「加入行事曆」對話框 ── */
+      const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent) ||
+                    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        window.open(
+          `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`,
+          "_blank"
+        );
+        return;
+      }
+
+      /* ── Android / 桌機：下載 .ics，Android 點一下自動用 Google 日曆開啟 ── */
       const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
       const url  = URL.createObjectURL(blob);
-      /* iOS Safari（含 PWA）：window.open → 檔案預覽 → 右上角「加入行事曆」
-         Android Chrome：觸發下載後點擊 .ics → 系統開啟 Google 日曆
-         桌機：下載後雙擊開啟 */
-      const opened = window.open(url, "_blank");
-      if (!opened) {
-        /* popup 被封鎖時 fallback 用 <a download> */
-        const a = document.createElement("a");
-        a.href = url; a.download = safeName;
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a);
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      const a    = document.createElement("a");
+      a.href = url; a.download = safeName;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 8000);
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
