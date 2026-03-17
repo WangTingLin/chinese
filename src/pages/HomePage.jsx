@@ -749,6 +749,20 @@ export default function HomePage({
                 >
                   <Icon name="Calendar" size={15} /> 加入行事曆
                 </button>
+                <button
+                  className="native-btn"
+                  onClick={() => {
+                    const text = [ev.title, ev.date && `📅 ${ev.date}`, ev.location && `📍 ${ev.location}`].filter(Boolean).join("\n");
+                    if (navigator.share) {
+                      navigator.share({ title: ev.title, text, url: ev.link || location.href }).catch(() => {});
+                    } else if (ev.link) {
+                      navigator.clipboard?.writeText(ev.link);
+                    }
+                  }}
+                  style={{ flexShrink: 0, padding: "0.6rem 0.85rem", borderRadius: "0.75rem", background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.75)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  <Icon name="Share" size={15} />
+                </button>
               </div>
             </div>
           ))}
