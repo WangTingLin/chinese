@@ -325,8 +325,10 @@ export default function HomePage({
     const isDraggingHorizRef = React.useRef(false);
     const isDraggingVertRef  = React.useRef(false);
     const [showListSheet, setShowListSheet]           = React.useState(false);
-    const sheetDragYRef                               = React.useRef(0);   // 直接操作 DOM，不用 state
+    const sheetDragYRef                               = React.useRef(0);
     const sheetDragStartY                             = React.useRef(null);
+    const sheetDragFromHandle                         = React.useRef(false); // 是否從把手區開始拖
+    const sheetVelocityRef                            = React.useRef({ y: 0, t: 0 }); // 速度追蹤
     const listSheetRef                                = React.useRef(null);
     const [showPrefsSheet, setShowPrefsSheet]         = React.useState(false);
     const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
@@ -465,34 +467,65 @@ export default function HomePage({
       const el = listSheetRef.current;
       if (!el || !showListSheet) return;
 
+      /* 橡皮筋阻力：前 60px 1:1，之後逐漸增加阻力 */
+      const rubbery = (dy) => dy <= 60 ? dy : 60 + (dy - 60) * 0.38;
+
       const onStart = (e) => {
-        sheetDragStartY.current = e.touches[0].clientY;
-        sheetDragYRef.current   = 0;
+        const touch = e.touches[0];
+        sheetDragStartY.current        = touch.clientY;
+        sheetDragYRef.current          = 0;
+        sheetVelocityRef.current       = { y: touch.clientY, t: Date.now() };
+        /* 判斷是否從把手區（sheet 頂端 56px）開始拖 */
+        const rect = el.getBoundingClientRect();
+        sheetDragFromHandle.current    = (touch.clientY - rect.top) < 56;
       };
+
       const onMove = (e) => {
         if (sheetDragStartY.current === null) return;
-        const dy = e.touches[0].clientY - sheetDragStartY.current;
-        if (dy <= 0) return; // 往上滑：讓列表正常捲動
-        /* 只有列表已在頂端，才接管手勢讓 sheet 跟著走 */
-        const scrollEl = el.querySelector(".sheet-scroll");
-        if (scrollEl && scrollEl.scrollTop > 0) return;
+        const touch = e.touches[0];
+        const dy    = touch.clientY - sheetDragStartY.current;
+        if (dy <= 0) return;
+
+        /* 把手區：永遠可拖；列表區：需在頂端 */
+        if (!sheetDragFromHandle.current) {
+          const scrollEl = el.querySelector(".sheet-scroll");
+          if (scrollEl && scrollEl.scrollTop > 0) return;
+        }
+
         e.preventDefault();
         sheetDragYRef.current = dy;
-        el.style.transform    = `translateY(${dy}px)`;
+        el.style.transform    = `translateY(${rubbery(dy)}px)`;
         el.style.transition   = "none";
+
+        /* 更新速度（最近一幀的 px/ms）*/
+        const now = Date.now();
+        const dt  = now - sheetVelocityRef.current.t;
+        if (dt > 8) {
+          sheetVelocityRef.current = {
+            velocity: (touch.clientY - sheetVelocityRef.current.y) / dt,
+            y: touch.clientY, t: now,
+          };
+        }
       };
+
       const onEnd = () => {
-        if (sheetDragYRef.current > 80) {
-          /* 飛出去再 unmount */
-          el.style.transition = "transform 300ms cubic-bezier(0.4,0,1,1)";
+        const dy       = sheetDragYRef.current;
+        const velocity = sheetVelocityRef.current.velocity ?? 0;
+
+        /* 距離超過 72px 或快速往下甩（速度 > 0.45px/ms）→ 關閉 */
+        if (dy > 72 || velocity > 0.45) {
+          el.style.transition = "transform 260ms cubic-bezier(0.4,0,1,1)";
           el.style.transform  = "translateY(110%)";
-          setTimeout(() => setShowListSheet(false), 290);
-        } else if (sheetDragYRef.current > 0) {
-          el.style.transition = "transform 320ms cubic-bezier(0.22,1,0.36,1)";
+          setTimeout(() => setShowListSheet(false), 255);
+        } else if (dy > 0) {
+          /* spring 彈回 */
+          el.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
           el.style.transform  = "";
         }
-        sheetDragYRef.current   = 0;
-        sheetDragStartY.current = null;
+        sheetDragYRef.current       = 0;
+        sheetDragStartY.current     = null;
+        sheetDragFromHandle.current = false;
+        sheetVelocityRef.current    = { y: 0, t: 0 };
       };
 
       el.addEventListener("touchstart", onStart, { passive: true });
