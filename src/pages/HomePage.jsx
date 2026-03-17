@@ -461,10 +461,10 @@ export default function HomePage({
         const bd = el.parentElement?.querySelector("[data-backdrop]");
         /* animation-fill-mode:both 會蓋掉 inline transform，必須先清除 */
         el.style.animation  = "none";
-        el.style.transition = "transform 320ms cubic-bezier(0.22,1,0.36,1)";
+        el.style.transition = "transform 500ms cubic-bezier(0.4,0,0.6,1)";
         el.style.transform  = "translateY(110%)";
-        if (bd) { bd.style.transition = "opacity 300ms ease"; bd.style.opacity = "0"; }
-        setTimeout(() => setShowListSheet(false), 315);
+        if (bd) { bd.style.transition = "opacity 460ms ease"; bd.style.opacity = "0"; }
+        setTimeout(() => setShowListSheet(false), 490);
       } else {
         setShowListSheet(false);
       }
@@ -568,16 +568,16 @@ export default function HomePage({
           /* animation-fill-mode:both 會蓋掉 inline transform，先清除 */
           panel.style.animation = "none";
           if (panelDy > 80 || vel > 0.35) {
-            /* 關閉：與開啟同樣 easing，方向相反 */
-            panel.style.transition = "transform 320ms cubic-bezier(0.22,1,0.36,1)";
+            /* 關閉：慢收，重力感 ease-in */
+            panel.style.transition = "transform 500ms cubic-bezier(0.4,0,0.6,1)";
             panel.style.transform  = "translateY(110%)";
-            if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = "0"; }
-            setTimeout(() => setShowListSheet(false), 315);
+            if (backdrop) { backdrop.style.transition = "opacity 460ms ease"; backdrop.style.opacity = "0"; }
+            setTimeout(() => setShowListSheet(false), 490);
           } else {
-            /* 彈回：spring 彈回原位 */
-            panel.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
+            /* 彈回：明顯 overshoot spring，Y2=1.72 讓它彈過頭再回來 */
+            panel.style.transition = "transform 500ms cubic-bezier(0.34,1.72,0.64,1)";
             panel.style.transform  = "";
-            if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = ""; }
+            if (backdrop) { backdrop.style.transition = "opacity 400ms ease"; backdrop.style.opacity = ""; }
           }
         } else if (mode === "scroll") {
           const max = maxScroll();
