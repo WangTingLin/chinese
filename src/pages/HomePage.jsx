@@ -742,17 +742,19 @@ export default function HomePage({
     };
 
     /* ── 共用列表元件（三個分類皆使用）── */
-    const ActivityListItems = ({ list }) => (
+    const ActivityListItems = ({ list, onSelect }) => (
       list.length === 0 ? null : (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {list.map((ev, i) => (
             <div
               key={ev._id}
               className="list-item-in"
+              onClick={onSelect ? () => onSelect(ev) : undefined}
               style={{
                 padding: "1.1rem 1.25rem",
                 borderBottom: i < list.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
                 animationDelay: `${Math.min(i * 0.065, 0.45)}s`,
+                cursor: onSelect ? "pointer" : undefined,
               }}
             >
               {/* 上半：縮圖 ＋ 文字 */}
@@ -1218,7 +1220,14 @@ export default function HomePage({
               <div className="sheet-scroll" style={{ overflowY: "auto", flex: 1 }}>
                 {filteredList.length > 0
                   ? <>
-                      <ActivityListItems list={shownList} />
+                      <ActivityListItems
+                        list={shownList}
+                        onSelect={ev => {
+                          const idx = displayList.findIndex(d => d._id === ev._id);
+                          if (idx !== -1) setCurrentActivityIndex(idx);
+                          closeSheetAnimated();
+                        }}
+                      />
                       {shownList.length < filteredList.length && (
                         <div style={{ padding: "1rem", textAlign: "center" }}>
                           <button onClick={() => setListPage(p => p + 1)}
