@@ -854,36 +854,28 @@ export default function HomePage({
       setCalMenuEv(null);
     };
 
-    /* ── Apple 日曆：Web Share API 傳 .ics，iOS 分享面板有「日曆」選項 ── */
-    const addToAppleCalendar = async (ev) => {
+    /* ── Apple 日曆：直接呼叫 /api/ics，iOS Safari 收到 text/calendar inline
+       會跳出原生「加入行事曆」對話框，不需經過分享面板 ── */
+    const addToAppleCalendar = (ev) => {
       if (!ev?.date) return;
-      const safeName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
-      if (Capacitor.isNativePlatform()) {
-        try {
-          const ics = makeICS(ev);
-          if (!ics) return;
-          const b64 = btoa(unescape(encodeURIComponent(ics)));
-          await Filesystem.writeFile({ path: safeName, data: b64, directory: Directory.Cache });
-          const { uri } = await Filesystem.getUri({ path: safeName, directory: Directory.Cache });
-          await Share.share({ title: ev.title || "行事曆事件", files: [uri] });
-        } catch (e) { console.error("加入行事曆失敗:", e); }
-        setCalMenuEv(null); return;
-      }
-      const ics = makeICS(ev);
-      if (!ics) return;
-      const file = new File([ics], safeName, { type: "text/calendar" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ title: ev.title || "行事曆事件", files: [file] }); }
-        catch (e) { if (e.name !== "AbortError") console.error(e); }
-        setCalMenuEv(null); return;
-      }
-      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href = url; a.download = safeName;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      const first  = ev.date.trim().split(/[~～,，]/)[0].trim();
+      const [datePart, timePart] = first.split(" ");
+      if (!datePart) return;
+      const startT = timePart ? timePart.split("-")[0] : "00:00";
+      const endT   = timePart && timePart.includes("-") ? timePart.split("-")[1] : null;
+      const startD = new Date(`${datePart}T${startT}:00`);
+      const endD   = endT ? new Date(`${datePart}T${endT}:00`) : new Date(startD.getTime() + 7200000);
+      const p      = n => String(n).padStart(2, "0");
+      const fmt    = d => `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;
+      const params = new URLSearchParams({
+        title:    ev.title    || "",
+        date:     fmt(startD),
+        end:      fmt(endD),
+        location: ev.location || "",
+        speaker:  ev.speaker  || "",
+        uid:      ev._id      || String(Date.now()),
+      });
+      window.open(`/api/ics?${params}`, "_blank");
       setCalMenuEv(null);
     };
 
