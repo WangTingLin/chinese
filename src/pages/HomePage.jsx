@@ -474,6 +474,22 @@ export default function HomePage({
 
       const rubbery = (dy) => dy <= 60 ? dy : 60 + (dy - 60) * 0.38;
 
+      /* 共用：實際移動 sheet 的邏輯 */
+      const applyDrag = (touch) => {
+        const dy = touch.clientY - sheetDragStartY.current;
+        if (dy <= 0) return;
+        sheetDragYRef.current = dy;
+        const visual = rubbery(dy);
+        el.style.transform  = `translateY(${visual}px)`;
+        el.style.transition = "none";
+        if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - visual / 200));
+        const now = Date.now(), dt = now - sheetVelocityRef.current.t;
+        if (dt > 8) sheetVelocityRef.current = {
+          velocity: (touch.clientY - sheetVelocityRef.current.y) / dt,
+          y: touch.clientY, t: now,
+        };
+      };
+
       const onStart = (e) => {
         const touch = e.touches[0];
         sheetDragStartY.current  = touch.clientY;
@@ -481,38 +497,41 @@ export default function HomePage({
         sheetVelocityRef.current = { y: touch.clientY, t: Date.now(), velocity: 0 };
         const rect = el.getBoundingClientRect();
         sheetDragFromHandle.current = (touch.clientY - rect.top) < 56;
-        /* touchstart 時就決定內層是否在頂端，之後不再重判 */
-        sheetStartedAtTop.current = sheetDragFromHandle.current ||
-          !scrollEl || scrollEl.scrollTop <= 0;
+        sheetStartedAtTop.current   = false; // 由 move 動態判斷
       };
 
-      /* 直接掛在 inner scroll div：iOS touchstart 認領前先 preventDefault */
+      /* 掛在 inner scroll div：實時判斷 scrollTop，在 iOS 認領之前 preventDefault */
       const onScrollDivMove = (e) => {
-        if (!sheetStartedAtTop.current) return;
-        const dy = e.touches[0].clientY - (sheetDragStartY.current ?? e.touches[0].clientY);
-        if (dy > 0) e.preventDefault();
+        if (sheetDragStartY.current === null) return;
+        const touch = e.touches[0];
+        const dy = touch.clientY - sheetDragStartY.current;
+        if (dy <= 0) { sheetStartedAtTop.current = false; return; }
+
+        const atTop = !scrollEl || scrollEl.scrollTop <= 0;
+        if (!atTop) return; // 還沒到頂，讓列表正常捲動
+
+        /* 已到頂並往下拉：接管手勢 */
+        e.preventDefault();
+        sheetStartedAtTop.current = true;
+        applyDrag(touch);
       };
 
       const onMove = (e) => {
-        if (sheetDragStartY.current === null || !sheetStartedAtTop.current) return;
+        if (sheetDragStartY.current === null) return;
         const touch = e.touches[0];
-        const dy    = touch.clientY - sheetDragStartY.current;
-        if (dy <= 0) return;
+        /* 把手區：永遠可拖（不管列表位置）*/
+        if (sheetDragFromHandle.current) {
+          const dy = touch.clientY - sheetDragStartY.current;
+          if (dy <= 0) return;
+          e.preventDefault();
+          sheetStartedAtTop.current = true;
+          applyDrag(touch);
+          return;
+        }
+        /* 列表區：由 onScrollDivMove 處理，這裡只防重複 */
+        if (!sheetStartedAtTop.current) return;
         e.preventDefault();
-
-        sheetDragYRef.current = dy;
-        const visual = rubbery(dy);
-        el.style.transform  = `translateY(${visual}px)`;
-        el.style.transition = "none";
-
-        /* backdrop 隨拖曳淡出（拖 200px 時完全透明）*/
-        if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - visual / 200));
-
-        const now = Date.now(), dt = now - sheetVelocityRef.current.t;
-        if (dt > 8) sheetVelocityRef.current = {
-          velocity: (touch.clientY - sheetVelocityRef.current.y) / dt,
-          y: touch.clientY, t: now,
-        };
+        applyDrag(touch);
       };
 
       const onEnd = () => {
