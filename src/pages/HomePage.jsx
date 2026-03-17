@@ -499,13 +499,12 @@ export default function HomePage({
       let rafId = null;
       const cancelRAF = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
 
-      /* ── touchstart：passive: false，iOS 無法啟動原生 scroll ── */
+      /* ── touchstart：passive: true，保留 click 事件（按鈕才能點擊）── */
       const onStart = (e) => {
         cancelRAF();
         lastY = e.touches[0].clientY;
         lastT = Date.now();
         vel = 0; mode = "idle"; panelDy = 0; topHitY = null;
-        e.preventDefault();
       };
 
       /* ── touchmove ── */
@@ -615,7 +614,7 @@ export default function HomePage({
         mode = "idle";
       };
 
-      panel.addEventListener("touchstart", onStart, { passive: false });
+      panel.addEventListener("touchstart", onStart, { passive: true });
       panel.addEventListener("touchmove",  onMove,  { passive: false });
       panel.addEventListener("touchend",   onEnd,   { passive: true });
       return () => {
@@ -821,25 +820,34 @@ export default function HomePage({
     const addToCalendar = async (ev) => {
       const ics = makeICS(ev);
       if (!ics) return;
+      const safeName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
+
+      /* ── Capacitor 原生 App ── */
       if (Capacitor.isNativePlatform()) {
         try {
-          const fileName = `${(ev.title || "event").replace(/[^\w\u4e00-\u9fff]/g, "_").slice(0, 30)}.ics`;
-          // base64-encode the ICS content
           const b64 = btoa(unescape(encodeURIComponent(ics)));
-          await Filesystem.writeFile({ path: fileName, data: b64, directory: Directory.Cache });
-          const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
+          await Filesystem.writeFile({ path: safeName, data: b64, directory: Directory.Cache });
+          const { uri } = await Filesystem.getUri({ path: safeName, directory: Directory.Cache });
           await Share.share({ title: ev.title || "行事曆事件", files: [uri] });
-        } catch (e) {
-          console.error("加入行事曆失敗:", e);
-        }
-      } else {
-        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement("a");
-        a.href = url; a.download = `${(ev.title||"event").slice(0,30)}.ics`;
-        document.body.appendChild(a); a.click();
-        document.body.removeChild(a); URL.revokeObjectURL(url);
+        } catch (e) { console.error("加入行事曆失敗:", e); }
+        return;
       }
+
+      /* ── PWA / 網頁：優先 Web Share API（iOS 15+, Android Chrome 89+）── */
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      const file = new File([blob], safeName, { type: "text/calendar" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ title: ev.title || "行事曆事件", files: [file] }); }
+        catch (e) { if (e.name !== "AbortError") console.error(e); }
+        return;
+      }
+
+      /* ── 桌機 fallback：下載 .ics ── */
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement("a");
+      a.href = url; a.download = safeName;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
