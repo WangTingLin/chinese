@@ -833,21 +833,21 @@ export default function HomePage({
         return;
       }
 
-      /* ── PWA / 網頁：優先 Web Share API（iOS 15+, Android Chrome 89+）── */
+      /* ── PWA / 網頁：開啟 .ics blob，iOS/Android 自動提示「加入行事曆」── */
       const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-      const file = new File([blob], safeName, { type: "text/calendar" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ title: ev.title || "行事曆事件", files: [file] }); }
-        catch (e) { if (e.name !== "AbortError") console.error(e); }
-        return;
+      const url  = URL.createObjectURL(blob);
+      /* iOS Safari（含 PWA）：window.open → 檔案預覽 → 右上角「加入行事曆」
+         Android Chrome：觸發下載後點擊 .ics → 系統開啟 Google 日曆
+         桌機：下載後雙擊開啟 */
+      const opened = window.open(url, "_blank");
+      if (!opened) {
+        /* popup 被封鎖時 fallback 用 <a download> */
+        const a = document.createElement("a");
+        a.href = url; a.download = safeName;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
       }
-
-      /* ── 桌機 fallback：下載 .ics ── */
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement("a");
-      a.href = url; a.download = safeName;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a); URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     };
 
     /* ── 滾動視差：封面圖片向上位移 + 漸暗，列表項目滑入 ── */
