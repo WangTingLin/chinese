@@ -469,116 +469,150 @@ export default function HomePage({
     }, []);
 
     React.useEffect(() => {
-      const el = listSheetRef.current;
-      if (!el || !showListSheet) return;
-      const scrollEl = el.querySelector(".sheet-scroll");
-      const backdrop = el.parentElement?.querySelector("[data-backdrop]");
+      const panel    = listSheetRef.current;
+      if (!panel || !showListSheet) return;
+      const backdrop = panel.parentElement?.querySelector("[data-backdrop]");
+      const cont     = panel.querySelector(".sheet-scroll-cont");
+      const content  = panel.querySelector(".sheet-scroll-content");
+      if (!cont || !content) return;
 
-      const rubbery = (dy) => dy <= 60 ? dy : 60 + (dy - 60) * 0.38;
-
-      /* 共用：實際移動 sheet 的邏輯 */
-      const applyDrag = (touch) => {
-        const dy = touch.clientY - sheetDragStartY.current;
-        if (dy <= 0) return;
-        sheetDragYRef.current = dy;
-        const visual = rubbery(dy);
-        el.style.transform  = `translateY(${visual}px)`;
-        el.style.transition = "none";
-        if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - visual / 200));
-        const now = Date.now(), dt = now - sheetVelocityRef.current.t;
-        if (dt > 8) sheetVelocityRef.current = {
-          velocity: (touch.clientY - sheetVelocityRef.current.y) / dt,
-          y: touch.clientY, t: now,
-        };
+      /* ── 工具函式 ── */
+      const rubbery  = (d) => d <= 60 ? d : 60 + (d - 60) * 0.4;
+      const getScroll = () => {
+        const m = content.style.transform?.match(/-?[\d.]+/);
+        return m ? -parseFloat(m[0]) : 0;
+      };
+      const maxScroll = () => Math.max(0, content.scrollHeight - cont.clientHeight);
+      const setScroll = (y) => {
+        content.style.transform = `translateY(${-y}px)`;
       };
 
-      /* scroll div 的 touchstart：scrollTop===0 時立刻宣告主權，
-         iOS 還來不及啟動 scroll 序列就被我們搶先 preventDefault        */
-      const onScrollDivStart = (e) => {
-        const touch = e.touches[0];
-        sheetDragStartY.current  = touch.clientY;
-        sheetDragYRef.current    = 0;
-        sheetVelocityRef.current = { y: touch.clientY, t: Date.now(), velocity: 0 };
-        sheetDragFromHandle.current = false;
-        sheetStartedAtTop.current   = false;
+      /* ── 手勢狀態（closure 變數，不用 React state）── */
+      let startY    = 0, lastY = 0, lastT = 0;
+      let vel       = 0;          // px / frame（16ms）
+      let mode      = "idle";     // "idle" | "scroll" | "drag"
+      let panelDy   = 0;
+      let rafId     = null;
+      const cancelRAF = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
 
-        if (!scrollEl || scrollEl.scrollTop <= 0) {
-          /* 在頂部：預先阻止 iOS 的 scroll 認領，手勢完全交給我們 */
-          e.preventDefault();
-          sheetStartedAtTop.current = true;
-        }
-      };
-
-      /* panel 本身的 touchstart（把手區或 panel 背景）*/
+      /* ── touchstart：passive: false，可隨時 preventDefault ── */
       const onStart = (e) => {
-        /* 若事件來源是 scrollEl，已由 onScrollDivStart 處理 */
-        if (scrollEl && scrollEl.contains(e.target)) return;
-        const touch = e.touches[0];
-        sheetDragStartY.current  = touch.clientY;
-        sheetDragYRef.current    = 0;
-        sheetVelocityRef.current = { y: touch.clientY, t: Date.now(), velocity: 0 };
-        const rect = el.getBoundingClientRect();
-        sheetDragFromHandle.current = (touch.clientY - rect.top) < 56;
-        sheetStartedAtTop.current   = sheetDragFromHandle.current;
+        cancelRAF();
+        startY = lastY = e.touches[0].clientY;
+        lastT  = Date.now();
+        vel    = 0; mode = "idle"; panelDy = 0;
+        /* 立刻宣告主權，iOS 無法啟動原生 scroll */
+        e.preventDefault();
       };
 
+      /* ── touchmove ── */
       const onMove = (e) => {
-        if (sheetDragStartY.current === null) return;
-        const touch = e.touches[0];
-        const dy    = touch.clientY - sheetDragStartY.current;
+        e.preventDefault();
+        const cy  = e.touches[0].clientY;
+        const now = Date.now(), dt = Math.max(1, now - lastT);
+        vel   = (cy - lastY) / dt * 16;   // 換算成每幀位移
+        lastY = cy; lastT = now;
 
-        if (!sheetStartedAtTop.current) {
-          /* 列表區且未到頂：檢查是否此刻剛到頂 */
-          if (scrollEl && scrollEl.scrollTop <= 0 && dy > 0) {
-            sheetStartedAtTop.current   = true;
-            sheetDragStartY.current     = touch.clientY; // 重設起點，消除跳動
-            sheetDragYRef.current       = 0;
+        const totalDy = cy - startY;       // 從 touchstart 的總位移
+
+        /* 決定模式（移動超過 4px 後判定）*/
+        if (mode === "idle") {
+          if (Math.abs(totalDy) < 4) return;
+          mode = (totalDy > 0 && getScroll() <= 1) ? "drag" : "scroll";
+          if (mode === "drag") panelDy = 0;
+        }
+
+        if (mode === "scroll") {
+          const cur  = getScroll();
+          const next = cur - vel;          // delta 滾動（每幀增量）
+          const max  = maxScroll();
+          if (next < 0) {
+            /* 超過頂部 + 手指向下 → 切換成 drag */
+            if (totalDy > 8) {
+              mode   = "drag";
+              startY = cy;
+              panelDy = 0;
+              setScroll(0);
+              content.style.transition = "";
+            } else {
+              /* 橡皮筋（頂部）*/
+              content.style.transform = `translateY(${Math.min(-next * 0.25, 30)}px)`;
+            }
+          } else if (next > max) {
+            /* 橡皮筋（底部）*/
+            const overflow = next - max;
+            content.style.transform = `translateY(${-(max + overflow * 0.25)}px)`;
           } else {
-            return;
+            setScroll(next);
           }
         }
 
-        if (dy <= 0) return;
-        e.preventDefault();
-        applyDrag(touch);
+        if (mode === "drag") {
+          panelDy = Math.max(0, cy - startY);
+          const vis = rubbery(panelDy);
+          panel.style.transform  = `translateY(${vis}px)`;
+          panel.style.transition = "none";
+          if (backdrop) backdrop.style.opacity = String(Math.max(0, 1 - vis / 180));
+        }
       };
 
+      /* ── touchend ── */
       const onEnd = () => {
-        const dy  = sheetDragYRef.current;
-        const vel = sheetVelocityRef.current.velocity ?? 0;
-
-        if (dy > 72 || vel > 0.45) {
-          el.style.transition = "transform 260ms cubic-bezier(0.4,0,1,1)";
-          el.style.transform  = "translateY(110%)";
-          if (backdrop) { backdrop.style.transition = "opacity 240ms ease"; backdrop.style.opacity = "0"; }
-          setTimeout(() => setShowListSheet(false), 255);
-        } else if (dy > 0) {
-          el.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
-          el.style.transform  = "";
-          if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = ""; }
+        if (mode === "drag") {
+          if (panelDy > 80 || vel > 0.55) {
+            panel.style.transition = "transform 280ms cubic-bezier(0.4,0,1,1)";
+            panel.style.transform  = "translateY(110%)";
+            if (backdrop) { backdrop.style.transition = "opacity 260ms ease"; backdrop.style.opacity = "0"; }
+            setTimeout(() => setShowListSheet(false), 275);
+          } else {
+            panel.style.transition = "transform 420ms cubic-bezier(0.34,1.4,0.64,1)";
+            panel.style.transform  = "";
+            if (backdrop) { backdrop.style.transition = "opacity 300ms ease"; backdrop.style.opacity = ""; }
+          }
+        } else if (mode === "scroll") {
+          const max = maxScroll();
+          const cur = getScroll();
+          /* 邊界彈回 */
+          if (cur < 0 || cur > max) {
+            const target = Math.max(0, Math.min(cur, max));
+            content.style.transition = "transform 380ms cubic-bezier(0.34,1.4,0.64,1)";
+            setScroll(target);
+            setTimeout(() => { content.style.transition = ""; }, 390);
+            return;
+          }
+          /* 動量慣性 */
+          let v = vel;
+          const tick = () => {
+            v *= 0.935;
+            if (Math.abs(v) < 0.4) {
+              const c = getScroll(), m = maxScroll();
+              if (c < 0 || c > m) {
+                const t = Math.max(0, Math.min(c, m));
+                content.style.transition = "transform 350ms cubic-bezier(0.22,1,0.36,1)";
+                setScroll(t);
+                setTimeout(() => { content.style.transition = ""; }, 360);
+              }
+              return;
+            }
+            const next = getScroll() - v, m = maxScroll();
+            if (next < 0)      { setScroll(0); v = 0; }
+            else if (next > m) { setScroll(m); v = 0; }
+            else               { setScroll(next); }
+            rafId = requestAnimationFrame(tick);
+          };
+          rafId = requestAnimationFrame(tick);
         }
-        sheetDragYRef.current       = 0;
-        sheetDragStartY.current     = null;
-        sheetDragFromHandle.current = false;
-        sheetStartedAtTop.current   = false;
-        sheetVelocityRef.current    = { y: 0, t: 0, velocity: 0 };
+        mode = "idle";
       };
 
-      el.addEventListener("touchstart",    onStart,          { passive: true });
-      el.addEventListener("touchmove",     onMove,           { passive: false });
-      el.addEventListener("touchend",      onEnd,            { passive: true });
-      if (scrollEl) {
-        scrollEl.addEventListener("touchstart", onScrollDivStart, { passive: false });
-        scrollEl.addEventListener("touchend",   onEnd,            { passive: true });
-      }
+      panel.addEventListener("touchstart", onStart, { passive: false });
+      panel.addEventListener("touchmove",  onMove,  { passive: false });
+      panel.addEventListener("touchend",   onEnd,   { passive: true });
       return () => {
-        el.removeEventListener("touchstart",    onStart);
-        el.removeEventListener("touchmove",     onMove);
-        el.removeEventListener("touchend",      onEnd);
-        if (scrollEl) {
-          scrollEl.removeEventListener("touchstart", onScrollDivStart);
-          scrollEl.removeEventListener("touchend",   onEnd);
-        }
+        cancelRAF();
+        panel.removeEventListener("touchstart", onStart);
+        panel.removeEventListener("touchmove",  onMove);
+        panel.removeEventListener("touchend",   onEnd);
       };
     }, [showListSheet, closeSheetAnimated]);
 
@@ -1296,33 +1330,35 @@ export default function HomePage({
                   </button>
                 </div>
               </div>
-              {/* 列表（可捲動，分頁避免一次渲染太多）*/}
-              <div className="sheet-scroll" style={{ overflowY: "auto", flex: 1 }}>
-                {filteredList.length > 0
-                  ? <>
-                      <ActivityListItems
-                        list={shownList}
-                        onSelect={ev => {
-                          const idx = displayList.findIndex(d => d._id === ev._id);
-                          if (idx !== -1) setCurrentActivityIndex(idx);
-                          closeSheetAnimated();
-                        }}
-                      />
-                      {shownList.length < filteredList.length && (
-                        <div style={{ padding: "1rem", textAlign: "center" }}>
-                          <button onClick={() => setListPage(p => p + 1)}
-                            style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "2rem", padding: "0.6rem 1.8rem", color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
-                            載入更多（剩 {filteredList.length - shownList.length} 筆）
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  : (
-                    <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
-                      <p style={{ fontSize: "0.92rem" }}>目前沒有符合條件的活動</p>
-                    </div>
-                  )
-                }
+              {/* 列表（手動 scroll 物理，overflow hidden + translateY）*/}
+              <div className="sheet-scroll-cont" style={{ overflow: "hidden", flex: 1, position: "relative" }}>
+                <div className="sheet-scroll-content">
+                  {filteredList.length > 0
+                    ? <>
+                        <ActivityListItems
+                          list={shownList}
+                          onSelect={ev => {
+                            const idx = displayList.findIndex(d => d._id === ev._id);
+                            if (idx !== -1) setCurrentActivityIndex(idx);
+                            closeSheetAnimated();
+                          }}
+                        />
+                        {shownList.length < filteredList.length && (
+                          <div style={{ padding: "1rem", textAlign: "center" }}>
+                            <button onClick={() => setListPage(p => p + 1)}
+                              style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "2rem", padding: "0.6rem 1.8rem", color: "rgba(255,255,255,0.6)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                              載入更多（剩 {filteredList.length - shownList.length} 筆）
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    : (
+                      <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                        <p style={{ fontSize: "0.92rem" }}>目前沒有符合條件的活動</p>
+                      </div>
+                    )
+                  }
+                </div>
               </div>
             </div>
           </div>
