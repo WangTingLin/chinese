@@ -238,6 +238,7 @@ export const Icon = ({ name, size = 24, className = "" }) => {
         <line x1="21" x2="16.65" y1="21" y2="16.65" />
       </>
     ),
+    Check: <polyline points="20 6 9 17 4 12" />,
   };
 
   return (
