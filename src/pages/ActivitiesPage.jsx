@@ -5,6 +5,7 @@ import imageUrlBuilder from '@sanity/image-url';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
+import SEOHead from '../components/SEOHead';
 
 const builder = imageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
@@ -78,24 +79,24 @@ export default function ActivitiesPage({ isDarkMode }) {
 
   const getPromoColors = (isDark) => ({
     "學術講座": {
-      bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)",
-      color: isDark ? "#93c5fd" : "#1e40af",
-      border: isDark ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)"
+      bg: isDark ? "rgba(58,80,104,0.28)" : "rgba(58,80,104,0.10)",
+      color: isDark ? "#90b0d0" : "#3a5068",
+      border: isDark ? "rgba(58,80,104,0.5)" : "rgba(58,80,104,0.25)"
     },
     "研討會／工作坊": {
-      bg: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)",
-      color: isDark ? "#86efac" : "#166534",
-      border: isDark ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)"
+      bg: isDark ? "rgba(58,82,40,0.28)" : "rgba(58,82,40,0.10)",
+      color: isDark ? "#a8c890" : "#3a5228",
+      border: isDark ? "rgba(58,82,40,0.5)" : "rgba(58,82,40,0.25)"
     },
     "徵稿資訊": {
-      bg: isDark ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.12)",
-      color: isDark ? "#fde047" : "#b45309",
-      border: isDark ? "rgba(245,158,11,0.4)" : "rgba(245,158,11,0.3)"
+      bg: isDark ? "rgba(122,96,24,0.28)" : "rgba(122,96,24,0.10)",
+      color: isDark ? "#d4b870" : "#7a6018",
+      border: isDark ? "rgba(122,96,24,0.5)" : "rgba(122,96,24,0.25)"
     },
     "已結束": {
-      bg: isDark ? "rgba(107,114,128,0.2)" : "rgba(107,114,128,0.12)",
-      color: isDark ? "#9ca3af" : "#6b7280",
-      border: isDark ? "rgba(107,114,128,0.4)" : "rgba(107,114,128,0.3)"
+      bg: isDark ? "rgba(100,88,72,0.28)" : "rgba(100,88,72,0.10)",
+      color: isDark ? "#b0a090" : "#6a5840",
+      border: isDark ? "rgba(100,88,72,0.5)" : "rgba(100,88,72,0.25)"
     },
   });
 
@@ -196,23 +197,23 @@ export default function ActivitiesPage({ isDarkMode }) {
       case "today":
         return {
           label: "今日",
-          bg: "rgba(59,130,246,0.16)",
-          color: "#2563eb",
-          border: "rgba(59,130,246,0.35)"
+          bg: "rgba(139,72,40,0.12)",
+          color: "#8b4828",
+          border: "rgba(139,72,40,0.3)"
         };
       case "upcoming":
         return {
           label: "即將舉行",
-          bg: "rgba(34,197,94,0.16)",
-          color: "#15803d",
-          border: "rgba(34,197,94,0.35)"
+          bg: "rgba(74,92,56,0.12)",
+          color: "#4a5c38",
+          border: "rgba(74,92,56,0.3)"
         };
       case "past":
         return {
           label: "已結束",
-          bg: "rgba(107,114,128,0.16)",
-          color: "#6b7280",
-          border: "rgba(107,114,128,0.3)"
+          bg: "rgba(100,88,72,0.10)",
+          color: "#6a5840",
+          border: "rgba(100,88,72,0.25)"
         };
       default:
         return null;
@@ -273,240 +274,86 @@ export default function ActivitiesPage({ isDarkMode }) {
   }, [filterCat, searchText, events]);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
-      <PageHeader title="近期活動" />
-      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+    <div style={{ padding: "4rem 2rem" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ height: "4rem", background: "rgba(29,27,25,0.05)", borderRadius: "0.5rem", marginBottom: "2rem" }} className="shimmer" />
+        {[1,2,3].map(i => <div key={i} style={{ height: "6rem", background: "rgba(29,27,25,0.04)", borderRadius: "0.5rem", marginBottom: "1rem" }} className="shimmer" />)}
+      </div>
     </div>
   );
 
   return (
-    <div className="w-full space-y-12 animate-fade-in relative z-10">
-      <PageHeader title="近期活動" />
+    <>
+      <SEOHead title="近期活動" description="中文研究室近期學術活動、講座、研討會與徵稿資訊。" url="/activities" />
+    <div style={{ padding: "4rem 2rem 2rem" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        {/* Editorial header */}
+        <div style={{ marginBottom: "3rem" }}>
+          <span className="ed-label">01 / 活動</span>
+          <h2 className="ed-heading" style={{ fontSize: "clamp(2.5rem, 7vw, 5rem)", marginTop: "0.5rem" }}>近期活動</h2>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", letterSpacing: "0.25em", color: "#a8a29e", textTransform: "uppercase", marginTop: "0.5rem" }}>{filteredEvents.length} 場</p>
+        </div>
 
-      <div className="space-y-5">
-        <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3 border border-white/60">
-          <Icon name="List" size={18} className="opacity-60 theme-text-secondary" />
+        {/* Search bar */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid rgba(29,27,25,0.1)", paddingBottom: "0.75rem", marginBottom: "1.5rem" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "1.1rem", color: "#a8a29e" }}>search</span>
           <input
             type="text"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="搜尋活動名稱、講者、主辦單位、地點、徵稿資訊⋯⋯"
-            className="w-full bg-transparent outline-none font-sans text-sm md:text-base theme-text placeholder:opacity-50"
-            style={{ color: "var(--c-text)" }}
+            placeholder="搜尋活動名稱、講者、主辦單位、地點⋯⋯"
+            style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontFamily: "'Inter', 'Noto Sans TC', sans-serif", fontSize: "0.88rem", color: "#1d1b19" }}
           />
           {searchText && (
-            <button
-              onClick={() => setSearchText("")}
-              className="shrink-0 px-3 py-1 rounded-full text-xs font-sans border spring-transition hover:scale-105 active:scale-95"
-              style={{
-                background: "rgba(var(--c-panel-rgb), 0.5)",
-                borderColor: "rgba(var(--c-border-rgb), 0.6)",
-                color: "var(--c-text-secondary)"
-              }}
-            >
+            <button onClick={() => setSearchText("")} style={{ flexShrink: 0, padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.72rem", fontFamily: "'Inter', sans-serif", background: "rgba(29,27,25,0.06)", border: "1px solid rgba(29,27,25,0.1)", color: "#78716c", cursor: "pointer" }}>
               清除
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 justify-center">
-          {categories.map(cat => {
-            const isActive = filterCat === cat;
-            const cColor = promoColors[cat];
-
-            return (
-              <button
-                key={cat}
-                onClick={() => setFilterCat(cat)}
-                className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
-                style={
-                  isActive
-                    ? {
-                        background: cat === "全部"
-                          ? "var(--c-nav-active-bg)"
-                          : cColor?.color || "var(--c-primary)",
-                        color: "#fff",
-                        borderColor: cat === "全部"
-                          ? "var(--c-nav-active-border)"
-                          : cColor?.color || "var(--c-primary)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
-                      }
-                    : {
-                        background: "rgba(var(--c-panel-rgb), 0.4)",
-                        borderColor: "rgba(var(--c-border-rgb), 0.6)",
-                        color: "var(--c-text-secondary)"
-                      }
-                }
-              >
-                {cat}
-              </button>
-            );
-          })}
+        {/* Filter tabs */}
+        <div style={{ display: "flex", gap: "2rem", marginBottom: "3rem", borderBottom: "1px solid rgba(29,27,25,0.08)", paddingBottom: "1rem", flexWrap: "wrap" }}>
+          {categories.map(cat => (
+            <button key={cat} onClick={() => setFilterCat(cat)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", letterSpacing: "0.1em", fontWeight: filterCat === cat ? 600 : 400, color: filterCat === cat ? "#b01f45" : "#78716c", paddingBottom: "0.5rem", borderBottom: filterCat === cat ? "2px solid #b01f45" : "2px solid transparent", transition: "all 200ms ease" }}>
+              {cat}
+            </button>
+          ))}
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Activity list */}
         {filteredEvents.length === 0 ? (
-          <div className="xl:col-span-2 text-center py-16 glass-panel rounded-3xl theme-text-secondary font-sans">
-            <Icon name="Megaphone" size={40} className="mx-auto mb-4 opacity-30" />
-            <p className="mb-2">查無符合條件的活動資訊。</p>
-            <p className="text-sm opacity-70">
-              目前分類：{filterCat}{searchText ? `｜搜尋：${searchText}` : ""}
-            </p>
+          <div style={{ padding: "4rem 0", textAlign: "center", color: "#a8a29e", fontFamily: "'Inter', sans-serif", fontSize: "0.9rem" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: "2.5rem", display: "block", marginBottom: "1rem", opacity: 0.4 }}>event_busy</span>
+            查無符合條件的活動資訊。
           </div>
         ) : (
-          filteredEvents.map((ev) => {
-            const cColor = promoColors[ev.category] || {
-              bg: "var(--c-badge-bg)",
-              color: "var(--c-badge-text)",
-              border: "var(--c-badge-border)"
-            };
+          <div>
+            {filteredEvents.map((ev) => {
+              const status = getEventStatus(ev);
+              const isPast = status === "past";
 
-            const status = getEventStatus(ev);
-            const statusBadge = getStatusBadge(status);
-            const isPast = status === "past";
-
-            return (
-              <article
-                key={ev._id}
-                className="rounded-3xl glass-panel overflow-hidden glass-card-hover border border-white/60 relative"
-                style={{
-                  opacity: isPast ? 0.52 : 1,
-                  filter: isPast ? "grayscale(45%)" : "none",
-                  transition: "opacity 300ms ease, filter 300ms ease"
-                }}
-              >
-                {/* 左側色條 */}
-                <div className="absolute left-0 inset-y-0 w-2 z-10" style={{ background: cColor.color }} />
-                <div className="pl-5 pr-6 py-6 md:pl-6 md:pr-8 md:py-8 flex flex-col md:flex-row gap-6 items-start">
-                <div className="flex-1 min-w-0 w-full">
-                  <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <span
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border transition-colors"
-                      style={{
-                        background: cColor.bg,
-                        color: cColor.color,
-                        borderColor: cColor.border
-                      }}
-                    >
-                      {ev.category}
-                    </span>
-
-                    {statusBadge && (
-                      <span
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border"
-                        style={{
-                          background: statusBadge.bg,
-                          color: statusBadge.color,
-                          borderColor: statusBadge.border
-                        }}
-                      >
-                        {statusBadge.label}
-                      </span>
-                    )}
-
-                    <span className="text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                      <Icon name="Calendar" size={14} /> {ev.date}
-                    </span>
+              return (
+                <article key={ev._id} className="item-row" style={{ padding: "2.5rem 1rem", borderBottom: "1px solid rgba(29,27,25,0.07)", opacity: isPast ? 0.55 : 1, borderRadius: "0.5rem", margin: "0 -1rem" }}>
+                  <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase" }}>{ev.category} • {ev.date}</span>
+                    {!isPast && <span className="brand-badge">近期舉辦</span>}
                   </div>
-
-                  <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-2">
-                    {ev.title}
-                  </h3>
-
-                  {/* 標籤列 */}
-                  {(() => {
-                    const tags = getEventTags(ev);
-                    if (!tags.length) return null;
-                    return (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {tags.map((tag, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-sans border"
-                            style={{
-                              background: "rgba(var(--c-panel-rgb), 0.6)",
-                              color: "var(--c-accent)",
-                              borderColor: "rgba(var(--c-border-rgb), 0.5)",
-                            }}
-                          >
-                            {tag.type === 'org' && (
-                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style={{ opacity: 0.7 }}>
-                                <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h2v2H5V5zm4 0h2v2H9V5zm-4 4h2v2H5V9zm4 0h2v2H9V9z"/>
-                              </svg>
-                            )}
-                            {tag.type === 'loc' && (
-                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" style={{ opacity: 0.7 }}>
-                                <path d="M8 1a5 5 0 0 1 5 5c0 3-5 9-5 9S3 9 3 6a5 5 0 0 1 5-5zm0 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
-                              </svg>
-                            )}
-                            {tag.label}
-                          </span>
-                        ))}
-                      </div>
-                    );
-                  })()}
-
-                  <div className="flex flex-col gap-2 mb-5 text-sm theme-text-secondary font-sans">
-                    {ev.speaker && (
-                      <span className="flex items-center gap-2">
-                        <Icon name="Users" size={16} className="opacity-60" />
-                        講者：{ev.speaker}
-                      </span>
-                    )}
-                    {ev.organizer && (
-                      <span className="flex items-center gap-2">
-                        <Icon name="Info" size={16} className="opacity-60" />
-                        主辦：{ev.organizer}
-                      </span>
-                    )}
-                    {ev.location && (
-                      <span className="flex items-center gap-2">
-                        <Icon name="MapPin" size={16} className="opacity-60" />
-                        地點：{ev.location}
-                      </span>
-                    )}
-                  </div>
-
-                  {ev.description && (
-                    <p className="text-base leading-relaxed font-serif content-justify theme-text-secondary border-t border-white/40 pt-4 mt-2">
-                      {ev.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col items-stretch gap-3 shrink-0 w-full md:w-auto">
-                  {ev.coverImage?.asset && (
-                    <img
-                      src={urlFor(ev.coverImage).width(240).auto('format').fit('clip').url()}
-                      alt={ev.coverImage.alt || ev.title}
-                      className="w-full md:w-44 rounded-2xl object-cover shadow-md border border-white/40 self-center"
-                      style={{ maxHeight: "280px" }}
-                      loading="lazy"
-                    />
-                  )}
+                  <h3 className="ed-heading" style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)", marginBottom: "0.75rem", lineHeight: 1.4 }}>{ev.title}</h3>
+                  {ev.speaker && <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.85rem", color: "#78716c", marginBottom: "0.5rem" }}>講者：{ev.speaker}</p>}
+                  {ev.location && <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.85rem", color: "#78716c", marginBottom: "1rem" }}>{ev.location}</p>}
+                  {ev.organizer && <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.8rem", color: "#a8a29e", marginBottom: "1rem" }}>主辦：{ev.organizer}</p>}
                   {ev.link && (
-                    <a
-                      href={ev.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full md:w-44 mt-2 md:mt-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold font-sans shadow-sm hover:-translate-y-0.5 transition-all border"
-                      style={{
-                        background: isPast ? "rgba(107,114,128,0.85)" : cColor.color,
-                        color: "#fff",
-                        borderColor: isPast ? "rgba(107,114,128,0.85)" : cColor.color
-                      }}
-                    >
-                      查看詳情 <Icon name="ExternalLink" size={16} />
+                    <a href={ev.link} target="_blank" rel="noopener noreferrer" className="ed-link" style={{ color: "#b01f45", textDecoration: "none" }}>
+                      查看詳情 <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>arrow_forward</span>
                     </a>
                   )}
-                </div>
-                </div>
-              </article>
-            );
-          })
+                </article>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
+    </>
   );
 }

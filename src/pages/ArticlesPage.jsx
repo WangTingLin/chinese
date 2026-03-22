@@ -4,6 +4,7 @@ import { PortableText } from '@portabletext/react';
 import imageUrlBuilder from '@sanity/image-url';
 
 import { client } from '../sanityClient';
+import SEOHead from '../components/SEOHead';
 
 const builder = imageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
@@ -18,9 +19,9 @@ const CATEGORY_DISPLAY = {
 };
 
 const getCategoryColors = (isDark) => ({
-  "學術筆記": { bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)", color: isDark ? "#93c5fd" : "#1e40af", border: isDark ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)" },
-  "讀書心得": { bg: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)", color: isDark ? "#86efac" : "#166534", border: isDark ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)" },
-  "文學創作": { bg: isDark ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.12)", color: isDark ? "#fda4af" : "#9f1239", border: isDark ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.3)" },
+  "學術筆記": { bg: isDark ? "rgba(122,82,40,0.28)" : "rgba(122,82,40,0.10)", color: isDark ? "#d4a86a" : "#7a5228", border: isDark ? "rgba(122,82,40,0.5)" : "rgba(122,82,40,0.25)" },
+  "讀書心得": { bg: isDark ? "rgba(74,92,56,0.28)" : "rgba(74,92,56,0.10)", color: isDark ? "#a8c890" : "#4a5c38", border: isDark ? "rgba(74,92,56,0.5)" : "rgba(74,92,56,0.25)" },
+  "文學創作": { bg: isDark ? "rgba(139,72,40,0.28)" : "rgba(139,72,40,0.10)", color: isDark ? "#e0a882" : "#8b4828", border: isDark ? "rgba(139,72,40,0.5)" : "rgba(139,72,40,0.25)" },
 });
 
 const extractTocHeadings = (blocks) => {
@@ -91,9 +92,11 @@ export default function ArticlesPage({ isDarkMode }) {
   const catColors = getCategoryColors(isDarkMode);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
-      <PageHeader title="文章專欄" />
-      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+    <div style={{ padding: "4rem 2rem" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ height: "4rem", background: "rgba(29,27,25,0.05)", borderRadius: "0.5rem", marginBottom: "2rem" }} className="shimmer" />
+        {[1,2,3].map(i => <div key={i} style={{ height: "5rem", background: "rgba(29,27,25,0.04)", borderRadius: "0.5rem", marginBottom: "1rem" }} className="shimmer" />)}
+      </div>
     </div>
   );
 
@@ -101,220 +104,160 @@ export default function ArticlesPage({ isDarkMode }) {
   const displayArticles = [...filteredArticles];
 
   const openArticle = displayArticles.find(a => a._id === expandedId);
-  const activeCatColor = openArticle ? (catColors[openArticle.category] || { color: "var(--c-primary)" }) : null;
+  const activeCatColor = openArticle ? (catColors[openArticle.category] || { color: "#b01f45" }) : null;
 
   return (
     <>
+      <SEOHead title="文章專欄" description="中文研究室學術文章、讀書紀要與研究評論。" url="/articles" />
       {expandedId && activeCatColor && (
-        <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={isDarkMode} />
+        <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={false} />
       )}
-      
-      <div className="w-full space-y-10 animate-fade-in relative z-10">
-        <PageHeader title="文章專欄" />
 
-        <div className="flex flex-wrap gap-2 justify-center">
-          {categories.map(cat => {
-            const isActive = filterCat === cat;
-            const cColor = catColors[cat];
+      <div style={{ padding: "4rem 2rem 2rem" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          {/* Editorial header */}
+          <div style={{ marginBottom: "3rem" }}>
+            <span className="ed-label">02 / 文章</span>
+            <h2 className="ed-heading" style={{ fontSize: "clamp(2.5rem, 7vw, 5rem)", marginTop: "0.5rem" }}>文章專欄</h2>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", letterSpacing: "0.25em", color: "#a8a29e", textTransform: "uppercase", marginTop: "0.5rem" }}>{articles.length} 篇</p>
+          </div>
 
-            return (
-              <button
-                key={cat}
-                onClick={() => setFilterCat(cat)}
-                className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
-                style={isActive
-                  ? { 
-                      background: cat === "全部" ? "var(--c-nav-active-bg)" : cColor?.color || "var(--c-primary)", 
-                      color: "#fff", 
-                      borderColor: cat === "全部" ? "var(--c-nav-active-border)" : cColor?.color || "var(--c-primary)", 
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)" 
-                    }
-                  : { 
-                      background: "rgba(var(--c-panel-rgb), 0.4)", 
-                      borderColor: "rgba(var(--c-border-rgb), 0.6)", 
-                      color: "var(--c-text-secondary)" 
-                    }}
-              >
+          {/* Filter tabs */}
+          <div style={{ display: "flex", gap: "2rem", marginBottom: "3rem", borderBottom: "1px solid rgba(29,27,25,0.08)", paddingBottom: "1rem", flexWrap: "wrap" }}>
+            {categories.map(cat => (
+              <button key={cat} onClick={() => setFilterCat(cat)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", letterSpacing: "0.1em", fontWeight: filterCat === cat ? 600 : 400, color: filterCat === cat ? "#b01f45" : "#78716c", paddingBottom: "0.5rem", borderBottom: filterCat === cat ? "2px solid #b01f45" : "2px solid transparent", transition: "all 200ms ease" }}>
                 {CATEGORY_DISPLAY[cat] ?? cat}
               </button>
-            )
-          })}
-        </div>
-
-        {displayArticles.length === 0 ? (
-          <div className="text-center py-16 glass-panel rounded-3xl theme-text-secondary font-sans">
-            <Icon name="FileText" size={40} className="mx-auto mb-4 opacity-30" />
-            <p>尚無文章，敬請期待。</p>
+            ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {displayArticles.map((a) => {
-              const open = expandedId === a._id;
-              const cColor = catColors[a.category] || { bg: "var(--c-badge-bg)", color: "var(--c-badge-text)", border: "var(--c-badge-border)" };
 
-              return (
-                <article
-                  key={a._id}
-                  ref={open ? activeArticleRef : null}
-                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70 xl:col-span-2" : "glass-card-hover"}`}
-                >
-                  <div
-                    className="p-5 md:p-8 relative"
-                    onClick={() => setExpandedId(open ? null : a._id)}
+          {displayArticles.length === 0 ? (
+            <div style={{ padding: "4rem 0", textAlign: "center", color: "#a8a29e", fontFamily: "'Inter', sans-serif", fontSize: "0.9rem" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "2.5rem", display: "block", marginBottom: "1rem", opacity: 0.4 }}>article</span>
+              尚無文章，敬請期待。
+            </div>
+          ) : (
+            <div>
+              {displayArticles.map((a) => {
+                const open = expandedId === a._id;
+
+                return (
+                  <article
+                    key={a._id}
+                    ref={open ? activeArticleRef : null}
+                    className="item-row"
+                    style={{ borderBottom: "1px solid rgba(29,27,25,0.07)", paddingBottom: open ? 0 : "2.5rem", marginBottom: open ? "2.5rem" : 0, borderRadius: "0.5rem", margin: "0 -0.75rem", marginBottom: open ? "2.5rem" : 0 }}
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border transition-colors"
-                        style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
-                        <Icon name="Folder" size={14} className="opacity-70" /> {CATEGORY_DISPLAY[a.category] ?? a.category}
-                      </span>
-                      <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                        <Icon name="Calendar" size={14} /> {a.date}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl md:text-3xl font-bold font-sans theme-heading mb-4 leading-tight transition-colors">
-                      {a.title}
-                    </h3>
-                    
-                    <div className="mb-5 flex flex-col gap-1.5">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm theme-text-secondary font-sans">
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: cColor.color, opacity: 0.9 }}>
-                            {a.author?.[0] ?? '?'}
-                          </span>
-                          <span className="font-medium text-base whitespace-nowrap">{a.author ?? '（未填）'}</span>
-                          <span className="opacity-50 hidden md:inline">｜</span>
-                        </div>
-                        <span className="opacity-80 w-full md:w-auto ml-8 md:ml-0 text-xs md:text-sm leading-relaxed">{a.affiliation}</span>
+                    <div
+                      style={{ paddingTop: "2.5rem", paddingLeft: "0.75rem", paddingRight: "0.75rem", cursor: "pointer" }}
+                      onClick={() => setExpandedId(open ? null : a._id)}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase" }}>{CATEGORY_DISPLAY[a.category] ?? a.category} • {a.date}</span>
+                        <span className="material-symbols-outlined" style={{ fontSize: "1rem", color: "#a8a29e", transition: "transform 200ms ease", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>expand_more</span>
                       </div>
-                      {a.contact && (
-                        <div className="flex items-center gap-1.5 text-xs font-mono theme-text-secondary opacity-60 ml-8">
-                          <Icon name="Mail" size={12} className="shrink-0" /> <span className="break-all">{a.contact}</span>
+
+                      <h3 className="ed-heading" style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)", marginBottom: "0.75rem", lineHeight: 1.4 }}>{a.title}</h3>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.85rem", color: "#78716c", fontStyle: "italic" }}>{a.author ?? '（未填）'}</span>
+                        {a.affiliation && <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.8rem", color: "#a8a29e" }}>— {a.affiliation}</span>}
+                      </div>
+
+                      {(a.tags || []).length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+                          {a.tags.map((tag, i) => (
+                            <span key={i} style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.1em", color: "#b01f45", background: "rgba(176,31,69,0.06)", borderRadius: "9999px", padding: "0.15rem 0.6rem" }}>{tag}</span>
+                          ))}
                         </div>
+                      )}
+
+                      {!open && a.summary && (
+                        <p style={{ fontFamily: "'Noto Serif TC', serif", fontSize: "0.9rem", color: "#78716c", lineHeight: 1.7, marginBottom: "1.5rem" }}>{a.summary}</p>
+                      )}
+
+                      {!open && (
+                        <button className="ed-link" style={{ color: "#b01f45" }}>
+                          閱讀全文 <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>arrow_forward</span>
+                        </button>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
-                      {(a.tags || []).map((tag, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full border transition-colors hover:brightness-95"
-                          style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
-                          <Icon name="Tag" size={12} className="opacity-60 shrink-0" /> {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className={`grid spring-transition ${open ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"}`}>
-                      <div className="overflow-hidden">
-                        {a.summary && (
-                          <p className="text-sm md:text-base leading-relaxed font-serif content-justify theme-text-secondary mb-4 p-4 rounded-2xl bg-white/30 border border-white/40 shadow-inner">
-                            {a.summary}
-                          </p>
-                        )}
-                        <div className="flex justify-center mt-2">
-                          <span className="inline-flex items-center justify-center gap-1 text-sm font-medium font-sans px-4 py-2 rounded-full shadow-sm border" style={{ color: "white", background: cColor.color, borderColor: cColor.color }}>
-                            <span className="leading-none pt-[1px]">閱讀全文</span>
-                            <div className="flex items-center justify-center h-4 w-4 ml-0.5"><Icon name="ChevronDown" size={16} className="animate-bounce" /></div>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={`grid spring-transition ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
-                    <div className="overflow-hidden">
-                      <div className="px-5 md:px-8 pb-16 md:pb-20 pt-2 md:pt-4"> 
-                        <div className="theme-divider pt-6 md:pt-8 mb-6 md:mb-8" style={{ borderTopWidth: "2px", borderTopStyle: "dashed" }}></div>
-                        
-                        <div className="flex flex-col lg:flex-row gap-8 items-start">
-                          {/* 行動版目錄 (只在小螢幕顯示) */}
+                    <div style={{ overflow: "hidden", transition: "all 300ms ease", maxHeight: open ? "9999px" : "0", opacity: open ? 1 : 0 }}>
+                      <div style={{ padding: "2rem 0 3rem", borderTop: "1px dashed rgba(29,27,25,0.1)", marginTop: "1.5rem" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                          {/* TOC */}
                           {(() => {
                             const tocItems = extractTocHeadings(a.blocks);
                             if (tocItems.length === 0) return null;
                             return (
-                              <div className="w-full lg:hidden mb-2">
-                                <div className="p-5 rounded-2xl bg-white/30 border border-white/40 shadow-sm">
-                                  <h4 className="text-base font-bold font-sans theme-heading mb-4 flex items-center gap-2">
-                                    <Icon name="List" size={18} /> 文章目錄
-                                  </h4>
-                                  <ul className="space-y-3 text-sm font-sans theme-text-secondary border-l-2 border-[var(--c-primary)]/20 pl-3">
-                                    {tocItems.map((h) => (
-                                      <li key={h.key} className="relative group">
-                                        <span className="absolute -left-[17px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--c-primary)] opacity-40 group-hover:opacity-100 transition-opacity"></span>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a._id}-${h.key}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
-                                          className="hover:text-[var(--c-primary)] transition-colors text-left leading-relaxed block w-full"
-                                        >
-                                          {h.text}
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
+                              <div style={{ padding: "1.25rem 1.5rem", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(29,27,25,0.07)", borderRadius: "0.75rem" }}>
+                                <h4 style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase", marginBottom: "1rem" }}>目錄</h4>
+                                <ul style={{ listStyle: "none", padding: 0, margin: 0, borderLeft: "2px solid rgba(176,31,69,0.2)", paddingLeft: "1rem" }}>
+                                  {tocItems.map((h) => (
+                                    <li key={h.key} style={{ marginBottom: "0.5rem" }}>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a._id}-${h.key}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
+                                        style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.8rem", color: "#78716c", textAlign: "left" }}
+                                      >
+                                        {h.text}
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
                             );
                           })()}
 
-                          {/* 左側：文章內容 */}
-                          <div className="flex-1 min-w-0 w-full space-y-6 font-serif text-[1.05rem] md:text-lg leading-loose content-justify theme-text">
+                          {/* Article content */}
+                          <div style={{ fontFamily: "'Noto Serif TC', serif", fontSize: "1.05rem", lineHeight: 1.9, color: "#1d1b19" }}>
                             {(a.blocks || []).length === 0 ? (
-                              <div className="text-center opacity-60 text-base py-10 bg-white/30 rounded-2xl border border-white/40">
-                                （此文尚未填入全文內容）
-                              </div>
+                              <p style={{ color: "#a8a29e", textAlign: "center", padding: "2rem 0" }}>（此文尚未填入全文內容）</p>
                             ) : (
                               <PortableText value={a.blocks} components={makePortableComponents(a._id)} />
                             )}
                           </div>
-
-                          {/* 右側：桌面版黏性目錄 (只在大螢幕顯示) */}
-                          {(() => {
-                            const tocItems = extractTocHeadings(a.blocks);
-                            if (tocItems.length === 0) return null;
-                            return (
-                              <div className="hidden lg:block w-[240px] shrink-0 sticky top-28">
-                                <div className="p-5 rounded-2xl glass-panel shadow-sm">
-                                  <h4 className="text-base font-bold font-sans theme-heading mb-4 flex items-center gap-2">
-                                    <Icon name="List" size={18} /> 文章目錄
-                                  </h4>
-                                  <ul className="space-y-3 text-sm font-sans theme-text-secondary border-l-2 border-[var(--c-primary)]/20 pl-3">
-                                    {tocItems.map((h) => (
-                                      <li key={h.key} className="relative group">
-                                        <span className="absolute -left-[17px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--c-primary)] opacity-40 group-hover:opacity-100 transition-opacity"></span>
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a._id}-${h.key}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
-                                          className="hover:text-[var(--c-primary)] transition-colors text-left leading-relaxed block w-full"
-                                        >
-                                          {h.text}
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
-                            );
-                          })()}
                         </div>
 
-                        <div className="mt-12 md:mt-16 flex justify-center pb-4 md:pb-8"> 
+                        {/* Related Articles */}
+                        {(() => {
+                          const related = articles
+                            .filter(r => r._id !== a._id && r.category === a.category)
+                            .slice(0, 3);
+                          if (related.length === 0) return null;
+                          return (
+                            <div style={{ marginTop: "3rem", paddingTop: "2rem", borderTop: "1px solid rgba(29,27,25,0.08)" }}>
+                              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.25em", color: "#a8a29e", textTransform: "uppercase", marginBottom: "1.5rem" }}>相關文章</p>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                                {related.map(r => (
+                                  <div key={r._id} onClick={() => setExpandedId(r._id)} style={{ cursor: "pointer", paddingBottom: "1.25rem", borderBottom: "1px solid rgba(29,27,25,0.06)" }}>
+                                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "#a8a29e", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{r.category} • {r.date}</p>
+                                    <h4 className="ed-heading" style={{ fontSize: "1.1rem", lineHeight: 1.45, fontWeight: 400 }}>{r.title}</h4>
+                                    <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.8rem", color: "#78716c", marginTop: "0.3rem" }}>{r.author}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div style={{ marginTop: "3rem", display: "flex", justifyContent: "center" }}>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedId(null);
-                            }}
-                            className="inline-flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-full text-sm font-bold font-sans transition-all hover:-translate-y-1 shadow-md border"
-                            style={{ background: cColor.color, color: "white", borderColor: cColor.color }}
+                            onClick={(e) => { e.stopPropagation(); setExpandedId(null); }}
+                            className="ed-link"
+                            style={{ color: "#b01f45" }}
                           >
-                            <Icon name="ChevronUp" size={18} />
-                            <span className="leading-none pt-[1px]">收合文章</span>
+                            收合文章 <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>expand_less</span>
                           </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </article>
+                  </article>
               );
             })}
           </div>
         )}
+        </div>
       </div>
     </>
   );

@@ -5,6 +5,7 @@ import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
 import { ArticleThumbnail } from '../components/ClassicalDecoration';
+import SEOHead from '../components/SEOHead';
 
 export default function EventsPage({ isDarkMode }) {
   const [viewMode, setViewMode] = useState("timeline");
@@ -39,231 +40,212 @@ export default function EventsPage({ isDarkMode }) {
   const displayResearchArticles = [...researchArticles];
 
   const getTypeColor = (type, isDark) => {
-    if (type === "讀書會") return isDark ? { bg: "rgba(59,130,246,0.2)", color: "#93c5fd", border: "rgba(59,130,246,0.4)" } : { bg: "rgba(59,130,246,0.12)", color: "#1d4ed8", border: "rgba(59,130,246,0.3)" };
-    if (type === "發表") return isDark ? { bg: "rgba(245,158,11,0.2)", color: "#fde047", border: "rgba(245,158,11,0.4)" } : { bg: "rgba(245,158,11,0.12)", color: "#b45309", border: "rgba(245,158,11,0.3)" };
-    if (type === "會後紀要") return isDark ? { bg: "rgba(16,185,129,0.2)", color: "#6ee7b7", border: "rgba(16,185,129,0.4)" } : { bg: "rgba(16,185,129,0.12)", color: "#047857", border: "rgba(16,185,129,0.3)" };
-    return isDark ? { bg: "rgba(148,163,184,0.2)", color: "#cbd5e1", border: "rgba(148,163,184,0.4)" } : { bg: "rgba(100,116,139,0.12)", color: "#475569", border: "rgba(100,116,139,0.3)" };
+    if (type === "讀書會") return isDark ? { bg: "rgba(58,80,104,0.28)", color: "#90b0d0", border: "rgba(58,80,104,0.5)" } : { bg: "rgba(58,80,104,0.10)", color: "#3a5068", border: "rgba(58,80,104,0.25)" };
+    if (type === "發表")   return isDark ? { bg: "rgba(122,82,40,0.28)", color: "#d4a86a", border: "rgba(122,82,40,0.5)" } : { bg: "rgba(122,82,40,0.10)", color: "#7a5228", border: "rgba(122,82,40,0.25)" };
+    if (type === "會後紀要") return isDark ? { bg: "rgba(74,92,56,0.28)", color: "#a8c890", border: "rgba(74,92,56,0.5)" } : { bg: "rgba(74,92,56,0.10)", color: "#4a5c38", border: "rgba(74,92,56,0.25)" };
+    return isDark ? { bg: "rgba(100,88,72,0.28)", color: "#b0a090", border: "rgba(100,88,72,0.5)" } : { bg: "rgba(100,88,72,0.10)", color: "#6a5840", border: "rgba(100,88,72,0.25)" };
   };
 
   const getStatusColor = (s, isDark) => {
-    if (s === "待發表") return { bg: "var(--c-badge-bg)", color: "var(--c-badge-text)", border: "var(--c-badge-border)" };
-    if (s === "修改中") return isDark ? { bg: "rgba(234,179,8,0.2)", color: "#fde047", border: "rgba(234,179,8,0.4)" } : { bg: "rgba(234,179,8,0.15)", color: "#854d0e", border: "rgba(234,179,8,0.3)" };
-    if (s === "撰寫中") return isDark ? { bg: "rgba(139,92,246,0.2)", color: "#d8b4fe", border: "rgba(139,92,246,0.4)" } : { bg: "rgba(139,92,246,0.12)", color: "#5b21b6", border: "rgba(139,92,246,0.25)" };
-    if (s === "已發表") return isDark ? { bg: "rgba(34,197,94,0.2)", color: "#86efac", border: "rgba(34,197,94,0.4)" } : { bg: "rgba(34,197,94,0.12)", color: "#15803d", border: "rgba(34,197,94,0.25)" };
-    return isDark ? { bg: "rgba(148,163,184,0.2)", color: "#cbd5e1", border: "rgba(148,163,184,0.4)" } : { bg: "rgba(100,116,139,0.12)", color: "#475569", border: "rgba(100,116,139,0.25)" };
+    if (s === "待發表") return isDark ? { bg: "rgba(100,88,72,0.28)", color: "#b0a090", border: "rgba(100,88,72,0.5)" } : { bg: "rgba(100,88,72,0.10)", color: "#6a5840", border: "rgba(100,88,72,0.25)" };
+    if (s === "修改中") return isDark ? { bg: "rgba(122,96,24,0.28)", color: "#d4b870", border: "rgba(122,96,24,0.5)" } : { bg: "rgba(122,96,24,0.10)", color: "#7a6018", border: "rgba(122,96,24,0.25)" };
+    if (s === "撰寫中") return isDark ? { bg: "rgba(58,80,104,0.28)", color: "#90b0d0", border: "rgba(58,80,104,0.5)" } : { bg: "rgba(58,80,104,0.10)", color: "#3a5068", border: "rgba(58,80,104,0.25)" };
+    if (s === "已發表") return isDark ? { bg: "rgba(74,92,56,0.28)", color: "#a8c890", border: "rgba(74,92,56,0.5)" } : { bg: "rgba(74,92,56,0.10)", color: "#4a5c38", border: "rgba(74,92,56,0.25)" };
+    return isDark ? { bg: "rgba(100,88,72,0.28)", color: "#b0a090", border: "rgba(100,88,72,0.5)" } : { bg: "rgba(100,88,72,0.10)", color: "#6a5840", border: "rgba(100,88,72,0.25)" };
   };
 
-  const activeTabClass = "bg-white shadow-md text-[var(--c-primary-dark)]";
-  const inactiveTabClass = "text-[var(--c-text-secondary)] hover-bg-surface";
-
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
-      <PageHeader title="研討進度" />
-      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+    <div style={{ padding: "4rem 2rem" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ height: "4rem", background: "rgba(29,27,25,0.05)", borderRadius: "0.5rem", marginBottom: "2rem" }} className="shimmer" />
+        {[1,2,3].map(i => <div key={i} style={{ height: "5rem", background: "rgba(29,27,25,0.04)", borderRadius: "0.5rem", marginBottom: "1rem" }} className="shimmer" />)}
+      </div>
     </div>
   );
 
   return (
-    <div className="w-full space-y-8 animate-fade-in relative z-10">
-      <PageHeader title="研討進度" />
-
-      <div className="flex justify-center mb-6 md:mb-10">
-        <div className="inline-flex bg-white/40 p-1.5 rounded-full border border-white/60 shadow-inner backdrop-blur-sm">
-          <button
-            onClick={() => setViewMode("timeline")}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold font-sans spring-transition ${viewMode === "timeline" ? activeTabClass : inactiveTabClass}`}
-          >
-            <Icon name="Calendar" size={16} className="shrink-0" /> 研討歷程
-          </button>
-          <button
-            onClick={() => setViewMode("articles")}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold font-sans spring-transition ${viewMode === "articles" ? activeTabClass : inactiveTabClass}`}
-          >
-            <Icon name="ClipboardList" size={16} className="shrink-0" /> 討論進度
-          </button>
+    <>
+      <SEOHead title="研討進度" description="中文研究室讀書會研討歷程與進度紀錄。" url="/events" />
+    <div style={{ padding: "4rem 2rem 2rem" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        {/* Editorial header */}
+        <div style={{ marginBottom: "3rem" }}>
+          <span className="ed-label">03 / 研討</span>
+          <h2 className="ed-heading" style={{ fontSize: "clamp(2.5rem, 7vw, 5rem)", marginTop: "0.5rem" }}>研討進度</h2>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", letterSpacing: "0.25em", color: "#a8a29e", textTransform: "uppercase", marginTop: "0.5rem" }}>{timelineEvents.length} 場</p>
         </div>
-      </div>
 
-      {viewMode === "timeline" && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="flex justify-center gap-3">
-            {[
-              { id: "all", label: "全部" },
-              { id: "upcoming", label: "即將舉辦" },
-              { id: "past", label: "已舉辦" },
-            ].map((btn) => (
-              <button
-                key={btn.id}
-                onClick={() => setEventFilter(btn.id)}
-                className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
-                style={eventFilter === btn.id
-                  ? { background: "var(--c-nav-active-bg)", color: "#fff", borderColor: "var(--c-nav-active-border)", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }
-                  : { background: "rgba(var(--c-panel-rgb), 0.4)", borderColor: "rgba(var(--c-border-rgb), 0.6)", color: "var(--c-text-secondary)" }
-                }
-              >
-                {btn.label}
-              </button>
-            ))}
-          </div>
+        {/* View mode tabs */}
+        <div style={{ display: "flex", gap: "2rem", marginBottom: "3rem", borderBottom: "1px solid rgba(29,27,25,0.08)", paddingBottom: "1rem" }}>
+          {[
+            { id: "timeline", label: "研討歷程" },
+            { id: "articles", label: "討論進度" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setViewMode(tab.id)}
+              style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", letterSpacing: "0.1em", fontWeight: viewMode === tab.id ? 600 : 400, color: viewMode === tab.id ? "#b01f45" : "#78716c", paddingBottom: "0.5rem", borderBottom: viewMode === tab.id ? "2px solid #b01f45" : "2px solid transparent", transition: "all 200ms ease" }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          <div className="relative pl-8 md:pl-12 pb-8">
-            <div className="absolute top-8 bottom-0 left-[15px] md:left-[23px] w-px border-l-2 border-dashed" style={{ borderColor: "color-mix(in srgb, var(--c-primary) 30%, transparent)" }}></div>
+        {viewMode === "timeline" && (
+          <div>
+            {/* Filter sub-tabs */}
+            <div style={{ display: "flex", gap: "1.5rem", marginBottom: "2.5rem", flexWrap: "wrap" }}>
+              {[
+                { id: "all", label: "全部" },
+                { id: "upcoming", label: "即將舉辦" },
+                { id: "past", label: "已舉辦" },
+              ].map(btn => (
+                <button
+                  key={btn.id}
+                  onClick={() => setEventFilter(btn.id)}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", letterSpacing: "0.12em", fontWeight: eventFilter === btn.id ? 600 : 400, color: eventFilter === btn.id ? "#b01f45" : "#a8a29e", transition: "color 200ms ease" }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
 
-            <div className="space-y-10">
-              {displayEvents.map((ev) => {
-                const open = activeEventId === ev._id;
-                const typeStyle = getTypeColor(ev.type, isDarkMode);
+            {/* Timeline */}
+            <div style={{ position: "relative", paddingLeft: "2rem" }}>
+              {/* Vertical line */}
+              <div style={{ position: "absolute", left: "7px", top: 0, bottom: 0, width: "1px", background: "rgba(176,31,69,0.15)" }} />
 
-                return (
-                  <div key={ev._id} className="relative">
-                    <div className="absolute -left-6 md:-left-8 top-7 w-4 h-4 rounded-full border-[3px] shadow-sm z-10" style={{ backgroundColor: "rgba(var(--c-panel-rgb), 1)", borderColor: "var(--c-primary)" }}></div>
-                    
-                    <article
-                      onClick={() => setActiveEventId(open ? null : ev._id)}
-                      className={`rounded-2xl glass-panel cursor-pointer spring-transition border border-white/60 overflow-hidden relative ${open ? "bg-white/70 shadow-xl scale-[1.02]" : "glass-card-hover hover:-translate-y-1"}`}
-                    >
-                      {/* 右側幾何紋樣裝飾帶 */}
-                      {!open && (
-                        <div
-                          className="absolute top-0 right-0 bottom-0 w-32 md:w-44 pointer-events-none"
-                          style={{ color: typeStyle.color, opacity: 0.3 }}
+              {displayEvents.length === 0 ? (
+                <div style={{ padding: "4rem 0", textAlign: "center", color: "#a8a29e", fontFamily: "'Inter', sans-serif", fontSize: "0.9rem" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "2.5rem", display: "block", marginBottom: "1rem", opacity: 0.4 }}>event</span>
+                  尚無活動記錄。
+                </div>
+              ) : (
+                <div>
+                  {displayEvents.map((ev) => {
+                    const open = activeEventId === ev._id;
+                    const typeStyle = getTypeColor(ev.type, false);
+                    const isUpcoming = ev.status === "upcoming";
+
+                    return (
+                      <div key={ev._id} style={{ position: "relative", marginBottom: "0" }}>
+                        {/* Timeline dot */}
+                        <div style={{ position: "absolute", left: "-1.75rem", top: "2.75rem", width: "10px", height: "10px", borderRadius: "50%", background: isUpcoming ? "#b01f45" : "rgba(176,31,69,0.3)", border: "2px solid #fef8f4", boxShadow: isUpcoming ? "0 0 0 3px rgba(176,31,69,0.15)" : "none" }} />
+
+                        <article
+                          onClick={() => setActiveEventId(open ? null : ev._id)}
+                          style={{ padding: "2.5rem 0", borderBottom: "1px solid rgba(29,27,25,0.07)", cursor: "pointer", opacity: !isUpcoming && ev.status === "past" ? 0.65 : 1 }}
                         >
-                          <ArticleThumbnail category={ev.type || '研討'} />
-                          <div
-                            className="absolute inset-y-0 left-0 w-20 md:w-28"
-                            style={{ background: "linear-gradient(to right, rgba(var(--c-panel-rgb), 1), transparent)" }}
-                          />
-                        </div>
-                      )}
-                      <div className="p-6 md:p-8">
-                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className="inline-block text-xs font-bold px-3 py-1 rounded-full font-sans border shrink-0 transition-colors" style={{ background: typeStyle.bg, color: typeStyle.color, borderColor: typeStyle.border }}>
-                              {ev.type}
-                            </span>
-                            <span className="text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                              <Icon name="Calendar" size={14} /> {ev.date}
-                            </span>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase" }}>{ev.type} • {ev.date}</span>
+                              {isUpcoming && (
+                                <span className="brand-badge" style={{ animation: "pulse 2s infinite" }}>即將舉辦</span>
+                              )}
+                            </div>
+                            <span className="material-symbols-outlined" style={{ fontSize: "1rem", color: "#a8a29e", transition: "transform 200ms ease", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>expand_more</span>
                           </div>
-                          {ev.status === "upcoming" ? (
-                            <span className="inline-flex items-center justify-center gap-1 text-xs font-bold px-3 py-1 rounded-full border font-sans shrink-0 animate-pulse" style={{ background: isDarkMode ? "rgba(239,68,68,0.2)" : "rgba(239,68,68,0.1)", color: isDarkMode ? "#fca5a5" : "#b91c1c", borderColor: isDarkMode ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.2)" }}>
-                              即將舉辦
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center justify-center gap-1 text-xs font-bold px-3 py-1 rounded-full border font-sans shrink-0" style={{ background: isDarkMode ? "rgba(148,163,184,0.2)" : "rgba(107,114,128,0.1)", color: isDarkMode ? "#cbd5e1" : "#4b5563", borderColor: isDarkMode ? "rgba(148,163,184,0.4)" : "rgba(107,114,128,0.2)" }}>
-                              已舉辦
-                            </span>
+
+                          <h3 className="ed-heading" style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)", marginBottom: "0.75rem", lineHeight: 1.4 }}>{ev.title}</h3>
+
+                          {ev.location && (
+                            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.8rem", color: "#a8a29e", marginBottom: "0.75rem" }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: "0.9rem", verticalAlign: "middle", marginRight: "0.25rem" }}>location_on</span>
+                              {ev.location}
+                            </p>
                           )}
-                        </div>
 
-                        <h3 className="text-xl md:text-2xl font-bold font-sans theme-heading mb-3">{ev.title}</h3>
-                        <p className="text-base md:text-lg leading-relaxed font-serif content-justify theme-text-secondary mb-2">{ev.summary}</p>
+                          {!open && ev.summary && (
+                            <p style={{ fontFamily: "'Noto Serif TC', serif", fontSize: "0.9rem", color: "#78716c", lineHeight: 1.7 }}>{ev.summary}</p>
+                          )}
 
-                        <div className={`grid spring-transition w-full ${open ? "grid-rows-[1fr] opacity-100 mt-5" : "grid-rows-[0fr] opacity-0 mt-0"}`}>
-                          <div className="overflow-hidden">
-                            <div className="pt-5 theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}>
-                              <div className="text-sm md:text-base whitespace-pre-line leading-relaxed font-serif bg-white/30 p-5 rounded-xl shadow-inner content-justify theme-text-secondary mb-4 border border-white/40">
-                                {ev.details}
-                              </div>
-
-                              {(ev.archive && ev.archive.length > 0) && (
-                                <div className="mt-4">
-                                  <h4 className="text-sm font-bold font-sans mb-3 flex items-center gap-2 theme-heading">
-                                    <Icon name="Folder" size={16} /> 相關歸檔資料
-                                  </h4>
-                                  <div className="flex flex-wrap gap-3">
-                                    {ev.archive.map((file, i) => (
-                                      <a key={i} href={file.url} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/50 border border-white/60 rounded-lg text-sm font-sans theme-text-secondary hover-bg-surface transition-colors shadow-sm">
-                                        <Icon name="FileText" size={14} className="opacity-60" /> {file.name}
-                                      </a>
-                                    ))}
-                                  </div>
+                          {open && (
+                            <div style={{ borderTop: "1px dashed rgba(29,27,25,0.1)", marginTop: "1.5rem", paddingTop: "1.5rem" }}>
+                              {ev.summary && (
+                                <p style={{ fontFamily: "'Noto Serif TC', serif", fontSize: "0.95rem", color: "#78716c", lineHeight: 1.8, marginBottom: "1.25rem" }}>{ev.summary}</p>
+                              )}
+                              {ev.details && (
+                                <div style={{ padding: "1.25rem 1.5rem", background: "rgba(255,255,255,0.6)", border: "1px solid rgba(29,27,25,0.06)", borderRadius: "0.75rem", borderLeft: "3px solid rgba(176,31,69,0.3)" }}>
+                                  <p style={{ fontFamily: "'Noto Serif TC', serif", fontSize: "0.9rem", color: "#78716c", lineHeight: 1.85, whiteSpace: "pre-line" }}>{ev.details}</p>
                                 </div>
                               )}
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end mt-4">
-                          <span className="text-xs font-sans flex items-center gap-1 theme-text-secondary" style={{ opacity: 0.5 }}>
-                            {open ? "收合內容" : "查看詳情"}
-                            <Icon name="ChevronRight" size={14} className={`spring-transition ${open ? "rotate-90" : ""}`} />
-                          </span>
-                        </div>
+                          )}
+                        </article>
                       </div>
-                    </article>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {viewMode === "articles" && (
-        <div className="space-y-6 animate-fade-in">
-          {displayResearchArticles.map((art) => {
-            const open = expandedArticleId === art._id;
-            const sc = getStatusColor(art.publicationStatus, isDarkMode);
-            const hasAbstract = art.summary && art.summary.trim().length > 0;
-            return (
-              <article key={art._id} onClick={() => setExpandedArticleId(open ? null : art._id)}
-                className={`rounded-2xl glass-panel cursor-pointer spring-transition ${open ? "bg-white/60 shadow-lg scale-[1.01]" : "glass-card-hover"}`}>
-                <div className="p-6 md:p-8">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="mt-1 p-2.5 rounded-xl shrink-0 border border-white/30 bg-white/40 text-[var(--c-primary-dark)]">
-                        <Icon name="FileText" size={22} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold font-sans leading-snug theme-heading">{art.title}</h3>
-                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm theme-text-secondary">
-                          <span className="flex items-center gap-1 font-sans"><Icon name="PenLine" size={14} /> {art.author}</span>
-                          <span className="flex items-center gap-1 font-mono text-xs opacity-60"><Icon name="Clock" size={14} /> {art.date}</span>
+        {viewMode === "articles" && (
+          <div>
+            {displayResearchArticles.length === 0 ? (
+              <div style={{ padding: "4rem 0", textAlign: "center", color: "#a8a29e", fontFamily: "'Inter', sans-serif", fontSize: "0.9rem" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "2.5rem", display: "block", marginBottom: "1rem", opacity: 0.4 }}>article</span>
+                尚無討論進度記錄。
+              </div>
+            ) : (
+              <div>
+                {displayResearchArticles.map((art) => {
+                  const open = expandedArticleId === art._id;
+                  const sc = getStatusColor(art.publicationStatus, false);
+                  const hasAbstract = art.summary && art.summary.trim().length > 0;
+
+                  return (
+                    <article
+                      key={art._id}
+                      onClick={() => setExpandedArticleId(open ? null : art._id)}
+                      style={{ padding: "2.5rem 0", borderBottom: "1px solid rgba(29,27,25,0.07)", cursor: "pointer" }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase" }}>{art.date}</span>
+                          {art.publicationStatus && (
+                            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.1em", fontWeight: 600, padding: "0.15rem 0.6rem", borderRadius: "9999px", background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                              {art.publicationStatus}
+                            </span>
+                          )}
                         </div>
+                        <span className="material-symbols-outlined" style={{ fontSize: "1rem", color: "#a8a29e", transition: "transform 200ms ease", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>expand_more</span>
                       </div>
-                    </div>
-                    <span className="inline-block text-xs font-bold px-3 py-1 rounded-full font-sans shrink-0 border transition-colors"
-                      style={{ background: sc.bg, color: sc.color, borderColor: sc.border }}>{art.publicationStatus}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {art.tags.map((tag, i) => (
-                      <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full bg-white/50 border border-white/60 theme-text-secondary">
-                        <Icon name="Tag" size={12} /> {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <div className={`grid spring-transition w-full ${open ? "grid-rows-[1fr] opacity-100 mt-4" : "grid-rows-[0fr] opacity-0 mt-0"}`}>
-                    <div className="overflow-hidden">
-                      <div className="pt-4 theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}>
-                        {hasAbstract ? (
-                          <>
-                            <h4 className="text-sm font-bold font-sans mb-3 flex items-center gap-2 theme-heading">
-                              <Icon name="BookOpen" size={16} /> 摘要
-                            </h4>
-                            <p className="text-sm leading-relaxed font-serif content-justify theme-text-secondary mb-4">{art.summary}</p>
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-3 py-4 px-5 bg-white/30 rounded-xl text-sm theme-text-secondary font-sans">
-                            <Icon name="AlertCircle" size={18} />
-                            <span>摘要尚在整理中，敬請期待。</span>
-                          </div>
-                        )}
+
+                      <h3 className="ed-heading" style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)", marginBottom: "0.75rem", lineHeight: 1.4 }}>{art.title}</h3>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.85rem", color: "#78716c", fontStyle: "italic" }}>{art.author}</span>
+                        {art.affiliation && <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.8rem", color: "#a8a29e" }}>— {art.affiliation}</span>}
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-3">
-                    <span className="text-xs font-sans flex items-center gap-1 theme-text-secondary" style={{ opacity: 0.5 }}>
-                      {open ? "收合" : hasAbstract ? "展開摘要" : "查看狀態"}
-                      <Icon name="ChevronRight" size={14} className={`spring-transition ${open ? "rotate-90" : ""}`} />
-                    </span>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
+
+                      {(art.tags || []).length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: open ? "1.5rem" : 0 }}>
+                          {art.tags.map((tag, i) => (
+                            <span key={i} style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.1em", color: "#b01f45", background: "rgba(176,31,69,0.06)", borderRadius: "9999px", padding: "0.15rem 0.6rem" }}>{tag}</span>
+                          ))}
+                        </div>
+                      )}
+
+                      {open && (
+                        <div style={{ borderTop: "1px dashed rgba(29,27,25,0.1)", marginTop: "1.5rem", paddingTop: "1.5rem" }}>
+                          {hasAbstract ? (
+                            <p style={{ fontFamily: "'Noto Serif TC', serif", fontSize: "0.9rem", color: "#78716c", lineHeight: 1.8 }}>{art.summary}</p>
+                          ) : (
+                            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.85rem", color: "#a8a29e" }}>摘要尚在整理中，敬請期待。</p>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
+    </>
   );
 }

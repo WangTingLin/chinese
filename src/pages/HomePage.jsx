@@ -1,5 +1,6 @@
 // 檔案路徑：src/pages/HomePage.jsx
 import React, { useState, useMemo, useEffect } from "react";
+import SEOHead from '../components/SEOHead';
 
 /* Sanity Image CDN 轉換 — 自動縮尺寸、轉 WebP */
 const sanityImg = (url, { w, h, q = 75, fm = "webp", fit } = {}) => {
@@ -1550,6 +1551,7 @@ export default function HomePage({
 
   return (
     <div className="space-y-10 md:space-y-14 animate-fade-in relative z-10">
+      <SEOHead url="/" />
 
       {/* ===================== Hero ===================== */}
       <section className="relative rounded-3xl overflow-hidden p-6 sm:p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
