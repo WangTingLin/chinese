@@ -269,42 +269,38 @@ const LogoImage = ({ className = "" }) => (
 
 /* ==================== 共用元件 ==================== */
 
-const ThemedButton = ({ active, children, onClick, className = "", darkBg = false }) => (
+const ThemedButton = ({ active, children, onClick, className = "" }) => (
   <button
     onClick={onClick}
-    className={`relative px-3 py-2 text-sm font-medium font-sans spring-transition ${className}`}
-    style={{
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: active ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.42)",
-      transition: "color 200ms ease",
-      fontFamily: "'Noto Sans TC', sans-serif",
-      fontSize: "0.85rem",
-      letterSpacing: "0.05em",
-    }}
-    onMouseEnter={e => { if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
-    onMouseLeave={e => { if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.42)"; }}
+    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border font-sans spring-transition hover:scale-105 active:scale-95 ${className}`}
+    style={
+      active
+        ? {
+            background: "var(--c-nav-active-bg)",
+            color: "#fff",
+            borderColor: "var(--c-nav-active-border)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          }
+        : { borderColor: "transparent", color: "var(--c-text-secondary)" }
+    }
   >
     {children}
-    {active && <span style={{ position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)", width:"1.2rem", height:"2px", background:"#c8a84b", borderRadius:"9999px", display:"block" }} />}
   </button>
 );
 
-export const PageHeader = ({ title, count, unit = "筆", sectionNumber, sectionLabel }) => (
-  <div style={{ paddingBottom: "3rem" }}>
-    {(sectionNumber || sectionLabel) && (
-      <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "1rem" }}>
-        {sectionNumber && <span className="ed-label">{sectionNumber}</span>}
-        {sectionLabel && <span className="ed-label">{sectionLabel}</span>}
-      </div>
-    )}
-    <h2 className="ed-heading" style={{ fontSize: "clamp(2.5rem, 7vw, 5rem)", marginBottom: count != null ? "0.5rem" : 0 }}>{title}</h2>
-    {count != null && (
-      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", letterSpacing: "0.25em", color: "#a8a29e", fontWeight: 400, textTransform: "uppercase" }}>
-        {count} {unit}
-      </p>
-    )}
+export const PageHeader = ({ title }) => (
+  <div className="text-center space-y-4">
+    <h2 className="text-3xl font-bold font-sans theme-heading">{title}</h2>
+    <div
+      className="w-16 h-1 mx-auto rounded-full"
+      style={{ background: "var(--c-accent)" }}
+    />
+    <div
+      className="mt-3 overflow-hidden rounded-2xl mx-auto opacity-75"
+      style={{ maxWidth: 680, color: "var(--c-accent)" }}
+    >
+      <PageHeaderBanner />
+    </div>
   </div>
 );
 
@@ -410,17 +406,17 @@ const BackToTopButton = ({ isDarkMode }) => {
       style={{
         position: "fixed",
         right: "1.5rem",
-        bottom: "5rem",
+        bottom: "1.5rem",
         zIndex: 120,
         width: "3rem",
         height: "3rem",
         borderRadius: "9999px",
-        border: "1px solid rgba(29,27,25,0.12)",
-        background: "rgba(254,248,244,0.9)",
+        border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? "0.3" : "0.6"})`,
+        background: `rgba(var(--c-panel-rgb), ${isDarkMode ? "0.65" : "0.75"})`,
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
-        color: "#1d1b19",
-        boxShadow: "0 4px 16px rgba(29,27,25,0.1)",
+        color: "var(--c-primary-dark)",
+        boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? "0.35" : "0.12"})`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -493,8 +489,7 @@ export default function App() {
 
   const [currentPage, setCurrentPage] = useState("home");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [navScrolled, setNavScrolled] = useState(false);
-  const isDarkMode = false;
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [nativeCategory, setNativeCategory] = useState("lecture");
   const [articles, setArticles] = useState([]);
   const [events, setEvents] = useState([]);
@@ -509,34 +504,6 @@ export default function App() {
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
   const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
   const [launchOnboardingSelected, setLaunchOnboardingSelected] = useState([]);
-
-  /* ── Navbar scroll shrink ── */
-  useEffect(() => {
-    if (isAppMode) return;
-    const onScroll = () => setNavScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* ── Scroll reveal (IntersectionObserver) ── */
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const observer = new IntersectionObserver(
-        (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("is-visible"); observer.unobserve(e.target); } }),
-        { threshold: 0.08, rootMargin: "0px 0px -30px 0px" }
-      );
-      const main = document.querySelector("main");
-      if (!main) return;
-      main.querySelectorAll("h2:not(.no-reveal), h3:not(.no-reveal), h4:not(.no-reveal), article, .rev").forEach((el, i) => {
-        el.classList.add("reveal");
-        if (i % 3 === 1) el.classList.add("reveal-d1");
-        if (i % 3 === 2) el.classList.add("reveal-d2");
-        observer.observe(el);
-      });
-      return () => observer.disconnect();
-    }, 80);
-    return () => clearTimeout(timer);
-  }, [currentPage]);
 
   /* Native 啟動動畫：1.9s 顯示，再 500ms 淡出，共 2.4s */
   /* Native：body 加深色背景，防止 iOS overscroll 白邊 */
@@ -678,136 +645,182 @@ const pageProps = {
     }
   })();
 
+  const baseThemes = {
+    home:       { primary: "#2d6a6a", primaryDark: "#1a4f4f", accent: "#d4a24e", accentLight: "#fef3d8", text: "#0f3d3d", textSec: "#3a6b6b", blob1: "rgba(77,160,160,0.42)", blob2: "rgba(212,162,78,0.32)", blob3: "rgba(140,190,210,0.32)", footer: "rgba(15,61,61,0.85)", navBg: "rgba(45,106,106,0.9)", navBorder: "rgba(77,160,160,0.5)", badgeBg: "rgba(212,162,78,0.2)", badgeText: "#7a5c1a", badgeBorder: "rgba(212,162,78,0.3)" },
+    about:      { primary: "#8c6240", primaryDark: "#5e3d24", accent: "#c4935a", accentLight: "#fdf0e0", text: "#3d2414", textSec: "#7a5a3e", blob1: "rgba(196,147,90,0.38)", blob2: "rgba(140,98,64,0.32)", blob3: "rgba(220,180,140,0.35)", footer: "rgba(61,36,20,0.85)", navBg: "rgba(140,98,64,0.9)", navBorder: "rgba(196,147,90,0.5)", badgeBg: "rgba(196,147,90,0.2)", badgeText: "#5e3d24", badgeBorder: "rgba(196,147,90,0.3)" },
+    books:      { primary: "#8a7a2e", primaryDark: "#5c5218", accent: "#b89a38", accentLight: "#fdf8e8", text: "#3a3410", textSec: "#6b6330", blob1: "rgba(184,154,56,0.38)", blob2: "rgba(138,122,46,0.32)", blob3: "rgba(210,195,120,0.35)", footer: "rgba(58,52,16,0.85)", navBg: "rgba(138,122,46,0.9)", navBorder: "rgba(184,154,56,0.5)", badgeBg: "rgba(184,154,56,0.2)", badgeText: "#5c5218", badgeBorder: "rgba(184,154,56,0.3)" },
+    events:     { primary: "#3d6878", primaryDark: "#264350", accent: "#6ba0b4", accentLight: "#eaf4f8", text: "#1a3540", textSec: "#4a7080", blob1: "rgba(61,104,120,0.38)", blob2: "rgba(107,160,180,0.32)", blob3: "rgba(80,130,160,0.35)", footer: "rgba(26,53,64,0.85)", navBg: "rgba(61,104,120,0.9)", navBorder: "rgba(107,160,180,0.5)", badgeBg: "rgba(107,160,180,0.2)", badgeText: "#264350", badgeBorder: "rgba(107,160,180,0.3)" },
+    activities: { primary: "#0284c7", primaryDark: "#0369a1", accent: "#38bdf8", accentLight: "#e0f2fe", text: "#0c4a6e", textSec: "#0369a1", blob1: "rgba(2,132,199,0.38)", blob2: "rgba(56,189,248,0.32)", blob3: "rgba(3,105,161,0.35)", footer: "rgba(8,47,73,0.85)", navBg: "rgba(3,105,161,0.9)", navBorder: "rgba(2,132,199,0.5)", badgeBg: "rgba(2,132,199,0.2)", badgeText: "#0369a1", badgeBorder: "rgba(2,132,199,0.3)" },
+    articles:   { primary: "#475569", primaryDark: "#1e293b", accent: "#94a3b8", accentLight: "#f1f5f9", text: "#0f172a", textSec: "#334155", blob1: "rgba(71,85,105,0.38)", blob2: "rgba(100,116,139,0.32)", blob3: "rgba(30,41,59,0.35)", footer: "rgba(15,23,42,0.85)", navBg: "rgba(30,41,59,0.9)", navBorder: "rgba(100,116,139,0.5)", badgeBg: "rgba(100,116,139,0.2)", badgeText: "#1e293b", badgeBorder: "rgba(100,116,139,0.3)" },
+    columns:    { primary: "#4a6a50", primaryDark: "#2e4432", accent: "#8aaa60", accentLight: "#f2f7ec", text: "#1e3322", textSec: "#506a54", blob1: "rgba(74,106,80,0.38)", blob2: "rgba(138,170,96,0.32)", blob3: "rgba(100,150,110,0.35)", footer: "rgba(30,51,34,0.85)", navBg: "rgba(74,106,80,0.9)", navBorder: "rgba(138,170,96,0.5)", badgeBg: "rgba(138,170,96,0.2)", badgeText: "#2e4432", badgeBorder: "rgba(138,170,96,0.3)" },
+    submission: { primary: "#b45309", primaryDark: "#7c2d12", accent: "#f59e0b", accentLight: "#ffedd5", text: "#431407", textSec: "#9a3412", blob1: "rgba(180,83,9,0.38)", blob2: "rgba(124,45,18,0.32)", blob3: "rgba(245,158,11,0.35)", footer: "rgba(67,20,7,0.85)", navBg: "rgba(124,45,18,0.9)", navBorder: "rgba(180,83,9,0.5)", badgeBg: "rgba(180,83,9,0.2)", badgeText: "#7c2d12", badgeBorder: "rgba(180,83,9,0.3)" },
+  };
+
+  const bTheme = baseThemes[currentPage] || baseThemes.home;
+  
+  /* 動態計算亮/暗模式的變數值 */
+  const t = {
+    ...bTheme,
+    primaryDark: isDarkMode ? "#f8fafc" : bTheme.primaryDark,
+    text: isDarkMode ? "#f1f5f9" : bTheme.text,
+    textSec: isDarkMode ? "#cbd5e1" : bTheme.textSec,
+    navBg: isDarkMode ? "rgba(15,23,42,0.9)" : bTheme.navBg,
+    navBorder: isDarkMode ? "rgba(255,255,255,0.15)" : bTheme.navBorder,
+    footer: isDarkMode ? "rgba(2,6,23,0.95)" : bTheme.footer,
+    badgeBg: isDarkMode ? bTheme.badgeBorder : bTheme.badgeBg,
+    badgeText: isDarkMode ? bTheme.accentLight : bTheme.badgeText,
+    badgeBorder: isDarkMode ? bTheme.badgeBg : bTheme.badgeBorder,
+  };
 
   return (
     <div style={{
-      "--bg": "#fef8f4",
-      "--ink": "#1d1b19",
-      "--brand": "#b01f45",
-      "--brand-soft": "#ed4f6f",
-      "--brand-dim": "rgba(176,31,69,0.08)",
-      "--muted": "#78716c",
-      "--border": "rgba(29,27,25,0.08)",
-      "--surface": "#ffffff",
-      "--accent": "#b01f45",
-      "--accent-dim": "rgba(176,31,69,0.08)",
-      "--r": "0.75rem",
-      "--r-lg": "1rem",
-      "--c-accent": "#b01f45",
-      "--c-text": "#1d1b19",
-      "--c-text-secondary": "#78716c",
-      "--c-primary": "#b01f45",
-      "--c-border-rgb": "29,27,25",
-      "--c-panel-rgb": "255,255,255",
-      "--c-badge-bg": "rgba(176,31,69,0.08)",
-      "--c-badge-text": "#b01f45",
-      "--c-badge-border": "rgba(176,31,69,0.2)",
-      backgroundImage: "#fef8f4",
-      color: "#1d1b19",
-      fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
+      "--c-primary": t.primary, 
+      "--c-primary-dark": t.primaryDark, 
+      "--c-accent": t.accent,
+      "--c-accent-light": t.accentLight, 
+      "--c-text": t.text, 
+      "--c-text-secondary": t.textSec,
+      "--c-blob-1": t.blob1, 
+      "--c-blob-2": t.blob2, 
+      "--c-blob-3": t.blob3,
+      "--c-footer": t.footer, 
+      "--c-nav-active-bg": t.navBg, 
+      "--c-nav-active-border": t.navBorder,
+      "--c-badge-bg": t.badgeBg, 
+      "--c-badge-text": t.badgeText, 
+      "--c-badge-border": t.badgeBorder,
+      "--c-selection": `${t.accent}4D`,
+      "--c-panel-rgb": isDarkMode ? "30, 41, 59" : "255, 255, 255",
+      "--c-border-rgb": isDarkMode ? "148, 163, 184" : "255, 255, 255",
+      backgroundImage: isDarkMode
+        ? `linear-gradient(-45deg, #0c1422, #0f172a, #0d1525, #101828)`
+        : `linear-gradient(-45deg, #f5f8fb, #f9fafb, #f7f4fc, #f9fafb)`,
+      backgroundSize: "400% 400%",
+      animation: "gradientShift 20s ease infinite",
+      color: t.text,
+      fontFamily: "'Noto Serif TC', serif",
       minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
+      transition: "background 800ms ease, color 500ms ease",
     }}>
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes fadeIn { 0% { opacity:0; transform:translateY(10px);} 100% { opacity:1; transform:translateY(0);} }
-        .animate-fade-in { animation: fadeIn 0.45s ease-out both; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
+        @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out both; }
         @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        .shimmer { background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.12) 50%,rgba(255,255,255,0.05) 75%); background-size:200% 100%; animation:shimmer 1.5s ease infinite; border-radius:0.5rem; }
         .native-btn { -webkit-tap-highlight-color:transparent; transition:transform 130ms ease,opacity 130ms ease !important; }
         .native-btn:active { transform:scale(0.94) !important; opacity:0.78 !important; }
         @keyframes splashLogoIn { 0%{opacity:0;transform:scale(0.55)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
         @keyframes splashTextIn { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
-        @keyframes splashTagIn { 0%{opacity:0;letter-spacing:0.3em} 100%{opacity:1;letter-spacing:0.14em} }
+        @keyframes splashTagIn  { 0%{opacity:0;letter-spacing:0.3em} 100%{opacity:1;letter-spacing:0.14em} }
         @keyframes bounceY { 0%,100%{transform:translateY(0)} 45%{transform:translateY(6px)} 65%{transform:translateY(2px)} }
         .bounce-y { animation:bounceY 1.9s ease-in-out infinite; }
         @keyframes listItemIn { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
         .list-item-in { animation:listItemIn 0.42s cubic-bezier(0.22,1,0.36,1) both; }
         @keyframes sheetSlideUp { 0%{transform:translateY(100%)} 100%{transform:translateY(0)} }
-        @keyframes backdropIn { 0%{opacity:0} 100%{opacity:1} }
-        .spring-transition { transition: all 220ms cubic-bezier(0.34,1.56,0.64,1) !important; }
-
-        body { background: #fef8f4; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Noto Serif TC', serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
-
-        /* ── 頁面切換淡入 ── */
-        @keyframes pageIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .page-enter { animation: pageIn 0.5s cubic-bezier(0.22,1,0.36,1) both; }
-
-        /* ── 滾動顯現 ── */
-        .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
-        .reveal.is-visible { opacity: 1; transform: translateY(0); }
-        .reveal-d1 { transition-delay: 0.08s; }
-        .reveal-d2 { transition-delay: 0.16s; }
-        .reveal-d3 { transition-delay: 0.24s; }
-
-        /* ── 清單項目 hover ── */
-        .item-row { transition: background 200ms ease; cursor: pointer; }
-        .item-row:hover { background: rgba(176,31,69,0.03); }
-        .item-row:hover h3, .item-row:hover h4 { color: #b01f45; transition: color 200ms ease; }
-        .item-row h3, .item-row h4 { transition: color 200ms ease; }
-        .item-row .ed-link { transition: gap 300ms ease, color 200ms ease; }
-        .item-row:hover .ed-link { color: #b01f45; gap: 0.7rem; }
-
-        /* ── Navbar 縮小 ── */
-        .nav-scrolled { background: rgba(254,248,244,0.95) !important; box-shadow: 0 1px 12px rgba(29,27,25,0.06) !important; }
-        .nav-scrolled .nav-inner { height: 3.5rem !important; }
-
-        /* Section label */
-        .ed-label { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 500; color: #ed4f6f; letter-spacing: 0.25em; text-transform: uppercase; }
-        /* Editorial heading */
-        .ed-heading { font-family: 'Noto Serif TC', serif; font-weight: 300; color: #1d1b19; line-height: 1.15; }
-        /* Divider */
-        .ed-divider { border-bottom: 1px solid rgba(29,27,25,0.08); }
-        /* Action link */
-        .ed-link { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #1d1b19; display: inline-flex; align-items: center; gap: 0.4rem; transition: gap 300ms ease, color 200ms ease; background: none; border: none; cursor: pointer; }
-        .ed-link:hover { gap: 0.7rem; color: #b01f45; }
-        /* Brand badge */
-        .brand-badge { background: rgba(176,31,69,0.08); color: #b01f45; border: none; border-radius: 9999px; padding: 0.2rem 0.75rem; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Inter', sans-serif; }
-        /* Filter pill */
-        .filter-pill { padding: 0.3rem 1rem; border-radius: 9999px; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; cursor: pointer; border: 1px solid rgba(29,27,25,0.12); background: transparent; color: #78716c; transition: all 200ms ease; letter-spacing: 0.05em; }
-        .filter-pill:hover { border-color: #b01f45; color: #b01f45; }
-        .filter-pill.active { background: #b01f45; border-color: #b01f45; color: white; }
-        /* Main content area */
-        .main-content { flex-grow: 1; width: 100%; padding-bottom: 6rem; }
-        /* Bottom nav fixed */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: rgba(254,248,244,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(29,27,25,0.06); box-shadow: 0 -8px 32px rgba(29,27,25,0.04); padding-bottom: env(safe-area-inset-bottom, 0px); }
-        /* Card - light minimal */
-        .c-card { background: #ffffff; border: 1px solid rgba(29,27,25,0.07); border-radius: 1rem; transition: border-color 200ms ease, box-shadow 200ms ease; }
-        .c-card:hover, .c-card-hover:hover { border-color: rgba(29,27,25,0.18); box-shadow: 0 4px 24px rgba(29,27,25,0.06); }
-        .c-card-hover { transition: border-color 200ms ease, box-shadow 200ms ease; }
-        /* Legacy glass-panel → white card */
-        .glass-panel { background: #ffffff !important; border: 1px solid rgba(29,27,25,0.07) !important; backdrop-filter: none !important; box-shadow: none; }
-        .glass-panel:hover { border-color: rgba(29,27,25,0.18) !important; }
-        .glass-card-hover { transition: border-color 200ms ease, box-shadow 200ms ease; }
-        .glass-card-hover:hover { box-shadow: 0 4px 24px rgba(29,27,25,0.06) !important; border-color: rgba(29,27,25,0.18) !important; }
-        /* Theme utils */
-        .theme-heading { color: #1d1b19 !important; }
-        .theme-text { color: #1d1b19 !important; }
-        .theme-text-secondary { color: #78716c !important; }
-        .theme-divider { border-color: rgba(29,27,25,0.08) !important; }
-        .theme-input { background: #ffffff !important; border: 1px solid rgba(29,27,25,0.12) !important; color: #1d1b19 !important; }
-        .font-sans { font-family: 'Inter', 'Noto Sans TC', sans-serif !important; }
+        @keyframes backdropIn   { 0%{opacity:0} 100%{opacity:1} }
+        @keyframes cardInfoIn   { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
+        .card-info-in { animation:cardInfoIn 0.38s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes imgFadeIn    { 0%{opacity:0} 100%{opacity:1} }
+        .img-fade-in { animation:imgFadeIn 0.45s ease both; }
+        @keyframes hintFloat    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .hint-float { animation:hintFloat 2.4s cubic-bezier(0.45,0,0.55,1) infinite; }
+        @keyframes dotPop       { 0%{transform:scaleX(0.4)} 60%{transform:scaleX(1.15)} 100%{transform:scaleX(1)} }
+        .dot-active { animation:dotPop 0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
+        @keyframes handleWiggle { 0%,100%{transform:scaleX(1)} 30%{transform:scaleX(0.7)} 60%{transform:scaleX(1.18)} }
+        .handle-in { animation:handleWiggle 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(1) opacity(0.4); }
+        .native-input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:0.85rem; color:#fff; font-family:'Noto Sans TC',sans-serif; font-size:0.9rem; padding:0.75rem 1rem; width:100%; box-sizing:border-box; outline:none; -webkit-appearance:none; }
+        .native-input::placeholder { color:rgba(255,255,255,0.28); }
+        .native-input:focus { border-color:rgba(255,255,255,0.32); }
+        @keyframes blob1Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.45} 25%{transform:translate(6vw,10vh) scale(1.22);opacity:.95} 50%{transform:translate(-4vw,16vh) scale(.88);opacity:.5} 75%{transform:translate(9vw,4vh) scale(1.18);opacity:.9} }
+        @keyframes blob2Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.4} 33%{transform:translate(-8vw,13vh) scale(1.2);opacity:.9} 66%{transform:translate(5vw,-10vh) scale(.82);opacity:.45} }
+        @keyframes blob3Float { 0%,100%{transform:translate(0,0) scale(1);opacity:.4} 40%{transform:translate(8vw,-13vh) scale(1.25);opacity:.92} 80%{transform:translate(-6vw,-4vh) scale(.85);opacity:.48} }
+        @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .blob-1 { animation: blob1Float 14s ease-in-out infinite; }
+        .blob-2 { animation: blob2Float 18s ease-in-out infinite; }
+        .blob-3 { animation: blob3Float 22s ease-in-out infinite; }
+        .font-sans { font-family: 'Noto Sans TC', sans-serif !important; }
         .font-serif { font-family: 'Noto Serif TC', serif !important; }
-        .font-kai { font-family: 'Noto Serif TC', serif !important; }
-        .content-justify { text-align: justify; }
-        /* Tailwind overrides for light mode */
-        .bg-white { background-color: #ffffff !important; }
-        .bg-white\\/30, .bg-white\\/40, .bg-white\\/50, .bg-white\\/60, .bg-white\\/70 { background-color: rgba(255,255,255,0.5) !important; }
-        .border-white\\/30, .border-white\\/40, .border-white\\/50, .border-white\\/60 { border-color: rgba(29,27,25,0.08) !important; }
-        .hover-bg-surface:hover { background-color: #faf8f5 !important; }
-        /* shimmer for loading */
-        .shimmer { background: linear-gradient(90deg, rgba(29,27,25,0.04) 25%, rgba(29,27,25,0.08) 50%, rgba(29,27,25,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; border-radius: 0.5rem; }
-        /* Desktop nav hidden, bottom nav used instead */
-        .desktop-nav { display: none !important; }
-        .mobile-menu-btn { display: none !important; }
-        /* Hero */
-        .hero-section { min-height: 92vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6rem 1.5rem 4rem; background: #fef8f4; position: relative; }
+        .font-kai { font-family: 'Kaiti TC', 'BiauKai', 'DFKai-SB', 'AR PL UKai TW', serif !important; }
+        .content-justify { text-align: justify; text-justify: inter-ideograph; overflow-wrap: break-word; word-break: normal; }
+        .spring-transition { transition: all 500ms cubic-bezier(0.34,1.56,0.64,1); }
+        .theme-text { color: var(--c-text); transition: color 500ms ease; }
+        .theme-text-secondary { color: var(--c-text-secondary); transition: color 500ms ease; }
+        .theme-heading { color: var(--c-primary-dark); transition: color 500ms ease; }
+        .theme-divider { border-color: color-mix(in srgb, var(--c-primary) 15%, transparent); }
 
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: none; opacity: 0.4; }
-        .native-input { background: rgba(29,27,25,0.05); border: 1px solid rgba(29,27,25,0.12); border-radius: 0.85rem; color: #1d1b19; font-family: 'Inter', 'Noto Sans TC', sans-serif; font-size: 0.9rem; padding: 0.75rem 1rem; width: 100%; box-sizing: border-box; outline: none; -webkit-appearance: none; }
-        .native-input::placeholder { color: rgba(29,27,25,0.35); }
-        .native-input:focus { border-color: rgba(29,27,25,0.3); }
+        /* ===== 全域覆寫 Tailwind 背景/框線供玻璃擬態使用 ===== */
+        .glass-panel { background: rgba(var(--c-panel-rgb), 0.4) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'}); transition: all 500ms ease; }
+        .glass-panel:hover { background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.6'}) !important; }
+        .glass-card-hover { transition: all 300ms ease; }
+        .glass-card-hover:hover { background: rgba(var(--c-panel-rgb), ${isDarkMode ? '0.5' : '0.6'}) !important; box-shadow: 0 8px 32px rgba(0,0,0,${isDarkMode ? '0.4' : '0.1'}) !important; }
+        
+        .bg-white { background-color: rgba(var(--c-panel-rgb), 1) !important; transition: background-color 500ms ease; }
+        .bg-white\\/30 { background-color: rgba(var(--c-panel-rgb), 0.3) !important; transition: background-color 500ms ease; }
+        .bg-white\\/40 { background-color: rgba(var(--c-panel-rgb), 0.4) !important; transition: background-color 500ms ease; }
+        .bg-white\\/50 { background-color: rgba(var(--c-panel-rgb), 0.5) !important; transition: background-color 500ms ease; }
+        .bg-white\\/60 { background-color: rgba(var(--c-panel-rgb), 0.6) !important; transition: background-color 500ms ease; }
+        .bg-white\\/70 { background-color: rgba(var(--c-panel-rgb), 0.7) !important; transition: background-color 500ms ease; }
+        .bg-white\\/80 { background-color: rgba(var(--c-panel-rgb), 0.8) !important; transition: background-color 500ms ease; }
+        
+        .border-white\\/30 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.3'}) !important; transition: border-color 500ms ease; }
+        .border-white\\/40 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.4'}) !important; transition: border-color 500ms ease; }
+        .border-white\\/50 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.25' : '0.5'}) !important; transition: border-color 500ms ease; }
+        .border-white\\/60 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.6'}) !important; transition: border-color 500ms ease; }
+        .border-white\\/80 { border-color: rgba(var(--c-border-rgb), ${isDarkMode ? '0.4' : '0.8'}) !important; transition: border-color 500ms ease; }
+
+        .hover-bg-surface:hover { background-color: rgba(var(--c-panel-rgb), 0.3) !important; }
+
+        /* ===== RWD 導覽列 ===== */
+        @media (max-width: 768px) {
+          .desktop-nav { display: none !important; }
+          .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; }
+        }
+        @media (min-width: 769px) {
+          .mobile-menu-btn { display: none !important; }
+        }
+
+        /* ===== RWD 頁尾 ===== */
+        .footer-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+        }
+        @media (max-width: 768px) {
+          .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+        }
+
+        /* ===== RWD 主要內容區塊 ===== */
+        .main-content {
+          flex-grow: 1;
+          max-width: 72rem;
+          margin: 0 auto;
+          padding: 2rem 1.5rem 6rem;
+          width: 100%;
+        }
+        @media (min-width: 1280px) {
+          .main-content {
+            max-width: 90rem;
+            padding-left: 2.5rem;
+            padding-right: 2.5rem;
+          }
+        }
+        @media (min-width: 1536px) {
+          .main-content {
+            max-width: 110rem;
+          }
+        }
+        @media (max-width: 640px) {
+          .main-content {
+            padding: 1.25rem 1rem 4rem;
+          }
+        }
       `}} />
 
       {/* ── Native 啟動動畫（Splash Screen）── */}
@@ -953,178 +966,204 @@ const pageProps = {
         </div>
       )}
 
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+        <div className="blob-1" style={{ position: "absolute", top: "-10%", left: "-10%", width: "50vw", height: "50vw", borderRadius: "9999px", filter: "blur(100px)", background: "var(--c-blob-1)", transition: "background 800ms ease" }} />
+        <div className="blob-2" style={{ position: "absolute", top: "20%", right: "-10%", width: "40vw", height: "40vw", borderRadius: "9999px", filter: "blur(100px)", background: "var(--c-blob-2)", transition: "background 800ms ease" }} />
+        <div className="blob-3" style={{ position: "absolute", bottom: "-10%", left: "10%", width: "45vw", height: "45vw", borderRadius: "9999px", filter: "blur(120px)", background: "var(--c-blob-3)", transition: "background 800ms ease" }} />
+      </div>
 
-      {/* ── App版 Tab Nav ── */}
-      {isAppMode && (
-        <nav style={{
-          position: "sticky", top: 0, zIndex: 100,
-          display: launchOnboarding ? "none" : undefined,
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          background: "rgba(254,248,244,0.85)",
-          borderBottom: "1px solid rgba(29,27,25,0.06)",
-          paddingTop: "env(safe-area-inset-top, 0px)",
-        }}>
-          <div style={{ padding: "0 1rem" }}>
-            <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", height: "3.5rem", margin: "0 auto", justifyContent: "center" }}>
-              {[
-                { key: "lecture",    label: "學術講座" },
-                { key: "workshop",   label: "研討會/工作坊" },
-                { key: "submission", label: "徵稿資訊" },
-              ].map(tab => {
-                const active = nativeCategory === tab.key;
-                const cnt = catCounts[tab.key];
-                return (
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 50, transition: "all 500ms ease",
+        display: (isAppMode && launchOnboarding) ? "none" : undefined,
+        background: isAppMode ? "transparent" : `rgba(var(--c-panel-rgb), 0.3)`,
+        backdropFilter: isAppMode ? "none" : "blur(20px)",
+        borderBottom: isAppMode ? "none" : `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.15' : '0.4'})`,
+        boxShadow: isAppMode ? "none" : `0 1px 3px rgba(0,0,0,${isDarkMode ? '0.3' : '0.05'})`,
+        paddingTop: isAppMode ? "env(safe-area-inset-top, 0px)" : 0,
+      }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: isAppMode ? "0 1rem" : "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: isAppMode ? "3.5rem" : "5rem" }}>
+
+            {/* ── App 版：3 分類 Tab（置中）── */}
+            {isAppMode ? (
+              <>
+                {/* 3 分類 Tab */}
+                <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", margin: "0 auto" }}>
+                  {[
+                    { key: "lecture",    label: "學術講座" },
+                    { key: "workshop",   label: "研討會/工作坊" },
+                    { key: "submission", label: "徵稿資訊" },
+                  ].map(tab => {
+                    const active = nativeCategory === tab.key;
+                    const cnt = catCounts[tab.key];
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setNativeCategory(tab.key)}
+                        className="native-btn"
+                        style={{
+                          padding: "0.3rem 0.65rem",
+                          borderRadius: "9999px",
+                          fontSize: "0.72rem",
+                          fontWeight: active ? 700 : 500,
+                          fontFamily: "'Noto Sans TC', sans-serif",
+                          cursor: "pointer",
+                          border: "none",
+                          transition: "all 220ms ease",
+                          background: active
+                            ? "rgba(255,255,255,0.95)"
+                            : "rgba(255,255,255,0.12)",
+                          color: active ? "#1c1c1e" : "rgba(255,255,255,0.8)",
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          display: "flex", alignItems: "center", gap: "0.3rem",
+                        }}
+                      >
+                        {tab.label}
+                        {cnt > 0 && (
+                          <span style={{
+                            background: active ? "rgba(28,28,30,0.15)" : "rgba(255,255,255,0.22)",
+                            color: active ? "#1c1c1e" : "#fff",
+                            fontSize: "0.6rem", fontWeight: 700,
+                            padding: "1px 5px", borderRadius: 9999,
+                            lineHeight: 1.4,
+                          }}>{cnt}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              /* ── 網頁版：Logo + 標題（左）+ 導覽列（右）── */
+              <>
+                <div style={{ display: "flex", alignItems: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => go("home")}>
+                  <LogoImage className="w-10 h-10 mr-3 rounded-xl shadow-sm border border-white/50" />
+                  <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif", color: t.primaryDark, transition: "color 500ms ease" }}>中文研究室</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginLeft: "auto" }}>
+                  <div className="desktop-nav" style={{ display: "flex", gap: "0.375rem", flexWrap: "nowrap" }}>
+                    {navItems.map((item) => (
+                      <ThemedButton key={item.id} active={currentPage === item.id} onClick={() => go(item.id)}>
+                        {item.icon} {item.label}
+                      </ThemedButton>
+                    ))}
+                  </div>
+
+                  {/* 搜尋 */}
                   <button
-                    key={tab.key}
-                    onClick={() => setNativeCategory(tab.key)}
-                    className="native-btn"
+                    onClick={() => setSearchOpen(true)}
+                    className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"
                     style={{
-                      padding: "0.3rem 0.65rem",
-                      borderRadius: "9999px",
-                      fontSize: "0.72rem",
-                      fontWeight: active ? 700 : 500,
-                      fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
-                      cursor: "pointer",
-                      border: active ? "none" : "1px solid rgba(29,27,25,0.12)",
-                      transition: "all 220ms ease",
-                      background: active ? "#b01f45" : "transparent",
-                      color: active ? "white" : "#78716c",
-                      display: "flex", alignItems: "center", gap: "0.3rem",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                      background: "rgba(var(--c-panel-rgb), 0.4)",
+                      border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                      color: "var(--c-primary-dark)",
                     }}
+                    title="搜尋"
                   >
-                    {tab.label}
-                    {cnt > 0 && (
-                      <span style={{
-                        background: active ? "rgba(255,255,255,0.25)" : "rgba(176,31,69,0.1)",
-                        color: active ? "white" : "#b01f45",
-                        fontSize: "0.6rem", fontWeight: 700,
-                        padding: "1px 5px", borderRadius: 9999,
-                        lineHeight: 1.4,
-                      }}>{cnt}</span>
-                    )}
+                    <Icon name="Search" size={20} />
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
-      )}
 
-      {/* ── 網頁版 Top Nav ── */}
-      {!isAppMode && (
-        <nav className={navScrolled ? "nav-scrolled" : ""} style={{
-          position: "sticky", top: 0, zIndex: 100,
-          background: "rgba(254,248,244,0.8)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderBottom: "1px solid rgba(29,27,25,0.06)",
-          transition: "background 300ms ease, box-shadow 300ms ease",
-        }}>
-          <div className="nav-inner" style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", height: "4.5rem", transition: "height 300ms ease" }}>
-            {/* Left: hamburger */}
-            <button onClick={() => setMobileOpen(!mobileOpen)} style={{ background: "none", border: "none", cursor: "pointer", color: "#1d1b19", display: "flex", alignItems: "center", padding: "0.5rem" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "1.4rem" }}>menu</span>
-            </button>
+                  {/* 日/月 模式切換 */}
+                  <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                      background: "rgba(var(--c-panel-rgb), 0.4)",
+                      border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                      color: "var(--c-primary-dark)",
+                    }}
+                    title={isDarkMode ? "切換至亮色模式" : "切換至暗色模式"}
+                  >
+                    <Icon name={isDarkMode ? "Sun" : "Moon"} size={20} />
+                  </button>
 
-            {/* Center: title */}
-            <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", textAlign: "center", cursor: "pointer" }} onClick={() => go("home")}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <LogoImage className="w-7 h-7 rounded-lg border border-stone-200" />
-                <span style={{ fontFamily: "'Noto Serif TC', serif", fontWeight: 400, letterSpacing: "0.15em", color: "#1d1b19", fontSize: "clamp(0.85rem, 1.5vw, 1rem)" }}>中文研究室</span>
-              </div>
-            </div>
-
-            {/* Right: search icon */}
-            {/* 搜尋 */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
-                background: "rgba(var(--c-panel-rgb), 0.4)",
-                border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
-                color: "var(--c-primary-dark)",
-              }}
-              title="搜尋"
-            >
-              <Icon name="Search" size={20} />
-            </button>
-          </div>
-
-        </nav>
-      )}
-
-      {/* ── 抽屜選單（在 nav 外避免 backdrop-filter 截斷）── */}
-      {!isAppMode && mobileOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(29,27,25,0.3)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} onClick={() => setMobileOpen(false)}>
-          <div style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "300px", background: "#fef8f4", padding: "2rem 1.5rem", overflowY: "auto", boxShadow: "4px 0 32px rgba(29,27,25,0.12)" }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2.5rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <LogoImage className="w-7 h-7 rounded-lg border border-stone-200" />
-                <span style={{ fontFamily: "'Noto Serif TC', serif", fontWeight: 400, fontSize: "0.95rem", letterSpacing: "0.1em", color: "#1d1b19" }}>中文研究室</span>
-              </div>
-              <button onClick={() => setMobileOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#1d1b19", padding: "0.25rem" }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "1.4rem" }}>close</span>
-              </button>
-            </div>
-            {allNavItems.map(item => {
-              const active = currentPage === item.id;
-              return (
-                <button key={item.id} onClick={() => go(item.id)} style={{ display: "flex", alignItems: "center", gap: "0.85rem", width: "100%", textAlign: "left", padding: "0.9rem 0", background: "none", border: "none", borderBottom: "1px solid rgba(29,27,25,0.06)", cursor: "pointer" }}>
-                  <span style={{ color: active ? "#b01f45" : "#a8a29e", flexShrink: 0, display: "flex" }}>{item.icon}</span>
-                  <span style={{ fontFamily: "'Noto Serif TC', serif", fontWeight: active ? 700 : 400, fontSize: "1.05rem", color: active ? "#b01f45" : "#1d1b19", letterSpacing: "0.05em" }}>{item.label}</span>
-                  {active && <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: "#b01f45", flexShrink: 0 }} />}
-                </button>
-              );
-            })}
+                  {/* 網頁版漢堡按鈕 */}
+                  <button
+                    className="mobile-menu-btn"
+                    onClick={() => setMobileOpen(!mobileOpen)}
+                    style={{ display: "none", padding: "0.5rem", background: "rgba(var(--c-panel-rgb), 0.4)", borderRadius: "0.5rem", backdropFilter: "blur(8px)", border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`, color: t.primaryDark, cursor: "pointer" }}
+                  >
+                    <Icon name={mobileOpen ? "X" : "Menu"} size={24} />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      )}
+
+        {/* 網頁版 mobile 下拉選單 */}
+        {!isAppMode && mobileOpen && (
+          <div style={{ background: `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.97' : '0.92'})`, backdropFilter: "blur(24px)", borderBottom: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.2' : '0.5'})`, boxShadow: `0 8px 24px rgba(0,0,0,${isDarkMode ? '0.5' : '0.08'})`, position: "absolute", width: "100%", left: 0 }} className="animate-fade-in">
+            <div style={{ padding: "0.75rem 1rem 1.25rem" }}>
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => go(item.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    width: "100%", textAlign: "left",
+                    padding: "0.75rem 1rem", borderRadius: "0.75rem",
+                    fontSize: "1rem", fontWeight: 500,
+                    fontFamily: "'Noto Sans TC', sans-serif",
+                    border: "1px solid", cursor: "pointer",
+                    marginBottom: "0.25rem", transition: "all 200ms ease",
+                    background: currentPage === item.id ? `rgba(var(--c-panel-rgb), ${isDarkMode ? '0.6' : '0.8'})` : "transparent",
+                    borderColor: currentPage === item.id ? `rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.9'})` : "transparent",
+                    color: currentPage === item.id ? t.primaryDark : t.textSec,
+                  }}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
 
       <main className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
-        <div key={currentPage} className="page-enter">
-          {page}
-        </div>
+        {page}
       </main>
 
-      {!isAppMode && (
-        <footer style={{ borderTop: "1px solid rgba(29,27,25,0.08)", padding: "3rem 2rem", background: "#fef8f4", marginBottom: "5rem" }}>
-          <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <LogoImage className="w-7 h-7 rounded-lg border border-stone-200" />
-                <span style={{ fontFamily: "'Noto Serif TC', serif", fontWeight: 400, fontSize: "0.9rem", letterSpacing: "0.12em", color: "#1d1b19" }}>中文研究室</span>
+      {!isAppMode && <footer style={{ position: "relative", zIndex: 10, backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "3rem 0", background: t.footer, transition: "background 500ms ease" }}>
+        <div style={{ maxWidth: "min(110rem, 100%)", margin: "0 auto", padding: "0 clamp(1.5rem, 2.5vw, 2.5rem)" }}>
+          <div className="footer-grid">
+            <div style={{ marginBottom: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", color: "white", marginBottom: "0.5rem" }}>
+                <LogoImage className="w-8 h-8 mr-2 rounded-lg border border-white/30" />
+                <span style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "0.1em", fontFamily: "'Noto Sans TC', sans-serif" }}>中文研究室</span>
               </div>
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.75rem", color: "#a8a29e", letterSpacing: "0.1em" }}>Email: zxc998775@gmail.com</p>
             </div>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.7rem", color: "#a8a29e", letterSpacing: "0.1em" }}>&copy; {new Date().getFullYear()} 中文研究室. All rights reserved.</p>
-          </div>
-        </footer>
-      )}
 
-      {!isAppMode && (
-        <div className="bottom-nav">
-          <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center", padding: "0.75rem 1rem 1rem", maxWidth: "600px", margin: "0 auto" }}>
-            {[
-              { id: "home", label: "首頁", icon: "home" },
-              { id: "activities", label: "近期活動", icon: "auto_awesome_motion" },
-              { id: "events", label: "研討進度", icon: "calendar_month" },
-              { id: "articles", label: "文章專欄", icon: "article" },
-              { id: "about", label: "關於", icon: "info" },
-            ].map(item => {
-              const active = currentPage === item.id;
-              return (
-                <button key={item.id} onClick={() => go(item.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.2rem", background: "none", border: "none", cursor: "pointer", padding: "0.25rem 0.5rem", color: active ? "#b01f45" : "#78716c", borderTop: active ? "2px solid #b01f45" : "2px solid transparent", paddingTop: "0.5rem", transition: "color 200ms ease" }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "1.35rem", fontVariationSettings: active ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24" }}>{item.icon}</span>
-                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.6rem", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" }}>{item.label}</span>
-                </button>
-              );
-            })}
+            <div>
+              <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>快速連結</h4>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "row", flexWrap: "wrap", gap: "0.5rem 1.5rem", fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>
+                {navItems.map((n) => (
+                  <li key={n.id}>
+                    <button onClick={() => go(n.id)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0, fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", transition: "color 300ms" }} className="hover:text-white">
+                      {n.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>聯絡資訊</h4>
+              <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>Email：zxc998775@gmail.com</p>
+            </div>
           </div>
         </div>
-      )}
+
+        <div style={{ maxWidth: "72rem", margin: "0 auto", padding: "1.5rem 1.5rem 0", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "2rem", textAlign: "center", fontSize: "0.875rem", color: "rgba(255,255,255,0.3)", fontFamily: "'Noto Sans TC', sans-serif" }}>
+          &copy; {new Date().getFullYear()} 中文研究室. All rights reserved.
+        </div>
+      </footer>}
 
       {!isAppMode && <BackToTopButton isDarkMode={isDarkMode} />}
 
@@ -1206,4 +1245,4 @@ const pageProps = {
     </div>
   );
 
-}
+} 
