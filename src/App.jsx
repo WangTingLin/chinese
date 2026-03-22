@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { createClient } from '@sanity/client';
-import { PageHeaderBanner } from './components/ClassicalDecoration';
 import ArticlesPage from './pages/ArticlesPage';
 import { getCategoryColors } from './data/articlesData';
 import EventsPage from './pages/EventsPage';
@@ -296,12 +295,6 @@ export const PageHeader = ({ title }) => (
       className="w-16 h-1 mx-auto rounded-full"
       style={{ background: "var(--c-accent)" }}
     />
-    <div
-      className="mt-3 overflow-hidden rounded-2xl mx-auto opacity-75"
-      style={{ maxWidth: 680, color: "var(--c-accent)" }}
-    >
-      <PageHeaderBanner />
-    </div>
   </div>
 );
 
