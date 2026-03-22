@@ -1,12 +1,12 @@
 // 檔案路徑：src/pages/ActivitiesPage.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
 
 // ── 主辦單位縮寫對照表 ───────────────────────────────────────
