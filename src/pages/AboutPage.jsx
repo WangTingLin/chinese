@@ -28,15 +28,15 @@ export default function AboutPage({ isDarkMode }) {
   const colors = getFieldColors(isDarkMode);
   
   return (
-    <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
+    <div className="w-full space-y-12 animate-fade-in relative z-10">
       <PageHeader title="關於讀書會" />
-      <div className="p-8 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-6 theme-text">
-        <p className="text-lg font-serif content-justify">
+      <div className="p-5 sm:p-8 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-6 theme-text">
+        <p className="text-base md:text-lg font-serif content-justify">
           「獨學而無友，則孤陋而寡聞」，出自《禮記‧學記》，指獨自一人的學習，而沒有志同道合的朋友相互切磋討論，就會陷入學識淺薄、見聞狹隘的困境。然而，在現代學術分科的影響下，研究生對於研究論文的撰寫（特別是人文學科），往往是一場孤獨的馬拉松，研究者們往往花費大量的時間與古籍對話，與前人理論交流。
 然而，新的知識並不是古人或個人所能生產，它勢必須要與時代建立溝通的橋樑，學術寫作就是將已經内化的思考透過文字與公共社會進行對話，尋求建立新的知識觀點。布魯菲（Kenneth A. Bruffee, 1934-2019）提到個人的學思與公共社會對話的重要性：「如果思考是與公眾、社會對話的内化，學會更好地思考，就是學會更好地對話。（If thought is internalized public and social talk, then to learn to think better is to learn to converse better.）」（Bruffee, 1984），因此，現代的研究者本不應該「閉門造車」，而是需要闊開心胸，與他人建立共學的連結，而在產出新知識的階段，就應該建立「實踐社群（Communities of Practice, CoP）」，讓知識不再只是靜態地產出，而是在成員們的互動、共享與回饋時動態生成。
 
         </p>
-        <div className="grid md:grid-cols-2 gap-8 mt-8">
+        <div className="grid md:grid-cols-2 gap-5 md:gap-8 mt-6 md:mt-8 xl:max-w-5xl xl:mx-auto">
           {[
             { icon: "BookOpen", title: "當局者迷與同儕審查", desc: "傳統俗諺：「當局者迷，旁觀者清」，在研究生撰寫論文的過程中，難免遭遇論述困難、邏輯死角、學術視野缺失等諸多情形。若在此之前，藉由協作學習的成員建立小型的「同儕審查機制（Peer Review）」，不僅可以提供他者的眼光，協助成員提早發現論文問題以及發展方向，便可即時避免、降低正式發表的挫折感。" },
             { icon: "Users", title: "寫作焦慮與進度控管", desc: "研究生的學術寫作之所以常有「拖延症」，不應歸咎於自身的研究能力不足，而是源於長時間孤軍奮戰產生的心理耗損。藉由社群強制訂立發表時程的強制規定，將相對抽象的寫作計畫轉化為具體的「Deadline」，以適度的社交壓力能有效打破學術寫作的延宕。" },
@@ -51,7 +51,7 @@ export default function AboutPage({ isDarkMode }) {
         </div>
         <div className="mt-10 pt-8 theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}>
           <h3 className="text-2xl font-bold mb-8 font-sans text-center theme-heading">具體實踐</h3>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
             {[
               { icon: "ClipboardList", n: 1, t: "建立學術討論的期程表", d: "計畫伊始，即排定每位成員的發表次序與時段，要求發表人須於會議前一週提交論文初稿。旨在模擬學術期刊或研討會的審稿流程，給予研究生學術寫作的「儀式感」與「責任心」。" },
               { icon: "Users", n: 2, t: "組建同儕審查會議", d: "每位成員須輪流在會議中承擔不同角色。主持人須控管現場對話的次序；發表人須練習在有限時間內精煉陳述核心問題；特約討論人則需針對論文提供具建設性的修改建議。" },
@@ -70,7 +70,7 @@ export default function AboutPage({ isDarkMode }) {
 
         <div className="mt-10 pt-8 theme-divider" style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}>
           <h3 className="text-2xl font-bold mb-8 font-sans text-center theme-heading">讀書會成員</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
             {members.map((m, i) => {
               const fc = colors[m.field] || { bg: isDarkMode ? "rgba(148,163,184,0.2)" : "rgba(100,116,139,0.12)", color: isDarkMode ? "#cbd5e1" : "#475569", border: isDarkMode ? "rgba(148,163,184,0.4)" : "rgba(100,116,139,0.25)" };
               return (

@@ -1,23 +1,106 @@
 // 檔案路徑：src/pages/ArticlesPage.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import { PortableText } from '@portabletext/react';
+import imageUrlBuilder from '@sanity/image-url';
 
-// 💡 匯入文章資料
-import { columnArticles, FIXED_CATEGORIES, getCategoryColors } from '../data/articlesData';
+import { client } from '../sanityClient';
+
+const builder = imageUrlBuilder(client);
+const urlFor = (source) => builder.image(source);
 // 💡 從主程式匯入共用的介面元件
-import { Icon, PageHeader, ReadingProgress, BlockRenderer } from '../App';
+import { Icon, PageHeader, ReadingProgress } from '../App';
+
+const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書心得", "文學創作"];
+
+// 後端儲存值 → 前端顯示名稱的對照表
+const CATEGORY_DISPLAY = {
+  "讀書心得": "讀書會紀錄",
+};
+
+const getCategoryColors = (isDark) => ({
+  "學術筆記": { bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)", color: isDark ? "#93c5fd" : "#1e40af", border: isDark ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)" },
+  "讀書心得": { bg: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)", color: isDark ? "#86efac" : "#166534", border: isDark ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)" },
+  "文學創作": { bg: isDark ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.12)", color: isDark ? "#fda4af" : "#9f1239", border: isDark ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.3)" },
+});
+
+const extractTocHeadings = (blocks) => {
+  if (!blocks) return [];
+  return blocks
+    .filter(b => b._type === "block" && /^h[1-6]$/.test(b.style || ""))
+    .map(b => ({ key: b._key, text: b.children?.map(c => c.text).join('') || '' }));
+};
+
+const makePortableComponents = (articleId) => ({
+  types: {
+    image: ({ value }) => {
+      if (!value?.asset) return null;
+      return (
+        <figure className="my-8">
+          <img
+            src={urlFor(value).width(900).auto('format').url()}
+            alt={value.alt || ''}
+            className="w-full rounded-2xl shadow-md border border-white/40"
+            loading="lazy"
+          />
+          {value.caption && (
+            <figcaption className="mt-3 text-center text-sm theme-text-secondary opacity-70 font-sans">
+              {value.caption}
+            </figcaption>
+          )}
+        </figure>
+      );
+    },
+  },
+  block: {
+    normal: ({children}) => <p className="leading-relaxed theme-text-secondary mb-4" style={{ textIndent: "2em" }}>{children}</p>,
+    h2: ({value, children}) => <h4 id={`article-${articleId}-${value._key}`} className="text-xl md:text-2xl font-bold theme-heading mt-10 mb-5 flex items-center gap-3" style={{ scrollMarginTop: "120px" }}><span style={{ width: "5px", height: "1.2em", background: "var(--c-accent)", borderRadius: "4px" }}></span>{children}</h4>,
+    h3: ({value, children}) => <h5 id={`article-${articleId}-${value._key}`} className="text-lg font-bold theme-heading mt-8 mb-4" style={{ scrollMarginTop: "120px" }}>{children}</h5>,
+    blockquote: ({children}) => <blockquote className="my-8 pl-5 py-4 border-l-4 font-kai leading-relaxed theme-text-secondary bg-white/40 rounded-r-xl shadow-sm" style={{ borderColor: "var(--c-accent)" }}>{children}</blockquote>,
+  },
+  list: {
+    bullet: ({children}) => <ul className="space-y-3 my-6 px-4 md:px-8 theme-text-secondary">{children}</ul>,
+    number: ({children}) => <ol className="space-y-3 my-6 px-4 md:px-8 theme-text-secondary list-decimal">{children}</ol>,
+  },
+  listItem: {
+    bullet: ({children}) => <li className="leading-relaxed relative pl-6"><span className="absolute left-0 top-2.5 w-2 h-2 rounded-full" style={{ background: "var(--c-accent)", opacity: 0.8 }}></span>{children}</li>,
+  },
+  marks: {
+    strong: ({children}) => <strong className="font-bold theme-heading">{children}</strong>,
+    em: ({children}) => <em>{children}</em>,
+    link: ({value, children}) => <a href={value?.href} target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80" style={{ color: "var(--c-primary)" }}>{children}</a>,
+  },
+});
 
 export default function ArticlesPage({ isDarkMode }) {
   const [expandedId, setExpandedId] = useState(null);
   const [filterCat, setFilterCat] = useState("全部");
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const activeArticleRef = useRef(null);
+
+  useEffect(() => {
+    client.fetch(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {
+      _id, title, author, affiliation, contact, date, category, tags, summary, blocks
+    }`).then(data => {
+      setArticles(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
   const categories = FIXED_CATEGORIES;
   const catColors = getCategoryColors(isDarkMode);
-  
-  const filteredArticles = filterCat === "全部" ? columnArticles : columnArticles.filter(a => a.category === filterCat);
-  const displayArticles = [...filteredArticles].reverse();
 
-  const openArticle = displayArticles.find(a => a.id === expandedId);
+  if (loading) return (
+    <div className="w-full animate-fade-in relative z-10">
+      <PageHeader title="文章專欄" />
+      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+    </div>
+  );
+
+  const filteredArticles = filterCat === "全部" ? articles : articles.filter(a => a.category === filterCat);
+  const displayArticles = [...filteredArticles];
+
+  const openArticle = displayArticles.find(a => a._id === expandedId);
   const activeCatColor = openArticle ? (catColors[openArticle.category] || { color: "var(--c-primary)" }) : null;
 
   return (
@@ -26,7 +109,7 @@ export default function ArticlesPage({ isDarkMode }) {
         <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={isDarkMode} />
       )}
       
-      <div className="max-w-4xl mx-auto space-y-10 animate-fade-in relative z-10">
+      <div className="w-full space-y-10 animate-fade-in relative z-10">
         <PageHeader title="文章專欄" />
 
         <div className="flex flex-wrap gap-2 justify-center">
@@ -52,7 +135,7 @@ export default function ArticlesPage({ isDarkMode }) {
                       color: "var(--c-text-secondary)" 
                     }}
               >
-                {cat}
+                {CATEGORY_DISPLAY[cat] ?? cat}
               </button>
             )
           })}
@@ -64,25 +147,25 @@ export default function ArticlesPage({ isDarkMode }) {
             <p>尚無文章，敬請期待。</p>
           </div>
         ) : (
-          <div className="space-y-6 md:space-y-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {displayArticles.map((a) => {
-              const open = expandedId === a.id;
+              const open = expandedId === a._id;
               const cColor = catColors[a.category] || { bg: "var(--c-badge-bg)", color: "var(--c-badge-text)", border: "var(--c-badge-border)" };
 
               return (
                 <article
-                  key={a.id}
+                  key={a._id}
                   ref={open ? activeArticleRef : null}
-                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70" : "glass-card-hover cursor-pointer"}`}
+                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70 xl:col-span-2" : "glass-card-hover"}`}
                 >
                   <div
                     className="p-5 md:p-8 relative"
-                    onClick={() => setExpandedId(open ? null : a.id)}
+                    onClick={() => setExpandedId(open ? null : a._id)}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-sans border transition-colors"
                         style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
-                        <Icon name="Folder" size={14} className="opacity-70" /> {a.category}
+                        <Icon name="Folder" size={14} className="opacity-70" /> {CATEGORY_DISPLAY[a.category] ?? a.category}
                       </span>
                       <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
                         <Icon name="Calendar" size={14} /> {a.date}
@@ -97,9 +180,9 @@ export default function ArticlesPage({ isDarkMode }) {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm theme-text-secondary font-sans">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm" style={{ background: cColor.color, opacity: 0.9 }}>
-                            {a.author[0]}
+                            {a.author?.[0] ?? '?'}
                           </span>
-                          <span className="font-medium text-base whitespace-nowrap">{a.author}</span>
+                          <span className="font-medium text-base whitespace-nowrap">{a.author ?? '（未填）'}</span>
                           <span className="opacity-50 hidden md:inline">｜</span>
                         </div>
                         <span className="opacity-80 w-full md:w-auto ml-8 md:ml-0 text-xs md:text-sm leading-relaxed">{a.affiliation}</span>
@@ -112,7 +195,7 @@ export default function ArticlesPage({ isDarkMode }) {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
-                      {a.tags.map((tag, i) => (
+                      {(a.tags || []).map((tag, i) => (
                         <span key={i} className="inline-flex items-center gap-1 text-xs font-sans px-2.5 py-1 rounded-full border transition-colors hover:brightness-95"
                           style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
                           <Icon name="Tag" size={12} className="opacity-60 shrink-0" /> {tag}
@@ -145,7 +228,7 @@ export default function ArticlesPage({ isDarkMode }) {
                         <div className="flex flex-col lg:flex-row gap-8 items-start">
                           {/* 行動版目錄 (只在小螢幕顯示) */}
                           {(() => {
-                            const tocItems = (a.blocks || []).map((b, idx) => ({ ...b, index: idx })).filter(b => b.type === "heading");
+                            const tocItems = extractTocHeadings(a.blocks);
                             if (tocItems.length === 0) return null;
                             return (
                               <div className="w-full lg:hidden mb-2">
@@ -155,10 +238,10 @@ export default function ArticlesPage({ isDarkMode }) {
                                   </h4>
                                   <ul className="space-y-3 text-sm font-sans theme-text-secondary border-l-2 border-[var(--c-primary)]/20 pl-3">
                                     {tocItems.map((h) => (
-                                      <li key={h.index} className="relative group">
+                                      <li key={h.key} className="relative group">
                                         <span className="absolute -left-[17px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--c-primary)] opacity-40 group-hover:opacity-100 transition-opacity"></span>
                                         <button
-                                          onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a.id}-heading-${h.index}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
+                                          onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a._id}-${h.key}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
                                           className="hover:text-[var(--c-primary)] transition-colors text-left leading-relaxed block w-full"
                                         >
                                           {h.text}
@@ -178,13 +261,13 @@ export default function ArticlesPage({ isDarkMode }) {
                                 （此文尚未填入全文內容）
                               </div>
                             ) : (
-                              (a.blocks || []).map((b, idx) => <BlockRenderer key={idx} block={b} index={idx} articleId={a.id} />)
+                              <PortableText value={a.blocks} components={makePortableComponents(a._id)} />
                             )}
                           </div>
 
                           {/* 右側：桌面版黏性目錄 (只在大螢幕顯示) */}
                           {(() => {
-                            const tocItems = (a.blocks || []).map((b, idx) => ({ ...b, index: idx })).filter(b => b.type === "heading");
+                            const tocItems = extractTocHeadings(a.blocks);
                             if (tocItems.length === 0) return null;
                             return (
                               <div className="hidden lg:block w-[240px] shrink-0 sticky top-28">
@@ -194,10 +277,10 @@ export default function ArticlesPage({ isDarkMode }) {
                                   </h4>
                                   <ul className="space-y-3 text-sm font-sans theme-text-secondary border-l-2 border-[var(--c-primary)]/20 pl-3">
                                     {tocItems.map((h) => (
-                                      <li key={h.index} className="relative group">
+                                      <li key={h.key} className="relative group">
                                         <span className="absolute -left-[17px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--c-primary)] opacity-40 group-hover:opacity-100 transition-opacity"></span>
                                         <button
-                                          onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a.id}-heading-${h.index}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
+                                          onClick={(e) => { e.stopPropagation(); const el = document.getElementById(`article-${a._id}-${h.key}`); if(el) el.scrollIntoView({behavior: 'smooth'}); }}
                                           className="hover:text-[var(--c-primary)] transition-colors text-left leading-relaxed block w-full"
                                         >
                                           {h.text}
@@ -211,7 +294,32 @@ export default function ArticlesPage({ isDarkMode }) {
                           })()}
                         </div>
 
-                        <div className="mt-12 md:mt-16 flex justify-center pb-4 md:pb-8"> 
+                        {/* 相關文章 */}
+                        {(() => {
+                          const related = displayArticles.filter(r => r._id !== a._id && r.category === a.category).slice(0, 3);
+                          if (related.length === 0) return null;
+                          return (
+                            <div className="mt-12 pt-8 border-t-2 border-dashed" style={{ borderColor: "rgba(var(--c-border-rgb),0.4)" }}>
+                              <h4 className="text-base font-bold font-sans theme-heading mb-4 flex items-center gap-2">
+                                <Icon name="BookOpen" size={18} /> 相關文章
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {related.map(r => (
+                                  <button
+                                    key={r._id}
+                                    onClick={(e) => { e.stopPropagation(); setExpandedId(r._id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    className="text-left p-4 rounded-2xl glass-panel border border-white/50 hover:shadow-md spring-transition hover:-translate-y-1"
+                                  >
+                                    <p className="text-sm font-bold font-sans theme-heading leading-snug mb-2 line-clamp-2">{r.title}</p>
+                                    <p className="text-xs font-sans theme-text-secondary opacity-60">{r.author} · {r.date}</p>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="mt-12 md:mt-16 flex justify-center pb-4 md:pb-8">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

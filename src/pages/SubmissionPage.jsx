@@ -6,9 +6,9 @@ import { Icon, PageHeader } from '../App';
 
 export default function SubmissionPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-12 animate-fade-in relative z-10">
+    <div className="w-full space-y-12 animate-fade-in relative z-10">
       <PageHeader title="投稿須知" />
-      <div className="p-6 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text">
+      <div className="p-6 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text max-w-4xl mx-auto">
         <section>
           <h3 className="text-xl md:text-2xl font-bold mb-4 font-sans theme-heading flex items-center gap-2">
             <Icon name="PenLine" size={24} style={{ color: "var(--c-accent)" }} /> 徵稿範圍

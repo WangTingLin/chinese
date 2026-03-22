@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
+@import "./styles/theme.css";
 
 @tailwind base;
 @tailwind components;
@@ -11,6 +12,21 @@ html, body, #root {
 body {
   margin: 0;
   background: rgb(249 250 251);
+}
+
+/* Native / PWA app：深色背景防止 iOS overscroll 露白 */
+body.is-native,
+html.is-native {
+  background: #1c1c1e !important;
+  overscroll-behavior: none;
+}
+
+/* Native / PWA app：隱藏所有滾動條 */
+html.is-native *::-webkit-scrollbar {
+  display: none;
+}
+html.is-native * {
+  scrollbar-width: none;
 }
 
 @keyframes fadeIn {
@@ -34,11 +50,11 @@ body {
 }
 
 .glass-panel {
-  background: rgba(var(--c-panel-rgb), 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(var(--c-border-rgb), 0.35);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  background: rgba(var(--c-panel-rgb), 0.22);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(var(--c-border-rgb), 0.28);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
 }
 
 .glass-card-hover {
@@ -46,7 +62,7 @@ body {
 }
 
 .glass-card-hover:hover {
-  background: rgba(var(--c-panel-rgb), 0.6);
+  background: rgba(var(--c-panel-rgb), 0.38);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
@@ -75,4 +91,18 @@ body {
 
 .font-sans { font-family: 'Noto Sans TC', sans-serif !important; }
 .font-serif { font-family: 'Noto Serif TC', serif !important; }
-@import "./styles/theme.css";
+
+/* ===== 跑馬燈 ===== */
+@keyframes marqueeScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track { overflow: hidden; }
+.marquee-inner {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: marqueeScroll 32s linear infinite;
+  will-change: transform;
+}
+.marquee-inner:hover { animation-play-state: paused; }

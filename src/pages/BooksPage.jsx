@@ -15,7 +15,7 @@ export default function BooksPage() {
   return (
     <div className="space-y-16 animate-fade-in relative z-10">
       <PageHeader title="資源分享" />
-      <div className="space-y-12 max-w-5xl mx-auto">
+      <div className="space-y-12 w-full">
         {resourceCategories.map((cat, idx) => (
           <div key={idx} className="space-y-6">
             <h3 className="text-2xl font-bold font-sans flex items-center gap-3 pb-4 theme-heading theme-divider" style={{ borderBottomWidth: "1px", borderBottomStyle: "solid" }}>
@@ -24,7 +24,7 @@ export default function BooksPage() {
               </div>
               {idx + 1}. {cat.title}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {cat.links.map((link, li) => {
                 const domain = getDomain(link.url);
                 return (
