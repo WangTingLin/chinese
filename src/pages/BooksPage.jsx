@@ -5,7 +5,6 @@ import React from 'react';
 import { resourceCategories } from '../data/resources';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
-import SEOHead from '../components/SEOHead';
 
 // 解析網址取得網域的輔助函式
 const getDomain = (url) => {
@@ -14,9 +13,7 @@ const getDomain = (url) => {
 
 export default function BooksPage() {
   return (
-    <>
-      <SEOHead title="資源分享" description="中文研究室學術資源、書單與工具分享。" url="/books" />
-    <div className="space-y-16 animate-fade-in relative z-10">
+    <div className="space-y-16 page-enter-right stagger relative z-10">
       <PageHeader title="資源分享" />
       <div className="space-y-12 w-full">
         {resourceCategories.map((cat, idx) => (
@@ -59,6 +56,5 @@ export default function BooksPage() {
         ))}
       </div>
     </div>
-    </>
   );
 }

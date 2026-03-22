@@ -3,13 +3,10 @@ import React from 'react';
 
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
-import SEOHead from '../components/SEOHead';
 
 export default function SubmissionPage() {
   return (
-    <>
-      <SEOHead title="投稿須知" description="中文研究室投稿指引與格式要求。" url="/submission" />
-    <div className="w-full space-y-12 animate-fade-in relative z-10">
+    <div className="w-full space-y-12 page-enter-up stagger relative z-10">
       <PageHeader title="投稿須知" />
       <div className="p-6 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text max-w-4xl mx-auto">
         <section>
@@ -69,6 +66,5 @@ export default function SubmissionPage() {
         </section>
       </div>
     </div>
-    </>
   );
 }

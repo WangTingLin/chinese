@@ -158,7 +158,7 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
   const catColors = getCategoryColors(isDarkMode);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10 space-y-10">
+    <div className="w-full page-enter-right relative z-10 space-y-10">
       <PageHeader title="文章專欄" />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {[1, 2, 3, 4].map(i => <ArticleSkeleton key={i} />)}
@@ -178,7 +178,7 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
         <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={isDarkMode} />
       )}
       
-      <div className="w-full space-y-10 animate-fade-in relative z-10">
+      <div className="w-full space-y-10 page-enter-right stagger relative z-10">
         <PageHeader title="文章專欄" />
 
         <div className="flex flex-wrap gap-2 justify-center">

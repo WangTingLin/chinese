@@ -1182,7 +1182,7 @@ const pageProps = {
         )}
       </nav>
 
-      <main className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
+      <main key={currentPage} className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
         {page}
       </main>
 

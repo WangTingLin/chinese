@@ -287,14 +287,14 @@ export default function ActivitiesPage({ isDarkMode }) {
   }, [filterCat, searchText, events]);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
+    <div className="w-full page-enter-zoom relative z-10">
       <PageHeader title="近期活動" />
       <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
     </div>
   );
 
   return (
-    <div className="w-full space-y-12 animate-fade-in relative z-10">
+    <div className="w-full space-y-12 page-enter-zoom stagger relative z-10">
       <PageHeader title="近期活動" />
 
       <div className="space-y-5">

@@ -34,6 +34,29 @@ html.is-native * {
   100% { opacity: 1; transform: translateY(0); }
 }
 
+/* 頁面切換入場動畫 */
+@keyframes pageSlideUp    { 0%{opacity:0;transform:translateY(28px)}  100%{opacity:1;transform:none} }
+@keyframes pageSlideRight { 0%{opacity:0;transform:translateX(-24px)} 100%{opacity:1;transform:none} }
+@keyframes pageSlideLeft  { 0%{opacity:0;transform:translateX(24px)}  100%{opacity:1;transform:none} }
+@keyframes pageZoomIn     { 0%{opacity:0;transform:scale(0.97)}       100%{opacity:1;transform:none} }
+@keyframes pageBlurIn     { 0%{opacity:0;filter:blur(6px)}            100%{opacity:1;filter:none}    }
+
+.page-enter-up    { animation: pageSlideUp    0.42s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-right { animation: pageSlideRight 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-left  { animation: pageSlideLeft  0.42s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-zoom  { animation: pageZoomIn     0.38s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-blur  { animation: pageBlurIn     0.45s ease-out both; }
+
+/* 子區塊交錯入場 */
+.stagger > *          { animation: pageSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger > *:nth-child(6) { animation-delay: 0.34s; }
+.stagger > *:nth-child(n+7) { animation-delay: 0.40s; }
+
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out both;
 }
