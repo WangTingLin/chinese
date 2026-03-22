@@ -500,6 +500,9 @@ export default function App() {
   const [events, setEvents] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialArticleId, setInitialArticleId] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [splashVisible, setSplashVisible] = useState(isAppMode);
   const [splashExiting, setSplashExiting] = useState(false);
   const PREF_KEY = "csl_native_prefs_v1";
@@ -558,6 +561,16 @@ export default function App() {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  /* 讀取 URL 參數：?article=id */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const aid = params.get('article');
+    if (aid) {
+      setCurrentPage('articles');
+      setInitialArticleId(aid);
+    }
+  }, []);
+
   const saveLaunchPrefs = (selected) => {
     localStorage.setItem(PREF_KEY, JSON.stringify(selected));
     window.dispatchEvent(new Event("launchPrefsReady"));
@@ -610,7 +623,12 @@ export default function App() {
   const appOnlyIds = new Set(["home"]);
   const navItems = isAppMode ? allNavItems.filter(n => appOnlyIds.has(n.id)) : allNavItems;
 
-  const go = (id) => { setCurrentPage(id); setMobileOpen(false); };
+  const go = (id) => {
+    setCurrentPage(id);
+    setMobileOpen(false);
+    setSearchOpen(false);
+    if (id !== 'articles') history.replaceState(null, '', window.location.pathname);
+  };
 
   /* Tab 計數（native 導覽列 badge 用）*/
   const _getEndDate = (d) => {
@@ -643,6 +661,7 @@ const pageProps = {
   events,
   activities,
   loading,
+  initialArticleId,
 };
 
 
@@ -683,7 +702,7 @@ const pageProps = {
       "--c-badge-bg": "rgba(176,31,69,0.08)",
       "--c-badge-text": "#b01f45",
       "--c-badge-border": "rgba(176,31,69,0.2)",
-      background: "#fef8f4",
+      backgroundImage: "#fef8f4",
       color: "#1d1b19",
       fontFamily: "'Inter', 'Noto Sans TC', sans-serif",
       minHeight: "100vh",
@@ -1017,8 +1036,20 @@ const pageProps = {
             </div>
 
             {/* Right: search icon */}
-            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#1d1b19", display: "flex", alignItems: "center", padding: "0.5rem" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "1.4rem" }}>search</span>
+            {/* 搜尋 */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-2 rounded-xl backdrop-blur-sm border spring-transition hover:scale-105 active:scale-95"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                background: "rgba(var(--c-panel-rgb), 0.4)",
+                border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                color: "var(--c-primary-dark)",
+              }}
+              title="搜尋"
+            >
+              <Icon name="Search" size={20} />
             </button>
           </div>
 
@@ -1052,7 +1083,7 @@ const pageProps = {
         </div>
       )}
 
-      <main className="main-content">
+      <main className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
         <div key={currentPage} className="page-enter">
           {page}
         </div>
@@ -1096,7 +1127,83 @@ const pageProps = {
       )}
 
       {!isAppMode && <BackToTopButton isDarkMode={isDarkMode} />}
+
+      {/* 搜尋遮罩 */}
+      {searchOpen && (
+        <div
+          className="animate-fade-in"
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: isDarkMode ? "rgba(2,6,23,0.92)" : "rgba(245,248,251,0.95)",
+            backdropFilter: "blur(20px)",
+            display: "flex", flexDirection: "column",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setSearchOpen(false); }}
+        >
+          <div style={{ maxWidth: "min(40rem, 100%)", margin: "0 auto", width: "100%", padding: "clamp(1.5rem, 4vw, 3rem) 1.25rem 1.5rem" }}>
+            {/* 搜尋框 */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "0.75rem", background: isDarkMode ? "rgba(30,41,59,0.8)" : "rgba(255,255,255,0.9)", borderRadius: "1rem", border: `1px solid rgba(var(--c-border-rgb), 0.4)`, padding: "0.75rem 1rem" }}>
+                <Icon name="Search" size={18} style={{ flexShrink: 0, opacity: 0.5, color: "var(--c-text)" }} />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="搜尋文章、活動⋯"
+                  style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: "1rem", fontFamily: "'Noto Sans TC', sans-serif", color: "var(--c-text)" }}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-text-secondary)", display: "flex", padding: 0 }}>
+                    <Icon name="X" size={16} />
+                  </button>
+                )}
+              </div>
+              <button onClick={() => setSearchOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--c-text-secondary)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC', sans-serif", padding: "0.5rem" }}>取消</button>
+            </div>
+
+            {/* 搜尋結果 */}
+            {searchQuery.trim().length > 0 && (() => {
+              const q = searchQuery.trim().toLowerCase();
+              const matchedArticles = articles.filter(a => (a.title || '').toLowerCase().includes(q) || (a.summary || '').toLowerCase().includes(q) || (a.author || '').toLowerCase().includes(q));
+              const matchedActivities = activities.filter(a => (a.title || '').toLowerCase().includes(q) || (a.location || '').toLowerCase().includes(q));
+              const total = matchedArticles.length + matchedActivities.length;
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "60vh", overflowY: "auto" }}>
+                  {total === 0 && (
+                    <p style={{ textAlign: "center", color: "var(--c-text-secondary)", fontFamily: "'Noto Sans TC', sans-serif", padding: "2rem 0", opacity: 0.6 }}>找不到符合「{searchQuery}」的結果</p>
+                  )}
+                  {matchedArticles.length > 0 && (
+                    <>
+                      <p style={{ fontSize: "0.72rem", letterSpacing: "0.12em", color: "var(--c-text-secondary)", fontFamily: "'Noto Sans TC', sans-serif", opacity: 0.6, padding: "0.25rem 0.5rem", textTransform: "uppercase" }}>文章 ({matchedArticles.length})</p>
+                      {matchedArticles.map(a => (
+                        <button key={a._id} onClick={() => { go('articles'); setInitialArticleId(a._id); }} style={{ display: "flex", flexDirection: "column", gap: "0.2rem", textAlign: "left", padding: "0.75rem 1rem", borderRadius: "0.75rem", background: isDarkMode ? "rgba(30,41,59,0.5)" : "rgba(255,255,255,0.7)", border: `1px solid rgba(var(--c-border-rgb), 0.3)`, cursor: "pointer", transition: "all 200ms" }} className="hover:scale-[1.01]">
+                          <span style={{ fontWeight: 600, color: "var(--c-text)", fontFamily: "'Noto Sans TC', sans-serif", fontSize: "0.95rem" }}>{a.title}</span>
+                          <span style={{ fontSize: "0.8rem", color: "var(--c-text-secondary)", fontFamily: "'Noto Sans TC', sans-serif", opacity: 0.7 }}>{a.author} · {a.category}</span>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {matchedActivities.length > 0 && (
+                    <>
+                      <p style={{ fontSize: "0.72rem", letterSpacing: "0.12em", color: "var(--c-text-secondary)", fontFamily: "'Noto Sans TC', sans-serif", opacity: 0.6, padding: "0.25rem 0.5rem", marginTop: matchedArticles.length > 0 ? "0.5rem" : 0, textTransform: "uppercase" }}>活動 ({matchedActivities.length})</p>
+                      {matchedActivities.map(a => (
+                        <button key={a._id} onClick={() => go('activities')} style={{ display: "flex", flexDirection: "column", gap: "0.2rem", textAlign: "left", padding: "0.75rem 1rem", borderRadius: "0.75rem", background: isDarkMode ? "rgba(30,41,59,0.5)" : "rgba(255,255,255,0.7)", border: `1px solid rgba(var(--c-border-rgb), 0.3)`, cursor: "pointer", transition: "all 200ms" }} className="hover:scale-[1.01]">
+                          <span style={{ fontWeight: 600, color: "var(--c-text)", fontFamily: "'Noto Sans TC', sans-serif", fontSize: "0.95rem" }}>{a.title}</span>
+                          <span style={{ fontSize: "0.8rem", color: "var(--c-text-secondary)", fontFamily: "'Noto Sans TC', sans-serif", opacity: 0.7 }}>{a.date} · {a.location}</span>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+            {searchQuery.trim().length === 0 && (
+              <p style={{ textAlign: "center", color: "var(--c-text-secondary)", fontFamily: "'Noto Sans TC', sans-serif", opacity: 0.4, padding: "2rem 0", fontSize: "0.9rem" }}>輸入關鍵字搜尋</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
-} 
+}

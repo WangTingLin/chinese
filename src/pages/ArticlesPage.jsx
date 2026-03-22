@@ -1,12 +1,12 @@
 // 檔案路徑：src/pages/ArticlesPage.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { PortableText } from '@portabletext/react';
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 
 import { client } from '../sanityClient';
 import SEOHead from '../components/SEOHead';
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader, ReadingProgress } from '../App';
@@ -72,8 +72,32 @@ const makePortableComponents = (articleId) => ({
   },
 });
 
-export default function ArticlesPage({ isDarkMode }) {
-  const [expandedId, setExpandedId] = useState(null);
+/* 估算閱讀時間（中文約 300 字/分鐘） */
+const estimateReadingTime = (blocks) => {
+  if (!blocks || blocks.length === 0) return null;
+  const text = blocks
+    .filter(b => b._type === 'block')
+    .flatMap(b => b.children || [])
+    .map(c => c.text || '')
+    .join('');
+  return Math.max(1, Math.ceil(text.length / 300));
+};
+
+/* Skeleton 單張卡片 */
+const ArticleSkeleton = () => (
+  <div className="rounded-3xl glass-panel overflow-hidden border border-white/60 p-5 md:p-8 space-y-4">
+    <div className="flex justify-between items-center">
+      <div className="h-6 w-24 rounded-full shimmer" />
+      <div className="h-5 w-28 rounded-full shimmer" />
+    </div>
+    <div className="h-7 w-3/4 rounded-xl shimmer" />
+    <div className="h-5 w-1/2 rounded-xl shimmer" />
+    <div className="h-20 w-full rounded-xl shimmer" />
+  </div>
+);
+
+export default function ArticlesPage({ isDarkMode, initialArticleId }) {
+  const [expandedId, setExpandedId] = useState(initialArticleId || null);
   const [filterCat, setFilterCat] = useState("全部");
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,12 +105,55 @@ export default function ArticlesPage({ isDarkMode }) {
 
   useEffect(() => {
     client.fetch(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {
-      _id, title, author, affiliation, contact, date, category, tags, summary, blocks
+      _id, title, author, affiliation, contact, date, category, tags, summary, blocks,
+      "coverImageUrl": coverImage.asset->url
     }`).then(data => {
       setArticles(data);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  /* URL 同步：文章展開時更新 ?article=id，關閉時清除 */
+  useEffect(() => {
+    if (expandedId) {
+      history.replaceState(null, '', `?article=${expandedId}`);
+    } else {
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }, [expandedId]);
+
+  /* JSON-LD + 動態 OG：文章展開時注入，關閉時移除 */
+  useEffect(() => {
+    const openArticle = articles.find(a => a._id === expandedId);
+    const scriptId = 'article-jsonld';
+    let el = document.getElementById(scriptId);
+    if (openArticle) {
+      if (!el) { el = document.createElement('script'); el.id = scriptId; el.type = 'application/ld+json'; document.head.appendChild(el); }
+      el.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": openArticle.title,
+        "author": { "@type": "Person", "name": openArticle.author },
+        "datePublished": openArticle.date,
+        "description": openArticle.summary || '',
+        "publisher": { "@type": "Organization", "name": "中文研究室" },
+      });
+      /* 動態 OG */
+      const setMeta = (prop, val) => {
+        let m = document.querySelector(`meta[property="${prop}"]`);
+        if (!m) { m = document.createElement('meta'); m.setAttribute('property', prop); document.head.appendChild(m); }
+        m.setAttribute('content', val);
+      };
+      setMeta('og:title', openArticle.title);
+      setMeta('og:description', openArticle.summary || '中文研究室文章');
+      if (openArticle.coverImageUrl) setMeta('og:image', openArticle.coverImageUrl);
+    } else {
+      el?.remove();
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', '中文研究室');
+      document.querySelector('meta[property="og:description"]')?.setAttribute('content', '中文研究室：學術活動、文章專欄、研討進度，以文會友，以友輔仁。');
+    }
+    return () => { document.getElementById(scriptId)?.remove(); };
+  }, [expandedId, articles]);
 
   const categories = FIXED_CATEGORIES;
   const catColors = getCategoryColors(isDarkMode);
@@ -94,8 +161,9 @@ export default function ArticlesPage({ isDarkMode }) {
   if (loading) return (
     <div style={{ padding: "4rem 2rem" }}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <div style={{ height: "4rem", background: "rgba(29,27,25,0.05)", borderRadius: "0.5rem", marginBottom: "2rem" }} className="shimmer" />
-        {[1,2,3].map(i => <div key={i} style={{ height: "5rem", background: "rgba(29,27,25,0.04)", borderRadius: "0.5rem", marginBottom: "1rem" }} className="shimmer" />)}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map(i => <ArticleSkeleton key={i} />)}
+        </div>
       </div>
     </div>
   );
@@ -153,7 +221,10 @@ export default function ArticlesPage({ isDarkMode }) {
                       onClick={() => setExpandedId(open ? null : a._id)}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
-                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase" }}>{CATEGORY_DISPLAY[a.category] ?? a.category} • {a.date}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", letterSpacing: "0.2em", color: "#a8a29e", textTransform: "uppercase" }}>{CATEGORY_DISPLAY[a.category] ?? a.category} • {a.date}</span>
+                          {(() => { const mins = estimateReadingTime(a.blocks); return mins ? <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.65rem", color: "#a8a29e", display: "flex", alignItems: "center", gap: "0.25rem" }}><Icon name="Clock" size={12} /> 約 {mins} 分鐘</span> : null; })()}
+                        </div>
                         <span className="material-symbols-outlined" style={{ fontSize: "1rem", color: "#a8a29e", transition: "transform 200ms ease", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>expand_more</span>
                       </div>
 
