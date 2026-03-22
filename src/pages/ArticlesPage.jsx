@@ -1,11 +1,11 @@
 // 檔案路徑：src/pages/ArticlesPage.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { PortableText } from '@portabletext/react';
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 
 import { client } from '../sanityClient';
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader, ReadingProgress } from '../App';
@@ -71,8 +71,32 @@ const makePortableComponents = (articleId) => ({
   },
 });
 
-export default function ArticlesPage({ isDarkMode }) {
-  const [expandedId, setExpandedId] = useState(null);
+/* 估算閱讀時間（中文約 300 字/分鐘） */
+const estimateReadingTime = (blocks) => {
+  if (!blocks || blocks.length === 0) return null;
+  const text = blocks
+    .filter(b => b._type === 'block')
+    .flatMap(b => b.children || [])
+    .map(c => c.text || '')
+    .join('');
+  return Math.max(1, Math.ceil(text.length / 300));
+};
+
+/* Skeleton 單張卡片 */
+const ArticleSkeleton = () => (
+  <div className="rounded-3xl glass-panel overflow-hidden border border-white/60 p-5 md:p-8 space-y-4">
+    <div className="flex justify-between items-center">
+      <div className="h-6 w-24 rounded-full shimmer" />
+      <div className="h-5 w-28 rounded-full shimmer" />
+    </div>
+    <div className="h-7 w-3/4 rounded-xl shimmer" />
+    <div className="h-5 w-1/2 rounded-xl shimmer" />
+    <div className="h-20 w-full rounded-xl shimmer" />
+  </div>
+);
+
+export default function ArticlesPage({ isDarkMode, initialArticleId }) {
+  const [expandedId, setExpandedId] = useState(initialArticleId || null);
   const [filterCat, setFilterCat] = useState("全部");
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,20 +104,65 @@ export default function ArticlesPage({ isDarkMode }) {
 
   useEffect(() => {
     client.fetch(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {
-      _id, title, author, affiliation, contact, date, category, tags, summary, blocks
+      _id, title, author, affiliation, contact, date, category, tags, summary, blocks,
+      "coverImageUrl": coverImage.asset->url
     }`).then(data => {
       setArticles(data);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
+  /* URL 同步：文章展開時更新 ?article=id，關閉時清除 */
+  useEffect(() => {
+    if (expandedId) {
+      history.replaceState(null, '', `?article=${expandedId}`);
+    } else {
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }, [expandedId]);
+
+  /* JSON-LD + 動態 OG：文章展開時注入，關閉時移除 */
+  useEffect(() => {
+    const openArticle = articles.find(a => a._id === expandedId);
+    const scriptId = 'article-jsonld';
+    let el = document.getElementById(scriptId);
+    if (openArticle) {
+      if (!el) { el = document.createElement('script'); el.id = scriptId; el.type = 'application/ld+json'; document.head.appendChild(el); }
+      el.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": openArticle.title,
+        "author": { "@type": "Person", "name": openArticle.author },
+        "datePublished": openArticle.date,
+        "description": openArticle.summary || '',
+        "publisher": { "@type": "Organization", "name": "中文研究室" },
+      });
+      /* 動態 OG */
+      const setMeta = (prop, val) => {
+        let m = document.querySelector(`meta[property="${prop}"]`);
+        if (!m) { m = document.createElement('meta'); m.setAttribute('property', prop); document.head.appendChild(m); }
+        m.setAttribute('content', val);
+      };
+      setMeta('og:title', openArticle.title);
+      setMeta('og:description', openArticle.summary || '中文研究室文章');
+      if (openArticle.coverImageUrl) setMeta('og:image', openArticle.coverImageUrl);
+    } else {
+      el?.remove();
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', '中文研究室');
+      document.querySelector('meta[property="og:description"]')?.setAttribute('content', '中文研究室：學術活動、文章專欄、研討進度，以文會友，以友輔仁。');
+    }
+    return () => { document.getElementById(scriptId)?.remove(); };
+  }, [expandedId, articles]);
+
   const categories = FIXED_CATEGORIES;
   const catColors = getCategoryColors(isDarkMode);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
+    <div className="w-full animate-fade-in relative z-10 space-y-10">
       <PageHeader title="文章專欄" />
-      <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {[1, 2, 3, 4].map(i => <ArticleSkeleton key={i} />)}
+      </div>
     </div>
   );
 
@@ -167,9 +236,12 @@ export default function ArticlesPage({ isDarkMode }) {
                         style={{ background: cColor.bg, color: cColor.color, borderColor: cColor.border }}>
                         <Icon name="Folder" size={14} className="opacity-70" /> {CATEGORY_DISPLAY[a.category] ?? a.category}
                       </span>
-                      <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
-                        <Icon name="Calendar" size={14} /> {a.date}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        {(() => { const mins = estimateReadingTime(a.blocks); return mins ? <span className="text-xs font-mono flex items-center gap-1 theme-text-secondary opacity-60"><Icon name="Clock" size={13} /> 約 {mins} 分鐘</span> : null; })()}
+                        <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
+                          <Icon name="Calendar" size={14} /> {a.date}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 className="text-xl md:text-3xl font-bold font-sans theme-heading mb-4 leading-tight transition-colors">
