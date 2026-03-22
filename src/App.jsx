@@ -500,6 +500,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [splashVisible, setSplashVisible] = useState(isAppMode);
   const [splashExiting, setSplashExiting] = useState(false);
+  const [webSplashVisible, setWebSplashVisible] = useState(!isAppMode);
+  const [webSplashExiting, setWebSplashExiting] = useState(false);
   const PREF_KEY = "csl_native_prefs_v1";
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
   const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
@@ -525,6 +527,14 @@ export default function App() {
       /* 第一次開啟才顯示偏好設定 */
       if (!localStorage.getItem(PREF_KEY)) setLaunchOnboarding(true);
     }, 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  /* 網頁版 loading 動畫：1.8s 顯示，500ms 淡出 */
+  useEffect(() => {
+    if (isAppMode) return;
+    const t1 = setTimeout(() => setWebSplashExiting(true), 1800);
+    const t2 = setTimeout(() => setWebSplashVisible(false), 2300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
@@ -715,6 +725,8 @@ const pageProps = {
         @keyframes splashLogoIn { 0%{opacity:0;transform:scale(0.55)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
         @keyframes splashTextIn { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
         @keyframes splashTagIn  { 0%{opacity:0;letter-spacing:0.3em} 100%{opacity:1;letter-spacing:0.14em} }
+        @keyframes webSplashBar { 0%{width:0%} 80%{width:85%} 100%{width:100%} }
+        @keyframes webSplashDot { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
         @keyframes bounceY { 0%,100%{transform:translateY(0)} 45%{transform:translateY(6px)} 65%{transform:translateY(2px)} }
         .bounce-y { animation:bounceY 1.9s ease-in-out infinite; }
         @keyframes listItemIn { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
@@ -824,6 +836,49 @@ const pageProps = {
       `}} />
 
       {/* ── Native 啟動動畫（Splash Screen）── */}
+      {/* ── 網頁版 Loading 動畫 ── */}
+      {!isAppMode && webSplashVisible && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "linear-gradient(135deg, #0f3d3d 0%, #1a4f4f 50%, #0f3a3a 100%)",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          opacity: webSplashExiting ? 0 : 1,
+          transition: "opacity 500ms ease",
+          pointerEvents: webSplashExiting ? "none" : "auto",
+        }}>
+          {/* Logo */}
+          <div style={{ animation: "splashLogoIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s both" }}>
+            <LogoImage className="w-20 h-20 rounded-[18px] shadow-2xl" />
+          </div>
+          {/* 名稱 */}
+          <p style={{
+            color: "rgba(255,255,255,0.95)", fontFamily: "'Noto Serif TC',serif",
+            fontSize: "1.35rem", fontWeight: 700, letterSpacing: "0.2em",
+            marginTop: "1.25rem", marginBottom: "0.4rem",
+            animation: "splashTextIn 0.5s ease 0.7s both",
+          }}>中文研究室</p>
+          {/* 標語 */}
+          <p style={{
+            color: "rgba(255,255,255,0.4)", fontFamily: "'Noto Serif TC',serif",
+            fontSize: "0.78rem", letterSpacing: "0.14em",
+            animation: "splashTagIn 0.6s ease 0.95s both",
+          }}>志於道・據於德・依於仁・游於藝</p>
+          {/* Loading bar */}
+          <div style={{
+            position: "absolute", bottom: "3.5rem", width: "120px",
+            animation: "splashTextIn 0.4s ease 1.1s both",
+          }}>
+            <div style={{ height: "2px", background: "rgba(255,255,255,0.12)", borderRadius: "9999px", overflow: "hidden" }}>
+              <div style={{
+                height: "100%", background: "rgba(255,255,255,0.7)", borderRadius: "9999px",
+                animation: "webSplashBar 1.6s cubic-bezier(0.4,0,0.2,1) 1.1s both",
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {isAppMode && splashVisible && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9999,
