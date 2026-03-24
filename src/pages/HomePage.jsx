@@ -17,6 +17,8 @@ const sanityImg = (url, { w, h, q = 75, fm = "webp", fit } = {}) => {
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { Icon } from "../App";
 import { getCategoryColors } from "../data/articlesData";
 import { NavCardPattern, HeroMedallion } from "../components/ClassicalDecoration";
@@ -325,6 +327,9 @@ export default function HomePage({
   const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
   const [listPage, setListPage]                     = React.useState(1);
   const [calMenuEv, setCalMenuEv]                   = React.useState(null); // 行事曆選單目標活動
+  const [showCalSheet, setShowCalSheet]             = React.useState(false); // 月曆視圖
+  const [calSheetMonth, setCalSheetMonth]           = React.useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
+  const [scheduledIds, setScheduledIds]             = React.useState(() => { try { return JSON.parse(localStorage.getItem("csl_notif_ids_v1") || "{}"); } catch { return {}; } });
   const totalInCategoryRef = React.useRef(0);
   const nextCatActivityRef = React.useRef(() => {});
   const prevCatActivityRef = React.useRef(() => {});
@@ -630,8 +635,78 @@ export default function HomePage({
     ];
     const panelBg = "#1c1c1e";
 
+    /* ── Haptic helpers ── */
+    const hapticLight  = () => Haptics.impact({ style: ImpactStyle.Light  }).catch(() => {});
+    const hapticMedium = () => Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
 
+    /* ── 開地圖 ── */
+    const openMaps = (location) => {
+      if (!location) return;
+      hapticLight();
+      const q = encodeURIComponent(location);
+      const isIOS = Capacitor.getPlatform() === "ios";
+      window.open(isIOS ? `maps://maps.apple.com/?q=${q}` : `geo:0,0?q=${q}`, "_blank");
+    };
 
+    /* ── 本地通知 ── */
+    const NOTIF_KEY = "csl_notif_ids_v1";
+    const saveScheduledIds = (ids) => {
+      localStorage.setItem(NOTIF_KEY, JSON.stringify(ids));
+      setScheduledIds(ids);
+    };
+    const isReminderSet = (evId) => !!scheduledIds[evId];
+
+    const toggleReminder = async (ev) => {
+      hapticMedium();
+      try {
+        const perm = await LocalNotifications.requestPermissions();
+        if (perm.display !== "granted") return;
+
+        if (isReminderSet(ev._id)) {
+          // 取消提醒
+          const id = scheduledIds[ev._id];
+          await LocalNotifications.cancel({ notifications: [{ id }] }).catch(() => {});
+          const next = { ...scheduledIds };
+          delete next[ev._id];
+          saveScheduledIds(next);
+          return;
+        }
+
+        // 解析活動時間
+        const dateStr = ev.date?.trim() || "";
+        const firstPart = dateStr.split(/[~,～，]/)[0].trim();
+        const [datePart, timePart] = firstPart.split(" ");
+        if (!datePart) return;
+        const startTime = timePart ? timePart.split("-")[0] : "09:00";
+        const eventDate = new Date(`${datePart}T${startTime}:00`);
+        if (isNaN(eventDate)) return;
+
+        // 提前 1 天 09:00 提醒
+        const notifAt = new Date(eventDate);
+        notifAt.setDate(notifAt.getDate() - 1);
+        notifAt.setHours(9, 0, 0, 0);
+        if (notifAt <= new Date()) {
+          // 若提前時間已過，改為活動當天 09:00
+          notifAt.setDate(notifAt.getDate() + 1);
+          if (notifAt <= new Date()) return; // 也過了就不排
+        }
+
+        const id = Math.floor(Math.random() * 2_000_000_000);
+        await LocalNotifications.schedule({
+          notifications: [{
+            id,
+            title: "📅 明日活動提醒",
+            body: ev.title + (ev.location ? `\n📍 ${ev.location}` : ""),
+            schedule: { at: notifAt },
+            sound: "default",
+            smallIcon: "ic_notification",
+          }],
+        });
+        saveScheduledIds({ ...scheduledIds, [ev._id]: id });
+      } catch (e) {
+        console.error("通知排程失敗:", e);
+      }
+    };
 
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
@@ -1086,23 +1161,38 @@ export default function HomePage({
                 </h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", color: "rgba(255,255,255,0.48)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1rem" }}>
                   {currentActivity.date     && <span>📅 {currentActivity.date}</span>}
-                  {currentActivity.location && <span>📍 {currentActivity.location}</span>}
+                  {currentActivity.location && (
+                    <button
+                      onClick={() => openMaps(currentActivity.location)}
+                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit", textAlign: "left", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.2)", textUnderlineOffset: "2px" }}
+                    >
+                      📍 {currentActivity.location}
+                    </button>
+                  )}
                   {currentActivity.speaker  && <span>🎤 {currentActivity.speaker}</span>}
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.65rem" }}>
                   {currentActivity?.link && (
                     <a href={currentActivity.link} target="_blank" rel="noopener noreferrer"
                       className="native-btn"
+                      onClick={() => hapticLight()}
                       style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", background: "rgba(255,255,255,0.13)", color: "#fff", textDecoration: "none" }}
                     >
                       <Icon name="ExternalLink" size={17} /> 活動詳情
                     </a>
                   )}
-                  <button onClick={() => addToCalendar(currentActivity)}
+                  <button onClick={() => { hapticLight(); addToCalendar(currentActivity); }}
                     className="native-btn"
                     style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", background: "rgba(255,255,255,0.92)", color: "#1c1c1e", border: "none", cursor: "pointer" }}
                   >
                     <Icon name="Calendar" size={17} /> 加入行事曆
+                  </button>
+                  <button onClick={() => toggleReminder(currentActivity)}
+                    className="native-btn"
+                    title={isReminderSet(currentActivity._id) ? "取消提醒" : "設定提前一天提醒"}
+                    style={{ flexShrink: 0, padding: "0.85rem 1rem", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", background: isReminderSet(currentActivity._id) ? "rgba(251,191,36,0.22)" : "rgba(255,255,255,0.1)", color: isReminderSet(currentActivity._id) ? "#fbbf24" : "rgba(255,255,255,0.55)", border: `1px solid ${isReminderSet(currentActivity._id) ? "rgba(251,191,36,0.5)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer" }}
+                  >
+                    <Icon name={isReminderSet(currentActivity._id) ? "BellOff" : "Bell"} size={17} />
                   </button>
                 </div>
               </div>
@@ -1116,7 +1206,7 @@ export default function HomePage({
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.55rem" }}>
               <button
                 className="native-btn"
-                onClick={() => { setPrefsSheetSelected(userPrefs || []); setShowPrefsSheet(true); }}
+                onClick={() => { hapticLight(); setPrefsSheetSelected(userPrefs || []); setShowPrefsSheet(true); }}
                 style={{
                   flex: 1, padding: "0.55rem 0.7rem", borderRadius: "0.85rem",
                   border: "1px solid rgba(255,255,255,0.12)",
@@ -1136,7 +1226,7 @@ export default function HomePage({
               </button>
               <button
                 className="native-btn"
-                onClick={() => setSortByDate(s => !s)}
+                onClick={() => { hapticLight(); setSortByDate(s => !s); }}
                 style={{
                   flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
                   border: `1px solid ${sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
@@ -1153,7 +1243,7 @@ export default function HomePage({
               {/* 搜尋篩選按鈕（有篩選條件時高亮）*/}
               <button
                 className="native-btn"
-                onClick={() => setShowFilterSheet(true)}
+                onClick={() => { hapticLight(); setShowFilterSheet(true); }}
                 style={{
                   flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
                   border: `1px solid ${hasActiveFilter ? "rgba(251,191,36,0.7)" : "rgba(255,255,255,0.12)"}`,
@@ -1173,6 +1263,23 @@ export default function HomePage({
                     background: "#fbbf24",
                   }} />
                 )}
+              </button>
+              {/* 月曆按鈕 */}
+              <button
+                className="native-btn"
+                onClick={() => { hapticLight(); setCalSheetMonth({ y: new Date().getFullYear(), m: new Date().getMonth() }); setShowCalSheet(true); }}
+                style={{
+                  flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.4)",
+                  fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: "0.3rem",
+                  cursor: "pointer",
+                }}
+              >
+                <Icon name="CalendarDays" size={13} />
+                月曆
               </button>
             </div>
 
@@ -1544,6 +1651,136 @@ export default function HomePage({
             </div>
           </div>
         )}
+
+        {/* ── 月曆 sheet ── */}
+        {showCalSheet && (() => {
+          const { y, m } = calSheetMonth;
+          const monthLabel = `${y} 年 ${m + 1} 月`;
+          const firstDay = new Date(y, m, 1).getDay(); // 0=日
+          const daysInMonth = new Date(y, m + 1, 0).getDate();
+          const today = new Date();
+
+          // 當月有活動的日期 set
+          const activeDays = new Set();
+          const dayEventsMap = {}; // day -> [ev]
+          upcomingActivities.forEach(ev => {
+            const ds = ev.date?.trim() || "";
+            const fp = ds.split(/[~,～，]/)[0].trim();
+            const dp = fp.split(" ")[0];
+            if (!dp) return;
+            try {
+              const d = new Date(dp + "T00:00:00");
+              if (d.getFullYear() === y && d.getMonth() === m) {
+                const day = d.getDate();
+                activeDays.add(day);
+                if (!dayEventsMap[day]) dayEventsMap[day] = [];
+                dayEventsMap[day].push(ev);
+              }
+            } catch {}
+          });
+
+          const [selectedDay, setSelectedDay] = React.useState(null);
+          const weeks = [];
+          let cells = Array(firstDay).fill(null);
+          for (let d = 1; d <= daysInMonth; d++) {
+            cells.push(d);
+            if (cells.length === 7) { weeks.push(cells); cells = []; }
+          }
+          if (cells.length) {
+            while (cells.length < 7) cells.push(null);
+            weeks.push(cells);
+          }
+
+          const prevMonth = () => setCalSheetMonth(({ y, m }) => m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 });
+          const nextMonth = () => setCalSheetMonth(({ y, m }) => m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 });
+
+          const catDot = (category) => {
+            if (category === "學術講座") return "#60a5fa";
+            if (category?.includes("工作坊") || category?.includes("研討")) return "#4ade80";
+            if (category === "徵稿資訊") return "#fbbf24";
+            return "#a78bfa";
+          };
+
+          return (
+            <div onClick={() => setShowCalSheet(false)} style={{ position: "fixed", inset: 0, zIndex: 20001, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end" }}>
+              <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0", paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 1rem)", maxHeight: "88dvh", display: "flex", flexDirection: "column", animation: "slideUp 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
+                {/* handle */}
+                <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 0.25rem" }}>
+                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
+                </div>
+                {/* 月份導航 */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem 1.25rem 0.75rem" }}>
+                  <button onClick={prevMonth} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "1.4rem", cursor: "pointer", padding: "0.25rem 0.5rem" }}>‹</button>
+                  <span style={{ color: "#fff", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 700, fontSize: "1rem" }}>{monthLabel}</span>
+                  <button onClick={nextMonth} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "1.4rem", cursor: "pointer", padding: "0.25rem 0.5rem" }}>›</button>
+                </div>
+                {/* 星期標頭 */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", padding: "0 1rem", marginBottom: "0.35rem" }}>
+                  {["日","一","二","三","四","五","六"].map(d => (
+                    <div key={d} style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", fontFamily: "'Noto Sans TC',sans-serif", padding: "0.2rem 0" }}>{d}</div>
+                  ))}
+                </div>
+                {/* 日期格 */}
+                <div style={{ padding: "0 0.75rem", flex: 1, overflowY: "auto" }}>
+                  {weeks.map((week, wi) => (
+                    <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                      {week.map((day, di) => {
+                        if (!day) return <div key={di} />;
+                        const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === day;
+                        const hasEvs = activeDays.has(day);
+                        const isSelected = selectedDay === day;
+                        const evs = dayEventsMap[day] || [];
+                        return (
+                          <button key={di} onClick={() => { hapticLight(); setSelectedDay(isSelected ? null : day); }}
+                            style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0.45rem 0.2rem", borderRadius: "0.65rem", border: "none", cursor: "pointer", minHeight: "2.6rem",
+                              background: isSelected ? "rgba(255,255,255,0.15)" : isToday ? "rgba(255,255,255,0.08)" : "transparent",
+                              outline: isToday ? "1.5px solid rgba(255,255,255,0.3)" : "none",
+                            }}>
+                            <span style={{ fontSize: "0.9rem", fontFamily: "'Noto Serif TC',serif", color: isSelected ? "#fff" : isToday ? "#fff" : "rgba(255,255,255,0.75)", fontWeight: isToday ? 700 : 400 }}>{day}</span>
+                            {hasEvs && (
+                              <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                                {evs.slice(0, 3).map((ev, i) => (
+                                  <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: catDot(ev.category) }} />
+                                ))}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+                {/* 選擇日期的活動列表 */}
+                {selectedDay && dayEventsMap[selectedDay] && (
+                  <div style={{ padding: "0.75rem 1.25rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>{m + 1} 月 {selectedDay} 日</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "180px", overflowY: "auto" }}>
+                      {dayEventsMap[selectedDay].map(ev => (
+                        <div key={ev._id} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start", background: "rgba(255,255,255,0.05)", borderRadius: "0.75rem", padding: "0.6rem 0.75rem" }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: catDot(ev.category), marginTop: "0.3rem", flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ color: "#fff", fontSize: "0.85rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, lineHeight: 1.3, marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</p>
+                            {ev.date && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>📅 {ev.date}</p>}
+                            {ev.location && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>📍 {ev.location}</p>}
+                          </div>
+                          {ev.link && (
+                            <a href={ev.link} target="_blank" rel="noopener noreferrer" onClick={() => hapticLight()} style={{ flexShrink: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", textDecoration: "none", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+                              <Icon name="ExternalLink" size={13} />
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* 關閉 */}
+                <button onClick={() => setShowCalSheet(false)} style={{ margin: "0.5rem 1.25rem", padding: "0.75rem", borderRadius: "1rem", border: "none", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                  關閉
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   }
