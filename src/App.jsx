@@ -1135,13 +1135,18 @@ const pageProps = {
             {/* ── App 版：3 分類 Tab（置中）── */}
             {isAppMode ? (
               <>
-                {/* 3 分類 Tab */}
-                <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", margin: "0 auto" }}>
+                {/* 分類 Tab（可橫向捲動）*/}
+                <div style={{
+                  display: "flex", gap: "0.4rem", alignItems: "center",
+                  overflowX: "auto", WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none", msOverflowStyle: "none",
+                  padding: "0 0.25rem", margin: "0 auto", maxWidth: "100%",
+                }}>
                   {[
-                    { key: "all",        label: "全部" },
-                    { key: "lecture",    label: "學術講座" },
-                    { key: "workshop",   label: "研討會/工作坊" },
-                    { key: "submission", label: "徵稿資訊" },
+                    { key: "all",        label: "全部",       accent: "rgba(255,255,255,0.9)", activeBg: "rgba(255,255,255,0.95)", activeColor: "#1c1c1e", inactiveBg: "rgba(255,255,255,0.14)", inactiveColor: "rgba(255,255,255,0.85)" },
+                    { key: "lecture",    label: "學術講座",   accent: "#60a5fa", activeBg: "#60a5fa", activeColor: "#0c1a2e", inactiveBg: "rgba(96,165,250,0.18)", inactiveColor: "#93c5fd" },
+                    { key: "workshop",   label: "研討會/工作坊", accent: "#4ade80", activeBg: "#4ade80", activeColor: "#052e16", inactiveBg: "rgba(74,222,128,0.18)", inactiveColor: "#86efac" },
+                    { key: "submission", label: "徵稿資訊",   accent: "#fbbf24", activeBg: "#fbbf24", activeColor: "#1c1108", inactiveBg: "rgba(251,191,36,0.18)", inactiveColor: "#fcd34d" },
                   ].map(tab => {
                     const active = nativeCategory === tab.key;
                     const cnt = catCounts[tab.key];
@@ -1151,18 +1156,18 @@ const pageProps = {
                         onClick={() => setNativeCategory(tab.key)}
                         className="native-btn"
                         style={{
-                          padding: "0.3rem 0.65rem",
+                          flexShrink: 0,
+                          whiteSpace: "nowrap",
+                          padding: "0.32rem 0.75rem",
                           borderRadius: "9999px",
-                          fontSize: "0.72rem",
+                          fontSize: "0.73rem",
                           fontWeight: active ? 700 : 500,
                           fontFamily: "'Noto Sans TC', sans-serif",
                           cursor: "pointer",
-                          border: "none",
+                          border: active ? "none" : `1px solid ${tab.accent}33`,
                           transition: "all 220ms ease",
-                          background: active
-                            ? "rgba(255,255,255,0.95)"
-                            : "rgba(255,255,255,0.12)",
-                          color: active ? "#1c1c1e" : "rgba(255,255,255,0.8)",
+                          background: active ? tab.activeBg : tab.inactiveBg,
+                          color: active ? tab.activeColor : tab.inactiveColor,
                           backdropFilter: "blur(8px)",
                           WebkitBackdropFilter: "blur(8px)",
                           display: "flex", alignItems: "center", gap: "0.3rem",
@@ -1171,8 +1176,8 @@ const pageProps = {
                         {tab.label}
                         {cnt > 0 && (
                           <span style={{
-                            background: active ? "rgba(28,28,30,0.15)" : "rgba(255,255,255,0.22)",
-                            color: active ? "#1c1c1e" : "#fff",
+                            background: active ? "rgba(0,0,0,0.15)" : `${tab.accent}44`,
+                            color: active ? tab.activeColor : tab.inactiveColor,
                             fontSize: "0.6rem", fontWeight: 700,
                             padding: "1px 5px", borderRadius: 9999,
                             lineHeight: 1.4,
