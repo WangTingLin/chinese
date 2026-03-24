@@ -330,6 +330,7 @@ export default function HomePage({
   const [showCalSheet, setShowCalSheet]             = React.useState(false); // 月曆視圖
   const [calSheetMonth, setCalSheetMonth]           = React.useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
   const [scheduledIds, setScheduledIds]             = React.useState(() => { try { return JSON.parse(localStorage.getItem("csl_notif_ids_v1") || "{}"); } catch { return {}; } });
+  const [calSelectedDay, setCalSelectedDay]         = React.useState(null);
   const totalInCategoryRef = React.useRef(0);
   const nextCatActivityRef = React.useRef(() => {});
   const prevCatActivityRef = React.useRef(() => {});
@@ -639,13 +640,30 @@ export default function HomePage({
     const hapticLight  = () => Haptics.impact({ style: ImpactStyle.Light  }).catch(() => {});
     const hapticMedium = () => Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
 
-    /* ── 開地圖 ── */
-    const openMaps = (location) => {
+    /* ── 開地圖（線上活動改開活動連結）── */
+    const ONLINE_KEYWORDS = ["線上","online","zoom","meet","teams","webex","youtube","youtu.be","http","https","視訊","遠距"];
+    const isOnlineLocation = (loc) => {
+      if (!loc) return false;
+      const lower = loc.toLowerCase();
+      return ONLINE_KEYWORDS.some(kw => lower.includes(kw));
+    };
+    const openLocation = (location, link) => {
       if (!location) return;
       hapticLight();
+      if (isOnlineLocation(location)) {
+        // 線上活動：開活動連結
+        const url = link || (location.startsWith("http") ? location : null);
+        if (url) window.open(url, "_blank");
+        return;
+      }
       const q = encodeURIComponent(location);
       const isIOS = Capacitor.getPlatform() === "ios";
-      window.open(isIOS ? `maps://maps.apple.com/?q=${q}` : `geo:0,0?q=${q}`, "_blank");
+      window.open(
+        isIOS
+          ? `https://maps.apple.com/?q=${q}`
+          : `https://www.google.com/maps/search/?api=1&query=${q}`,
+        "_blank"
+      );
     };
 
     /* ── 本地通知 ── */
@@ -1163,10 +1181,10 @@ export default function HomePage({
                   {currentActivity.date     && <span>📅 {currentActivity.date}</span>}
                   {currentActivity.location && (
                     <button
-                      onClick={() => openMaps(currentActivity.location)}
+                      onClick={() => openLocation(currentActivity.location, currentActivity.link)}
                       style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit", textAlign: "left", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.2)", textUnderlineOffset: "2px" }}
                     >
-                      📍 {currentActivity.location}
+                      {isOnlineLocation(currentActivity.location) ? "💻" : "📍"} {currentActivity.location}
                     </button>
                   )}
                   {currentActivity.speaker  && <span>🎤 {currentActivity.speaker}</span>}
@@ -1656,13 +1674,11 @@ export default function HomePage({
         {showCalSheet && (() => {
           const { y, m } = calSheetMonth;
           const monthLabel = `${y} 年 ${m + 1} 月`;
-          const firstDay = new Date(y, m, 1).getDay(); // 0=日
+          const firstDay = new Date(y, m, 1).getDay();
           const daysInMonth = new Date(y, m + 1, 0).getDate();
           const today = new Date();
 
-          // 當月有活動的日期 set
-          const activeDays = new Set();
-          const dayEventsMap = {}; // day -> [ev]
+          const dayEventsMap = {};
           upcomingActivities.forEach(ev => {
             const ds = ev.date?.trim() || "";
             const fp = ds.split(/[~,～，]/)[0].trim();
@@ -1672,27 +1688,22 @@ export default function HomePage({
               const d = new Date(dp + "T00:00:00");
               if (d.getFullYear() === y && d.getMonth() === m) {
                 const day = d.getDate();
-                activeDays.add(day);
                 if (!dayEventsMap[day]) dayEventsMap[day] = [];
                 dayEventsMap[day].push(ev);
               }
             } catch {}
           });
 
-          const [selectedDay, setSelectedDay] = React.useState(null);
           const weeks = [];
           let cells = Array(firstDay).fill(null);
           for (let d = 1; d <= daysInMonth; d++) {
             cells.push(d);
             if (cells.length === 7) { weeks.push(cells); cells = []; }
           }
-          if (cells.length) {
-            while (cells.length < 7) cells.push(null);
-            weeks.push(cells);
-          }
+          if (cells.length) { while (cells.length < 7) cells.push(null); weeks.push(cells); }
 
-          const prevMonth = () => setCalSheetMonth(({ y, m }) => m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 });
-          const nextMonth = () => setCalSheetMonth(({ y, m }) => m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 });
+          const prevMonth = () => { setCalSelectedDay(null); setCalSheetMonth(({ y, m }) => m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }); };
+          const nextMonth = () => { setCalSelectedDay(null); setCalSheetMonth(({ y, m }) => m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }); };
 
           const catDot = (category) => {
             if (category === "學術講座") return "#60a5fa";
@@ -1702,39 +1713,35 @@ export default function HomePage({
           };
 
           return (
-            <div onClick={() => setShowCalSheet(false)} style={{ position: "fixed", inset: 0, zIndex: 20001, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end" }}>
+            <div onClick={() => { setShowCalSheet(false); setCalSelectedDay(null); }} style={{ position: "fixed", inset: 0, zIndex: 20001, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end" }}>
               <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0", paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 1rem)", maxHeight: "88dvh", display: "flex", flexDirection: "column", animation: "slideUp 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
-                {/* handle */}
                 <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 0.25rem" }}>
                   <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
                 </div>
-                {/* 月份導航 */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem 1.25rem 0.75rem" }}>
                   <button onClick={prevMonth} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "1.4rem", cursor: "pointer", padding: "0.25rem 0.5rem" }}>‹</button>
                   <span style={{ color: "#fff", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 700, fontSize: "1rem" }}>{monthLabel}</span>
                   <button onClick={nextMonth} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "1.4rem", cursor: "pointer", padding: "0.25rem 0.5rem" }}>›</button>
                 </div>
-                {/* 星期標頭 */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", padding: "0 1rem", marginBottom: "0.35rem" }}>
                   {["日","一","二","三","四","五","六"].map(d => (
                     <div key={d} style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", fontFamily: "'Noto Sans TC',sans-serif", padding: "0.2rem 0" }}>{d}</div>
                   ))}
                 </div>
-                {/* 日期格 */}
                 <div style={{ padding: "0 0.75rem", flex: 1, overflowY: "auto" }}>
                   {weeks.map((week, wi) => (
                     <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "0.25rem", marginBottom: "0.25rem" }}>
                       {week.map((day, di) => {
                         if (!day) return <div key={di} />;
                         const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === day;
-                        const hasEvs = activeDays.has(day);
-                        const isSelected = selectedDay === day;
                         const evs = dayEventsMap[day] || [];
+                        const hasEvs = evs.length > 0;
+                        const isSelected = calSelectedDay === day;
                         return (
-                          <button key={di} onClick={() => { hapticLight(); setSelectedDay(isSelected ? null : day); }}
-                            style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0.45rem 0.2rem", borderRadius: "0.65rem", border: "none", cursor: "pointer", minHeight: "2.6rem",
-                              background: isSelected ? "rgba(255,255,255,0.15)" : isToday ? "rgba(255,255,255,0.08)" : "transparent",
-                              outline: isToday ? "1.5px solid rgba(255,255,255,0.3)" : "none",
+                          <button key={di} onClick={() => { hapticLight(); setCalSelectedDay(isSelected ? null : day); }}
+                            style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0.45rem 0.2rem", borderRadius: "0.65rem", border: "none", cursor: "pointer", minHeight: "2.6rem",
+                              background: isSelected ? "rgba(255,255,255,0.18)" : isToday ? "rgba(255,255,255,0.08)" : "transparent",
+                              outline: isToday && !isSelected ? "1.5px solid rgba(255,255,255,0.3)" : "none",
                             }}>
                             <span style={{ fontSize: "0.9rem", fontFamily: "'Noto Serif TC',serif", color: isSelected ? "#fff" : isToday ? "#fff" : "rgba(255,255,255,0.75)", fontWeight: isToday ? 700 : 400 }}>{day}</span>
                             {hasEvs && (
@@ -1750,21 +1757,20 @@ export default function HomePage({
                     </div>
                   ))}
                 </div>
-                {/* 選擇日期的活動列表 */}
-                {selectedDay && dayEventsMap[selectedDay] && (
+                {calSelectedDay && dayEventsMap[calSelectedDay] && (
                   <div style={{ padding: "0.75rem 1.25rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>{m + 1} 月 {selectedDay} 日</p>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>{m + 1} 月 {calSelectedDay} 日</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "180px", overflowY: "auto" }}>
-                      {dayEventsMap[selectedDay].map(ev => (
+                      {dayEventsMap[calSelectedDay].map(ev => (
                         <div key={ev._id} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start", background: "rgba(255,255,255,0.05)", borderRadius: "0.75rem", padding: "0.6rem 0.75rem" }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: catDot(ev.category), marginTop: "0.3rem", flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ color: "#fff", fontSize: "0.85rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, lineHeight: 1.3, marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</p>
                             {ev.date && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>📅 {ev.date}</p>}
-                            {ev.location && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>📍 {ev.location}</p>}
+                            {ev.location && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>{isOnlineLocation(ev.location) ? "💻" : "📍"} {ev.location}</p>}
                           </div>
                           {ev.link && (
-                            <a href={ev.link} target="_blank" rel="noopener noreferrer" onClick={() => hapticLight()} style={{ flexShrink: 0, color: "rgba(255,255,255,0.45)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", textDecoration: "none", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+                            <a href={ev.link} target="_blank" rel="noopener noreferrer" onClick={() => hapticLight()} style={{ flexShrink: 0, color: "rgba(255,255,255,0.45)", textDecoration: "none", display: "flex", alignItems: "center" }}>
                               <Icon name="ExternalLink" size={13} />
                             </a>
                           )}
@@ -1773,8 +1779,7 @@ export default function HomePage({
                     </div>
                   </div>
                 )}
-                {/* 關閉 */}
-                <button onClick={() => setShowCalSheet(false)} style={{ margin: "0.5rem 1.25rem", padding: "0.75rem", borderRadius: "1rem", border: "none", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                <button onClick={() => { setShowCalSheet(false); setCalSelectedDay(null); }} style={{ margin: "0.5rem 1.25rem", padding: "0.75rem", borderRadius: "1rem", border: "none", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
                   關閉
                 </button>
               </div>

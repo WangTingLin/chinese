@@ -261,6 +261,34 @@ export const Icon = ({ name, size = 24, className = "" }) => {
         <path d="M12 7v5l4 2" />
       </>
     ),
+    Bell: (
+      <>
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+      </>
+    ),
+    BellOff: (
+      <>
+        <path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" />
+        <path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" />
+        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        <line x1="2" y1="2" x2="22" y2="22" />
+      </>
+    ),
+    CalendarDays: (
+      <>
+        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+        <line x1="16" x2="16" y1="2" y2="6" />
+        <line x1="8" x2="8" y1="2" y2="6" />
+        <line x1="3" x2="21" y1="10" y2="10" />
+        <path d="M8 14h.01" />
+        <path d="M12 14h.01" />
+        <path d="M16 14h.01" />
+        <path d="M8 18h.01" />
+        <path d="M12 18h.01" />
+        <path d="M16 18h.01" />
+      </>
+    ),
   };
 
   return (
