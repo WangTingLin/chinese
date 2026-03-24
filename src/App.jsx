@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { createClient } from '@sanity/client';
-import { PageHeaderBanner } from './components/ClassicalDecoration';
 import ArticlesPage from './pages/ArticlesPage';
 import { getCategoryColors } from './data/articlesData';
 import EventsPage from './pages/EventsPage';
@@ -238,6 +237,30 @@ export const Icon = ({ name, size = 24, className = "" }) => {
         <line x1="21" x2="16.65" y1="21" y2="16.65" />
       </>
     ),
+    Check: <polyline points="20 6 9 17 4 12" />,
+    Bookmark: <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />,
+    BookmarkFill: <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" fill="currentColor" />,
+    Type: (
+      <>
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" y1="20" x2="15" y2="20" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+      </>
+    ),
+    Rss: (
+      <>
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" fill="currentColor" />
+      </>
+    ),
+    History: (
+      <>
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+      </>
+    ),
   };
 
   return (
@@ -295,12 +318,6 @@ export const PageHeader = ({ title }) => (
       className="w-16 h-1 mx-auto rounded-full"
       style={{ background: "var(--c-accent)" }}
     />
-    <div
-      className="mt-3 overflow-hidden rounded-2xl mx-auto opacity-75"
-      style={{ maxWidth: 680, color: "var(--c-accent)" }}
-    >
-      <PageHeaderBanner />
-    </div>
   </div>
 );
 
@@ -500,7 +517,35 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [splashVisible, setSplashVisible] = useState(isAppMode);
   const [splashExiting, setSplashExiting] = useState(false);
+  const [webSplashVisible, setWebSplashVisible] = useState(!isAppMode);
+  const [webSplashExiting, setWebSplashExiting] = useState(false);
   const PREF_KEY = "csl_native_prefs_v1";
+
+  /* 字體大小 */
+  const FONT_SIZE_KEY = "csl_font_size";
+  const fontSizes = [0.95, 1.05, 1.18];
+  const [fontSizeLevel, setFontSizeLevel] = useState(() => {
+    const s = localStorage.getItem(FONT_SIZE_KEY);
+    return s !== null ? Math.min(2, Math.max(0, parseInt(s, 10))) : 1;
+  });
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, String(fontSizeLevel));
+  }, [fontSizeLevel]);
+
+  /* 書籤 */
+  const BOOKMARKS_KEY = "csl_bookmarks";
+  const [bookmarks, setBookmarks] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]')); }
+    catch { return new Set(); }
+  });
+  const toggleBookmark = (id) => {
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  };
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
   const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
   const [launchOnboardingSelected, setLaunchOnboardingSelected] = useState([]);
@@ -525,6 +570,14 @@ export default function App() {
       /* 第一次開啟才顯示偏好設定 */
       if (!localStorage.getItem(PREF_KEY)) setLaunchOnboarding(true);
     }, 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  /* 網頁版 loading 動畫：1.8s 顯示，500ms 淡出 */
+  useEffect(() => {
+    if (isAppMode) return;
+    const t1 = setTimeout(() => setWebSplashExiting(true), 1800);
+    const t2 = setTimeout(() => setWebSplashVisible(false), 2300);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
@@ -629,6 +682,9 @@ const pageProps = {
   activities,
   loading,
   initialArticleId,
+  bookmarks,
+  toggleBookmark,
+  fontSizeLevel,
 };
 
 
@@ -674,8 +730,8 @@ const pageProps = {
 
   return (
     <div style={{
-      "--c-primary": t.primary, 
-      "--c-primary-dark": t.primaryDark, 
+      "--c-primary": t.primary,
+      "--c-primary-dark": t.primaryDark,
       "--c-accent": t.accent,
       "--c-accent-light": t.accentLight, 
       "--c-text": t.text, 
@@ -690,6 +746,7 @@ const pageProps = {
       "--c-badge-text": t.badgeText, 
       "--c-badge-border": t.badgeBorder,
       "--c-selection": `${t.accent}4D`,
+      "--fs-article": `${fontSizes[fontSizeLevel]}rem`,
       "--c-panel-rgb": isDarkMode ? "30, 41, 59" : "255, 255, 255",
       "--c-border-rgb": isDarkMode ? "148, 163, 184" : "255, 255, 255",
       backgroundImage: isDarkMode
@@ -704,6 +761,20 @@ const pageProps = {
       flexDirection: "column",
       transition: "background 800ms ease, color 500ms ease",
     }}>
+      {/* 無障礙：跳過導覽 */}
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute", top: "-40px", left: "1rem", zIndex: 10000,
+          background: "var(--c-primary)", color: "#fff", padding: "0.5rem 1rem",
+          borderRadius: "0 0 0.5rem 0.5rem", fontFamily: "'Noto Sans TC',sans-serif",
+          fontWeight: 700, fontSize: "0.9rem", textDecoration: "none", transition: "top 200ms ease",
+        }}
+        onFocus={e => e.target.style.top = "0"}
+        onBlur={e => e.target.style.top = "-40px"}
+      >
+        跳到主要內容
+      </a>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
         @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
@@ -715,6 +786,8 @@ const pageProps = {
         @keyframes splashLogoIn { 0%{opacity:0;transform:scale(0.55)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
         @keyframes splashTextIn { 0%{opacity:0;transform:translateY(10px)} 100%{opacity:1;transform:translateY(0)} }
         @keyframes splashTagIn  { 0%{opacity:0;letter-spacing:0.3em} 100%{opacity:1;letter-spacing:0.14em} }
+        @keyframes webSplashBar { 0%{width:0%} 80%{width:85%} 100%{width:100%} }
+        @keyframes webSplashDot { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
         @keyframes bounceY { 0%,100%{transform:translateY(0)} 45%{transform:translateY(6px)} 65%{transform:translateY(2px)} }
         .bounce-y { animation:bounceY 1.9s ease-in-out infinite; }
         @keyframes listItemIn { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
@@ -747,6 +820,7 @@ const pageProps = {
         .font-kai { font-family: 'Kaiti TC', 'BiauKai', 'DFKai-SB', 'AR PL UKai TW', serif !important; }
         .content-justify { text-align: justify; text-justify: inter-ideograph; overflow-wrap: break-word; word-break: normal; }
         .spring-transition { transition: all 500ms cubic-bezier(0.34,1.56,0.64,1); }
+        *:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; border-radius: 4px; }
         .theme-text { color: var(--c-text); transition: color 500ms ease; }
         .theme-text-secondary { color: var(--c-text-secondary); transition: color 500ms ease; }
         .theme-heading { color: var(--c-primary-dark); transition: color 500ms ease; }
@@ -824,6 +898,49 @@ const pageProps = {
       `}} />
 
       {/* ── Native 啟動動畫（Splash Screen）── */}
+      {/* ── 網頁版 Loading 動畫 ── */}
+      {!isAppMode && webSplashVisible && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "linear-gradient(135deg, #0f3d3d 0%, #1a4f4f 50%, #0f3a3a 100%)",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          opacity: webSplashExiting ? 0 : 1,
+          transition: "opacity 500ms ease",
+          pointerEvents: webSplashExiting ? "none" : "auto",
+        }}>
+          {/* Logo */}
+          <div style={{ animation: "splashLogoIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s both" }}>
+            <LogoImage className="w-20 h-20 rounded-[18px] shadow-2xl" />
+          </div>
+          {/* 名稱 */}
+          <p style={{
+            color: "rgba(255,255,255,0.95)", fontFamily: "'Noto Serif TC',serif",
+            fontSize: "1.35rem", fontWeight: 700, letterSpacing: "0.2em",
+            marginTop: "1.25rem", marginBottom: "0.4rem",
+            animation: "splashTextIn 0.5s ease 0.7s both",
+          }}>中文研究室</p>
+          {/* 標語 */}
+          <p style={{
+            color: "rgba(255,255,255,0.4)", fontFamily: "'Noto Serif TC',serif",
+            fontSize: "0.78rem", letterSpacing: "0.14em",
+            animation: "splashTagIn 0.6s ease 0.95s both",
+          }}>志於道・據於德・依於仁・游於藝</p>
+          {/* Loading bar */}
+          <div style={{
+            position: "absolute", bottom: "3.5rem", width: "120px",
+            animation: "splashTextIn 0.4s ease 1.1s both",
+          }}>
+            <div style={{ height: "2px", background: "rgba(255,255,255,0.12)", borderRadius: "9999px", overflow: "hidden" }}>
+              <div style={{
+                height: "100%", background: "rgba(255,255,255,0.7)", borderRadius: "9999px",
+                animation: "webSplashBar 1.6s cubic-bezier(0.4,0,0.2,1) 1.1s both",
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {isAppMode && splashVisible && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9999,
@@ -1067,6 +1184,24 @@ const pageProps = {
                     <Icon name="Search" size={20} />
                   </button>
 
+                  {/* 字體大小 */}
+                  <button
+                    onClick={() => setFontSizeLevel(l => (l + 1) % 3)}
+                    title={['小字體', '標準字體', '大字體'][fontSizeLevel]}
+                    aria-label={['小字體', '標準字體', '大字體'][fontSizeLevel]}
+                    className="spring-transition hover:scale-105 active:scale-95"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: "2.25rem", height: "2.25rem",
+                      padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                      background: "rgba(var(--c-panel-rgb), 0.4)",
+                      border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                      color: "var(--c-primary-dark)",
+                    }}
+                  >
+                    <span style={{ fontWeight: 800, fontSize: ['0.7rem','0.875rem','1.05rem'][fontSizeLevel], fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1, transition: 'font-size 200ms ease', userSelect: 'none' }}>文</span>
+                  </button>
+
                   {/* 日/月 模式切換 */}
                   <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
@@ -1126,7 +1261,7 @@ const pageProps = {
         )}
       </nav>
 
-      <main className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
+      <main id="main-content" key={currentPage} className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
         {page}
       </main>
 
@@ -1155,7 +1290,10 @@ const pageProps = {
 
             <div>
               <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>聯絡資訊</h4>
-              <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>Email：zxc998775@gmail.com</p>
+              <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", marginBottom: "0.75rem" }}>Email：zxc998775@gmail.com</p>
+              <a href="/rss.xml" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "rgba(255,255,255,0.65)", textDecoration: "none", fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", transition: "color 300ms" }}>
+                <Icon name="Rss" size={14} /> RSS 訂閱
+              </a>
             </div>
           </div>
         </div>

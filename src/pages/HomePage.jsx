@@ -1549,7 +1549,7 @@ export default function HomePage({
   }
 
   return (
-    <div className="space-y-10 md:space-y-14 animate-fade-in relative z-10">
+    <div className="space-y-10 md:space-y-14 page-enter-zoom stagger relative z-10">
 
       {/* ===================== Hero ===================== */}
       <section className="relative rounded-3xl overflow-hidden p-6 sm:p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
