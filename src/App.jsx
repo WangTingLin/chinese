@@ -238,6 +238,29 @@ export const Icon = ({ name, size = 24, className = "" }) => {
       </>
     ),
     Check: <polyline points="20 6 9 17 4 12" />,
+    Bookmark: <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />,
+    BookmarkFill: <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" fill="currentColor" />,
+    Type: (
+      <>
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" y1="20" x2="15" y2="20" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+      </>
+    ),
+    Rss: (
+      <>
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1" fill="currentColor" />
+      </>
+    ),
+    History: (
+      <>
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+      </>
+    ),
   };
 
   return (
@@ -497,6 +520,32 @@ export default function App() {
   const [webSplashVisible, setWebSplashVisible] = useState(!isAppMode);
   const [webSplashExiting, setWebSplashExiting] = useState(false);
   const PREF_KEY = "csl_native_prefs_v1";
+
+  /* 字體大小 */
+  const FONT_SIZE_KEY = "csl_font_size";
+  const fontSizes = [0.95, 1.05, 1.18];
+  const [fontSizeLevel, setFontSizeLevel] = useState(() => {
+    const s = localStorage.getItem(FONT_SIZE_KEY);
+    return s !== null ? Math.min(2, Math.max(0, parseInt(s, 10))) : 1;
+  });
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, String(fontSizeLevel));
+  }, [fontSizeLevel]);
+
+  /* 書籤 */
+  const BOOKMARKS_KEY = "csl_bookmarks";
+  const [bookmarks, setBookmarks] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]')); }
+    catch { return new Set(); }
+  });
+  const toggleBookmark = (id) => {
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  };
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
   const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
   const [launchOnboardingSelected, setLaunchOnboardingSelected] = useState([]);
@@ -633,6 +682,9 @@ const pageProps = {
   activities,
   loading,
   initialArticleId,
+  bookmarks,
+  toggleBookmark,
+  fontSizeLevel,
 };
 
 
@@ -678,8 +730,8 @@ const pageProps = {
 
   return (
     <div style={{
-      "--c-primary": t.primary, 
-      "--c-primary-dark": t.primaryDark, 
+      "--c-primary": t.primary,
+      "--c-primary-dark": t.primaryDark,
       "--c-accent": t.accent,
       "--c-accent-light": t.accentLight, 
       "--c-text": t.text, 
@@ -694,6 +746,7 @@ const pageProps = {
       "--c-badge-text": t.badgeText, 
       "--c-badge-border": t.badgeBorder,
       "--c-selection": `${t.accent}4D`,
+      "--fs-article": `${fontSizes[fontSizeLevel]}rem`,
       "--c-panel-rgb": isDarkMode ? "30, 41, 59" : "255, 255, 255",
       "--c-border-rgb": isDarkMode ? "148, 163, 184" : "255, 255, 255",
       backgroundImage: isDarkMode
@@ -708,6 +761,20 @@ const pageProps = {
       flexDirection: "column",
       transition: "background 800ms ease, color 500ms ease",
     }}>
+      {/* 無障礙：跳過導覽 */}
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute", top: "-40px", left: "1rem", zIndex: 10000,
+          background: "var(--c-primary)", color: "#fff", padding: "0.5rem 1rem",
+          borderRadius: "0 0 0.5rem 0.5rem", fontFamily: "'Noto Sans TC',sans-serif",
+          fontWeight: 700, fontSize: "0.9rem", textDecoration: "none", transition: "top 200ms ease",
+        }}
+        onFocus={e => e.target.style.top = "0"}
+        onBlur={e => e.target.style.top = "-40px"}
+      >
+        跳到主要內容
+      </a>
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap');
         @keyframes fadeIn { 0% { opacity:0; transform:translateY(12px);} 100% { opacity:1; transform:translateY(0);} }
@@ -753,6 +820,7 @@ const pageProps = {
         .font-kai { font-family: 'Kaiti TC', 'BiauKai', 'DFKai-SB', 'AR PL UKai TW', serif !important; }
         .content-justify { text-align: justify; text-justify: inter-ideograph; overflow-wrap: break-word; word-break: normal; }
         .spring-transition { transition: all 500ms cubic-bezier(0.34,1.56,0.64,1); }
+        *:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; border-radius: 4px; }
         .theme-text { color: var(--c-text); transition: color 500ms ease; }
         .theme-text-secondary { color: var(--c-text-secondary); transition: color 500ms ease; }
         .theme-heading { color: var(--c-primary-dark); transition: color 500ms ease; }
@@ -1116,6 +1184,24 @@ const pageProps = {
                     <Icon name="Search" size={20} />
                   </button>
 
+                  {/* 字體大小 */}
+                  <button
+                    onClick={() => setFontSizeLevel(l => (l + 1) % 3)}
+                    title={['小字體', '標準字體', '大字體'][fontSizeLevel]}
+                    aria-label={['小字體', '標準字體', '大字體'][fontSizeLevel]}
+                    className="spring-transition hover:scale-105 active:scale-95"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: "2.25rem", height: "2.25rem",
+                      padding: "0.5rem", borderRadius: "0.6rem", cursor: "pointer",
+                      background: "rgba(var(--c-panel-rgb), 0.4)",
+                      border: `1px solid rgba(var(--c-border-rgb), ${isDarkMode ? '0.3' : '0.5'})`,
+                      color: "var(--c-primary-dark)",
+                    }}
+                  >
+                    <span style={{ fontWeight: 800, fontSize: ['0.7rem','0.875rem','1.05rem'][fontSizeLevel], fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1, transition: 'font-size 200ms ease', userSelect: 'none' }}>文</span>
+                  </button>
+
                   {/* 日/月 模式切換 */}
                   <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
@@ -1175,7 +1261,7 @@ const pageProps = {
         )}
       </nav>
 
-      <main key={currentPage} className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
+      <main id="main-content" key={currentPage} className="main-content" style={{ paddingBottom: isAppMode ? "env(safe-area-inset-bottom, 16px)" : undefined }}>
         {page}
       </main>
 
@@ -1204,7 +1290,10 @@ const pageProps = {
 
             <div>
               <h4 style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700, marginBottom: "1rem", fontFamily: "'Noto Sans TC', sans-serif" }}>聯絡資訊</h4>
-              <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif" }}>Email：zxc998775@gmail.com</p>
+              <p style={{ fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", marginBottom: "0.75rem" }}>Email：zxc998775@gmail.com</p>
+              <a href="/rss.xml" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", color: "rgba(255,255,255,0.65)", textDecoration: "none", fontSize: "0.875rem", fontFamily: "'Noto Sans TC', sans-serif", transition: "color 300ms" }}>
+                <Icon name="Rss" size={14} /> RSS 訂閱
+              </a>
             </div>
           </div>
         </div>
