@@ -16,7 +16,6 @@
     <meta name="theme-color" content="#1c1c1e" />
     <title>中文研究室</title>
     <link rel="sitemap" type="application/xml" href="/sitemap.xml">
-    <link rel="manifest" href="/manifest.json">
     <!-- SEO & Social -->
     <meta name="description" content="中文研究室：學術活動、文章專欄、研討進度，以文會友，以友輔仁。">
     <meta property="og:title" content="中文研究室">
@@ -34,14 +33,6 @@
     <div id="root"></div>
 
     <script type="module" src="/src/main.jsx"></script>
-    <!-- PWA Service Worker -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
-      }
-    </script>
     <!-- Plausible Analytics -->
     <script defer data-domain="chineselit.club" src="https://plausible.io/js/script.js"></script>
   </body>
