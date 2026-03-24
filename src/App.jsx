@@ -695,6 +695,7 @@ export default function App() {
   const _now = new Date();
   const _upcoming = activities.filter(a => _getEndDate(a.date) >= _now);
   const catCounts = {
+    all:        _upcoming.length,
     lecture:    _upcoming.filter(a => a.category === "學術講座").length,
     workshop:   _upcoming.filter(a => a.category === "研討會／工作坊" || a.category === "研討會/工作坊").length,
     submission: _upcoming.filter(a => a.category === "徵稿資訊").length,
@@ -1137,6 +1138,7 @@ const pageProps = {
                 {/* 3 分類 Tab */}
                 <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", margin: "0 auto" }}>
                   {[
+                    { key: "all",        label: "全部" },
                     { key: "lecture",    label: "學術講座" },
                     { key: "workshop",   label: "研討會/工作坊" },
                     { key: "submission", label: "徵稿資訊" },

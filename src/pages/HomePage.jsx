@@ -32,6 +32,7 @@ export default function HomePage({
   isDarkMode,
   isNative = false,
   nativeCategory = "lecture",
+  setNativeCategory = null,
   articles = [],
   events = [],
   activities = [],
@@ -173,9 +174,25 @@ export default function HomePage({
     });
   }, [submissionActivities, userPrefs]);
 
+  const rankedAllActivities = useMemo(() => {
+    if (!userPrefs || userPrefs.length === 0) return upcomingActivities;
+    return [...upcomingActivities].sort((a, b) => {
+      const diff = scoreActivity(b, userPrefs) - scoreActivity(a, userPrefs);
+      return diff !== 0 ? diff : parseEventDate(a.date) - parseEventDate(b.date);
+    });
+  }, [upcomingActivities, userPrefs]);
+
+  /* 從月曆跳轉：存放目標 index（繞過 nativeCategory effect 的 reset）*/
+  const pendingJumpRef = React.useRef(null);
+
   /* 切換 Tab 或篩選條件改變時，重置輪播到第一筆 */
   useEffect(() => {
-    setCurrentActivityIndex(0);
+    if (pendingJumpRef.current !== null) {
+      setCurrentActivityIndex(pendingJumpRef.current);
+      pendingJumpRef.current = null;
+    } else {
+      setCurrentActivityIndex(0);
+    }
   }, [nativeCategory]);
   useEffect(() => {
     setCurrentActivityIndex(0);
@@ -802,15 +819,17 @@ export default function HomePage({
       if (!dateStr) return null;
       const trimmed = dateStr.trim();
       const firstPart = trimmed.split(/[~,～，]/)[0].trim();
-      const [datePart, timePart] = firstPart.split(" ");
+      const [datePart] = firstPart.split(" ");
       if (!datePart) return null;
-      const startTime = timePart ? timePart.split("-")[0] : "00:00";
-      const eventDate = new Date(`${datePart}T${startTime}:00`);
-      if (isNaN(eventDate)) return null;
+      const parts = datePart.split("-").map(Number);
+      if (parts.length < 3 || parts.some(isNaN)) return null;
+      const [y, mo, d] = parts;
       const now = new Date();
-      const diffMs = eventDate - now;
-      if (diffMs < 0) return null; // 已過
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const eventMidnight = new Date(y, mo - 1, d);
+      if (isNaN(eventMidnight)) return null;
+      const diffDays = Math.round((eventMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return null; // 已過
       if (diffDays === 0) return { label: "今天", color: "#ef4444", urgent: true };
       if (diffDays === 1) return { label: "明天", color: "#f97316", urgent: true };
       if (diffDays <= 3) return { label: `還有 ${diffDays} 天`, color: "#fbbf24", urgent: true };
@@ -824,6 +843,38 @@ export default function HomePage({
       const cnt = getCountdown(ev.date);
       if (!cnt || !cnt.urgent) return null;
       return cnt;
+    };
+
+    /* ── 從月曆跳轉到精選卡片 ── */
+    const jumpToCalendarActivity = (ev) => {
+      hapticLight();
+      setShowCalSheet(false);
+      setCalSelectedDay(null);
+      if (!ev?._id) return;
+      const catKey =
+        ev.category === "學術講座" ? "lecture"
+        : (ev.category === "研討會／工作坊" || ev.category === "研討會/工作坊") ? "workshop"
+        : ev.category === "徵稿資訊" ? "submission"
+        : "all";
+      const getTargetList = (key) => {
+        if (sortByDate) {
+          if (key === "lecture") return lectureActivities;
+          if (key === "workshop") return workshopActivities;
+          if (key === "submission") return submissionActivities;
+          return upcomingActivities;
+        }
+        if (key === "lecture") return rankedLectureActivities;
+        if (key === "workshop") return rankedWorkshopActivities;
+        if (key === "submission") return rankedSubmissionActivities;
+        return rankedAllActivities;
+      };
+      const idx = Math.max(0, getTargetList(catKey).findIndex(a => a._id === ev._id));
+      if (catKey === nativeCategory) {
+        setCurrentActivityIndex(idx);
+      } else {
+        pendingJumpRef.current = idx;
+        setNativeCategory?.(catKey);
+      }
     };
 
     /* ── 批量提醒 ── */
@@ -981,6 +1032,7 @@ export default function HomePage({
 
     /* ── 目前分類對應的活動列表（依偏好或時間排序）── */
     const categoryList =
+      nativeCategory === "all"        ? (sortByDate ? upcomingActivities   : rankedAllActivities)        :
       nativeCategory === "lecture"    ? (sortByDate ? lectureActivities    : rankedLectureActivities)    :
       nativeCategory === "workshop"   ? (sortByDate ? workshopActivities   : rankedWorkshopActivities)   :
       (sortByDate ? submissionActivities : rankedSubmissionActivities);
@@ -1223,7 +1275,8 @@ export default function HomePage({
     );
 
     /* ── 分類名稱與列表標題 ── */
-    const catLabel = nativeCategory === "lecture" ? "學術講座" :
+    const catLabel = nativeCategory === "all"      ? "全部活動" :
+                     nativeCategory === "lecture"  ? "學術講座" :
                      nativeCategory === "workshop" ? "研討會／工作坊" : "徵稿資訊";
     const listHeader =
       sortByDate ? `全部${catLabel}（依時間）` :
@@ -1373,8 +1426,9 @@ export default function HomePage({
               </p>
             )}
 
-            {/* 偏好設定 ＋ 時間排序 ＋ 搜尋篩選（三個小按鈕並排）*/}
+            {/* 底部操作列（三個按鈕）*/}
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.55rem" }}>
+              {/* 偏好設定 */}
               <button
                 className="native-btn"
                 onClick={() => { hapticLight(); setPrefsSheetSelected(userPrefs || []); setShowPrefsSheet(true); }}
@@ -1395,47 +1449,7 @@ export default function HomePage({
                     : "設定偏好"}
                 </span>
               </button>
-              <button
-                className="native-btn"
-                onClick={() => { hapticLight(); setSortByDate(s => !s); }}
-                style={{
-                  flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
-                  border: `1px solid ${sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
-                  background: sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
-                  color: sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
-                  fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
-                  display: "flex", alignItems: "center", gap: "0.3rem",
-                  cursor: "pointer",
-                }}
-              >
-                <Icon name="Clock" size={13} />
-                時間
-              </button>
-              {/* 搜尋篩選按鈕（有篩選條件時高亮）*/}
-              <button
-                className="native-btn"
-                onClick={() => { hapticLight(); setShowFilterSheet(true); }}
-                style={{
-                  flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
-                  border: `1px solid ${hasActiveFilter ? "rgba(251,191,36,0.7)" : "rgba(255,255,255,0.12)"}`,
-                  background: hasActiveFilter ? "rgba(251,191,36,0.14)" : "transparent",
-                  color: hasActiveFilter ? "#fbbf24" : "rgba(255,255,255,0.4)",
-                  fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
-                  display: "flex", alignItems: "center", gap: "0.3rem",
-                  cursor: "pointer", position: "relative",
-                }}
-              >
-                <Icon name="Search" size={13} />
-                搜尋
-                {hasActiveFilter && (
-                  <span style={{
-                    position: "absolute", top: -4, right: -4,
-                    width: 8, height: 8, borderRadius: "50%",
-                    background: "#fbbf24",
-                  }} />
-                )}
-              </button>
-              {/* 月曆按鈕 */}
+              {/* 月曆 */}
               <button
                 className="native-btn"
                 onClick={() => { hapticLight(); setCalSheetMonth({ y: new Date().getFullYear(), m: new Date().getMonth() }); setShowCalSheet(true); }}
@@ -1452,22 +1466,29 @@ export default function HomePage({
                 <Icon name="CalendarDays" size={13} />
                 月曆
               </button>
-              {/* 重新整理按鈕 */}
+              {/* 篩選（有條件時高亮；長按切換時間排序）*/}
               <button
                 className="native-btn"
-                onClick={() => { hapticLight(); if (onRefresh) { setRefreshing(true); onRefresh(); setTimeout(() => setRefreshing(false), 1500); } }}
+                onClick={() => { hapticLight(); setShowFilterSheet(true); }}
                 style={{
-                  flexShrink: 0, padding: "0.55rem 0.75rem", borderRadius: "0.85rem",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: refreshing ? "rgba(255,255,255,0.1)" : "transparent",
-                  color: refreshing ? "#fff" : "rgba(255,255,255,0.4)",
+                  flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
+                  border: `1px solid ${hasActiveFilter || sortByDate ? "rgba(251,191,36,0.7)" : "rgba(255,255,255,0.12)"}`,
+                  background: hasActiveFilter || sortByDate ? "rgba(251,191,36,0.14)" : "transparent",
+                  color: hasActiveFilter || sortByDate ? "#fbbf24" : "rgba(255,255,255,0.4)",
                   fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
                   display: "flex", alignItems: "center", gap: "0.3rem",
-                  cursor: "pointer",
-                  animation: refreshing ? "spin 1s linear infinite" : "none",
+                  cursor: "pointer", position: "relative",
                 }}
               >
-                <Icon name="History" size={13} style={{ display: "inline-block" }} />
+                <Icon name="Search" size={13} />
+                篩選
+                {(hasActiveFilter || sortByDate) && (
+                  <span style={{
+                    position: "absolute", top: -4, right: -4,
+                    width: 8, height: 8, borderRadius: "50%",
+                    background: "#fbbf24",
+                  }} />
+                )}
               </button>
             </div>
 
@@ -1606,6 +1627,41 @@ export default function HomePage({
                 />
               </div>
 
+              {/* 排序方式 */}
+              <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                排序方式
+              </p>
+              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+                <button
+                  className="native-btn"
+                  onClick={() => { hapticLight(); setSortByDate(false); }}
+                  style={{
+                    flex: 1, padding: "0.6rem 0", borderRadius: "0.75rem",
+                    border: `1px solid ${!sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
+                    background: !sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
+                    color: !sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
+                    fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer",
+                  }}
+                >
+                  推薦排序
+                </button>
+                <button
+                  className="native-btn"
+                  onClick={() => { hapticLight(); setSortByDate(true); }}
+                  style={{
+                    flex: 1, padding: "0.6rem 0", borderRadius: "0.75rem",
+                    border: `1px solid ${sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
+                    background: sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
+                    color: sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
+                    fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem",
+                  }}
+                >
+                  <Icon name="Clock" size={13} />
+                  時間排序
+                </button>
+              </div>
+
               {/* 結果預覽 */}
               <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", marginBottom: "1.25rem" }}>
                 {filteredList.length > 0
@@ -1614,10 +1670,10 @@ export default function HomePage({
               </p>
 
               {/* 操作按鈕 */}
-              <div style={{ display: "flex", gap: "0.75rem" }}>
+              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
                 <button
                   className="native-btn"
-                  onClick={() => { setSearchQuery(""); setFilterDateFrom(""); setFilterDateTo(""); }}
+                  onClick={() => { setSearchQuery(""); setFilterDateFrom(""); setFilterDateTo(""); setSortByDate(false); }}
                   style={{
                     flex: 1, padding: "0.85rem 0", borderRadius: "1rem",
                     border: "1px solid rgba(255,255,255,0.15)", background: "transparent",
@@ -1640,6 +1696,21 @@ export default function HomePage({
                   {filteredList.length > 0 ? `顯示 ${filteredList.length} 筆結果` : "確認"}
                 </button>
               </div>
+              {/* 重新整理 */}
+              <button
+                className="native-btn"
+                onClick={() => { hapticLight(); setShowFilterSheet(false); if (onRefresh) { setRefreshing(true); onRefresh(); setTimeout(() => setRefreshing(false), 1500); } }}
+                style={{
+                  width: "100%", padding: "0.75rem 0", borderRadius: "1rem",
+                  border: "1px solid rgba(255,255,255,0.1)", background: "transparent",
+                  color: "rgba(255,255,255,0.35)", fontFamily: "'Noto Sans TC',sans-serif",
+                  fontWeight: 500, fontSize: "0.85rem", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem",
+                }}
+              >
+                <Icon name="History" size={14} />
+                重新整理資料
+              </button>
             </div>
           </div>
         )}
@@ -1975,19 +2046,21 @@ export default function HomePage({
                     <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>{m + 1} 月 {calSelectedDay} 日</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "180px", overflowY: "auto" }}>
                       {dayEventsMap[calSelectedDay].map(ev => (
-                        <div key={ev._id} style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start", background: "rgba(255,255,255,0.05)", borderRadius: "0.75rem", padding: "0.6rem 0.75rem" }}>
+                        <button
+                          key={ev._id}
+                          onClick={() => jumpToCalendarActivity(ev)}
+                          style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start", background: "rgba(255,255,255,0.05)", borderRadius: "0.75rem", padding: "0.6rem 0.75rem", border: "none", width: "100%", cursor: "pointer", textAlign: "left" }}
+                        >
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: catDot(ev.category), marginTop: "0.3rem", flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ color: "#fff", fontSize: "0.85rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, lineHeight: 1.3, marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</p>
                             {ev.date && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>📅 {ev.date}</p>}
                             {ev.location && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>{isOnlineLocation(ev.location) ? "💻" : "📍"} {ev.location}</p>}
                           </div>
-                          {ev.link && (
-                            <a href={ev.link} target="_blank" rel="noopener noreferrer" onClick={() => hapticLight()} style={{ flexShrink: 0, color: "rgba(255,255,255,0.45)", textDecoration: "none", display: "flex", alignItems: "center" }}>
-                              <Icon name="ExternalLink" size={13} />
-                            </a>
-                          )}
-                        </div>
+                          <div style={{ flexShrink: 0, color: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center" }}>
+                            <Icon name="ChevronRight" size={14} />
+                          </div>
+                        </button>
                       ))}
                     </div>
                   </div>
