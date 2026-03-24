@@ -36,6 +36,7 @@ export default function HomePage({
   events = [],
   activities = [],
   loading = false,
+  onRefresh = null,
 }) {
   /* ================= 最新文章 ================= */
   const latestArticle =
@@ -331,6 +332,10 @@ export default function HomePage({
   const [calSheetMonth, setCalSheetMonth]           = React.useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
   const [scheduledIds, setScheduledIds]             = React.useState(() => { try { return JSON.parse(localStorage.getItem("csl_notif_ids_v1") || "{}"); } catch { return {}; } });
   const [calSelectedDay, setCalSelectedDay]         = React.useState(null);
+  const [refreshing, setRefreshing]               = React.useState(false);
+  const [reminderOffset, setReminderOffset]       = React.useState(() => localStorage.getItem("csl_reminder_offset_v1") || "day1");
+  const [showReminderSheet, setShowReminderSheet] = React.useState(false);
+  const [reminderSheetEv, setReminderSheetEv]     = React.useState(null);
   const totalInCategoryRef = React.useRef(0);
   const nextCatActivityRef = React.useRef(() => {});
   const prevCatActivityRef = React.useRef(() => {});
@@ -727,6 +732,129 @@ export default function HomePage({
     };
 
 
+    /* ── 提醒時間選項 ── */
+    const REMINDER_OPTS = [
+      { id: "day3",  label: "前 3 天", desc: "活動前 3 天 09:00" },
+      { id: "day1",  label: "前一天",  desc: "活動前一天 09:00" },
+      { id: "hour2", label: "前 2 小時", desc: "活動開始前 2 小時" },
+      { id: "hour1", label: "前 1 小時", desc: "活動開始前 1 小時" },
+    ];
+    const saveReminderOffset = (id) => {
+      localStorage.setItem("csl_reminder_offset_v1", id);
+      setReminderOffset(id);
+    };
+
+    /* ── 計算提醒時間（依 reminderOffset）── */
+    const calcNotifAt = (ev, offset) => {
+      const dateStr = ev.date?.trim() || "";
+      const firstPart = dateStr.split(/[~,～，]/)[0].trim();
+      const [datePart, timePart] = firstPart.split(" ");
+      if (!datePart) return null;
+      const startTime = timePart ? timePart.split("-")[0] : "09:00";
+      const eventDate = new Date(`${datePart}T${startTime}:00`);
+      if (isNaN(eventDate)) return null;
+      const notifAt = new Date(eventDate);
+      if (offset === "day3") { notifAt.setDate(notifAt.getDate() - 3); notifAt.setHours(9, 0, 0, 0); }
+      else if (offset === "day1") { notifAt.setDate(notifAt.getDate() - 1); notifAt.setHours(9, 0, 0, 0); }
+      else if (offset === "hour2") { notifAt.setTime(notifAt.getTime() - 2 * 60 * 60 * 1000); }
+      else if (offset === "hour1") { notifAt.setTime(notifAt.getTime() - 60 * 60 * 1000); }
+      if (notifAt <= new Date()) return null;
+      return notifAt;
+    };
+
+    /* ── 修改 toggleReminder 改為先選時間 ── */
+    const openReminderSheet = (ev) => {
+      hapticLight();
+      if (isReminderSet(ev._id)) {
+        // 已設定 → 直接取消
+        toggleReminder(ev);
+      } else {
+        setReminderSheetEv(ev);
+        setShowReminderSheet(true);
+      }
+    };
+    const scheduleReminderWithOffset = async (ev, offset) => {
+      hapticMedium();
+      try {
+        const perm = await LocalNotifications.requestPermissions();
+        if (perm.display !== "granted") return;
+        const notifAt = calcNotifAt(ev, offset);
+        if (!notifAt) { setShowReminderSheet(false); return; }
+        const id = Math.floor(Math.random() * 2_000_000_000);
+        await LocalNotifications.schedule({
+          notifications: [{
+            id,
+            title: "📅 活動提醒",
+            body: ev.title + (ev.location ? `\n📍 ${ev.location}` : ""),
+            schedule: { at: notifAt },
+            sound: "default",
+            smallIcon: "ic_notification",
+          }],
+        });
+        saveScheduledIds({ ...scheduledIds, [ev._id]: id });
+        saveReminderOffset(offset);
+      } catch (e) { console.error("通知排程失敗:", e); }
+      setShowReminderSheet(false);
+    };
+
+    /* ── 活動倒數 ── */
+    const getCountdown = (dateStr) => {
+      if (!dateStr) return null;
+      const trimmed = dateStr.trim();
+      const firstPart = trimmed.split(/[~,～，]/)[0].trim();
+      const [datePart, timePart] = firstPart.split(" ");
+      if (!datePart) return null;
+      const startTime = timePart ? timePart.split("-")[0] : "00:00";
+      const eventDate = new Date(`${datePart}T${startTime}:00`);
+      if (isNaN(eventDate)) return null;
+      const now = new Date();
+      const diffMs = eventDate - now;
+      if (diffMs < 0) return null; // 已過
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) return { label: "今天", color: "#ef4444", urgent: true };
+      if (diffDays === 1) return { label: "明天", color: "#f97316", urgent: true };
+      if (diffDays <= 3) return { label: `還有 ${diffDays} 天`, color: "#fbbf24", urgent: true };
+      if (diffDays <= 7) return { label: `還有 ${diffDays} 天`, color: "rgba(255,255,255,0.45)", urgent: false };
+      return null;
+    };
+
+    /* ── 徵稿截止倒數（3天內紅色警示）── */
+    const getDeadlineWarning = (ev) => {
+      if (ev.category !== "徵稿資訊") return null;
+      const cnt = getCountdown(ev.date);
+      if (!cnt || !cnt.urgent) return null;
+      return cnt;
+    };
+
+    /* ── 批量提醒 ── */
+    const setBatchReminders = async (list) => {
+      hapticMedium();
+      try {
+        const perm = await LocalNotifications.requestPermissions();
+        if (perm.display !== "granted") return;
+        const newIds = { ...scheduledIds };
+        const toSchedule = [];
+        list.forEach(ev => {
+          if (isReminderSet(ev._id)) return;
+          const notifAt = calcNotifAt(ev, reminderOffset);
+          if (!notifAt) return;
+          const id = Math.floor(Math.random() * 2_000_000_000);
+          newIds[ev._id] = id;
+          toSchedule.push({
+            id, title: "📅 活動提醒",
+            body: ev.title,
+            schedule: { at: notifAt },
+            sound: "default",
+            smallIcon: "ic_notification",
+          });
+        });
+        if (toSchedule.length > 0) {
+          await LocalNotifications.schedule({ notifications: toSchedule });
+          saveScheduledIds(newIds);
+        }
+      } catch (e) { console.error("批量提醒失敗:", e); }
+    };
+
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
       return (
@@ -1013,8 +1141,9 @@ export default function HomePage({
               className="list-item-in"
               onClick={onSelect ? () => onSelect(ev) : undefined}
               style={{
-                padding: "1.1rem 1.25rem",
+                padding: "1.1rem 1.25rem 1.1rem 1.5rem",
                 borderBottom: i < list.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                borderLeft: `3px solid ${ev.category === "學術講座" ? "#60a5fa" : ev.category?.includes("研討") || ev.category?.includes("工作坊") ? "#4ade80" : ev.category === "徵稿資訊" ? "#fbbf24" : "#a78bfa"}`,
                 animationDelay: `${Math.min(i * 0.065, 0.45)}s`,
                 cursor: onSelect ? "pointer" : undefined,
               }}
@@ -1038,6 +1167,14 @@ export default function HomePage({
                   <h3 style={{ color: "#fff", fontSize: "0.93rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.2rem", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {ev.title}
                   </h3>
+                  {/* 倒數標籤 */}
+                  {(() => {
+                    const cnt = getCountdown(ev.date);
+                    const dw = getDeadlineWarning(ev);
+                    const badge = dw || cnt;
+                    if (!badge) return null;
+                    return <span style={{ display: "inline-flex", fontSize: "0.68rem", fontWeight: 700, color: badge.color, background: `${badge.color}22`, border: `1px solid ${badge.color}44`, borderRadius: "0.4rem", padding: "0.1rem 0.45rem", marginBottom: "0.2rem" }}>{dw ? "⚠ " : ""}{badge.label}</span>;
+                  })()}
                   {ev.date     && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.1rem" }}>📅 {ev.date}</p>}
                   {ev.location && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.1rem" }}>📍 {ev.location}</p>}
                   {ev.speaker  && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif" }}>🎤 {ev.speaker}</p>}
@@ -1073,6 +1210,11 @@ export default function HomePage({
                 >
                   <Icon name="Share" size={15} />
                 </button>
+                {isReminderSet(ev._id) && (
+                  <div style={{ flexShrink: 0, padding: "0.6rem 0.6rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#fbbf24" }}>
+                    <Icon name="Bell" size={13} />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -1177,6 +1319,17 @@ export default function HomePage({
                 <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.35, marginBottom: "0.5rem", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {currentActivity.title}
                 </h2>
+                {(() => {
+                  const cnt = getCountdown(currentActivity.date);
+                  const dw = getDeadlineWarning(currentActivity);
+                  if (!cnt && !dw) return null;
+                  const badge = dw || cnt;
+                  return (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", color: badge.color, background: `${badge.color}22`, border: `1px solid ${badge.color}55`, borderRadius: "0.5rem", padding: "0.2rem 0.6rem", marginBottom: "0.4rem" }}>
+                      {dw ? "⚠ 截止" : "⏰"} {badge.label}
+                    </span>
+                  );
+                })()}
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", color: "rgba(255,255,255,0.48)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1rem" }}>
                   {currentActivity.date     && <span>📅 {currentActivity.date}</span>}
                   {currentActivity.location && (
@@ -1205,9 +1358,9 @@ export default function HomePage({
                   >
                     <Icon name="Calendar" size={17} /> 加入行事曆
                   </button>
-                  <button onClick={() => toggleReminder(currentActivity)}
+                  <button onClick={() => openReminderSheet(currentActivity)}
                     className="native-btn"
-                    title={isReminderSet(currentActivity._id) ? "取消提醒" : "設定提前一天提醒"}
+                    title={isReminderSet(currentActivity._id) ? "取消提醒" : "設定提醒"}
                     style={{ flexShrink: 0, padding: "0.85rem 1rem", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", background: isReminderSet(currentActivity._id) ? "rgba(251,191,36,0.22)" : "rgba(255,255,255,0.1)", color: isReminderSet(currentActivity._id) ? "#fbbf24" : "rgba(255,255,255,0.55)", border: `1px solid ${isReminderSet(currentActivity._id) ? "rgba(251,191,36,0.5)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer" }}
                   >
                     <Icon name={isReminderSet(currentActivity._id) ? "BellOff" : "Bell"} size={17} />
@@ -1298,6 +1451,23 @@ export default function HomePage({
               >
                 <Icon name="CalendarDays" size={13} />
                 月曆
+              </button>
+              {/* 重新整理按鈕 */}
+              <button
+                className="native-btn"
+                onClick={() => { hapticLight(); if (onRefresh) { setRefreshing(true); onRefresh(); setTimeout(() => setRefreshing(false), 1500); } }}
+                style={{
+                  flexShrink: 0, padding: "0.55rem 0.75rem", borderRadius: "0.85rem",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: refreshing ? "rgba(255,255,255,0.1)" : "transparent",
+                  color: refreshing ? "#fff" : "rgba(255,255,255,0.4)",
+                  fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: "0.3rem",
+                  cursor: "pointer",
+                  animation: refreshing ? "spin 1s linear infinite" : "none",
+                }}
+              >
+                <Icon name="History" size={13} style={{ display: "inline-block" }} />
               </button>
             </div>
 
@@ -1535,8 +1705,12 @@ export default function HomePage({
                         )}
                       </>
                     : (
-                      <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
-                        <p style={{ fontSize: "0.92rem" }}>目前沒有符合條件的活動</p>
+                      <div style={{ textAlign: "center", padding: "4rem 1.5rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔍</div>
+                        <p style={{ fontSize: "0.92rem", marginBottom: "0.5rem", color: "rgba(255,255,255,0.45)" }}>沒有符合條件的活動</p>
+                        <p style={{ fontSize: "0.78rem", lineHeight: 1.6 }}>
+                          試試調整搜尋關鍵字<br />或清除日期篩選條件
+                        </p>
                       </div>
                     )
                   }
@@ -1590,6 +1764,16 @@ export default function HomePage({
                   );
                 })}
               </div>
+              {/* 批量提醒 */}
+              <div style={{ paddingTop: "0.5rem", paddingBottom: "0.75rem", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "0.5rem" }}>
+                <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>
+                  一鍵提醒・{REMINDER_OPTS.find(o => o.id === reminderOffset)?.desc || "前一天 09:00"}
+                </p>
+                <button onClick={() => { setBatchReminders(displayList); setShowPrefsSheet(false); }}
+                  style={{ width: "100%", padding: "0.75rem", borderRadius: "0.85rem", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                  <Icon name="Bell" size={14} /> 對目前 {displayList.filter(ev => !isReminderSet(ev._id)).length} 個活動設提醒
+                </button>
+              </div>
               <div style={{ display: "flex", gap: "0.6rem", paddingTop: "1rem", flexShrink: 0 }}>
                 <button onClick={() => { savePrefs([]); setShowPrefsSheet(false); }}
                   style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
@@ -1600,6 +1784,35 @@ export default function HomePage({
                   {prefsSheetSelected.length > 0 ? `套用（${prefsSheetSelected.length} 項）` : "請選擇"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 提醒時間選擇 sheet ── */}
+        {showReminderSheet && reminderSheetEv && (
+          <div onClick={() => setShowReminderSheet(false)} style={{ position: "fixed", inset: 0, zIndex: 20001, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end" }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#2c2c2e", borderRadius: "1.4rem 1.4rem 0 0", padding: "0 1.25rem calc(env(safe-area-inset-bottom,0px) + 1.25rem)", animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both" }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 1rem" }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", marginBottom: "0.5rem" }}>
+                提醒時間
+              </p>
+              <p style={{ color: "#fff", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 700, textAlign: "center", marginBottom: "1.25rem", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {reminderSheetEv.title}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem", marginBottom: "0.75rem" }}>
+                {REMINDER_OPTS.map(opt => (
+                  <button key={opt.id} onClick={() => scheduleReminderWithOffset(reminderSheetEv, opt.id)}
+                    style={{ padding: "0.9rem 1.1rem", borderRadius: "1rem", background: opt.id === reminderOffset ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.07)", border: "none", color: opt.id === reminderOffset ? "#1c1c1e" : "#fff", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>{opt.label}</span>
+                    <span style={{ fontSize: "0.75rem", opacity: 0.55 }}>{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setShowReminderSheet(false)} style={{ width: "100%", padding: "0.75rem", borderRadius: "1rem", border: "none", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                取消
+              </button>
             </div>
           </div>
         )}

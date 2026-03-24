@@ -129,3 +129,6 @@ html.is-native * {
   will-change: transform;
 }
 .marquee-inner:hover { animation-play-state: paused; }
+
+/* ===== 旋轉動畫（重新整理按鈕）===== */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

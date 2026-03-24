@@ -577,6 +577,7 @@ export default function App() {
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
   const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
   const [launchOnboardingSelected, setLaunchOnboardingSelected] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   /* Native 啟動動畫：1.9s 顯示，再 500ms 淡出，共 2.4s */
   /* Native：body 加深色背景，防止 iOS overscroll 白邊 */
@@ -657,7 +658,7 @@ export default function App() {
       }
     };
     fetchAllData();
-  }, []);
+  }, [refreshKey]);
 
   const allNavItems = [
     { id: "home", label: "首頁", icon: <Icon name="Home" size={18} /> },
@@ -713,6 +714,7 @@ const pageProps = {
   bookmarks,
   toggleBookmark,
   fontSizeLevel,
+  onRefresh: () => { setLoading(true); setRefreshKey(k => k + 1); },
 };
 
 
