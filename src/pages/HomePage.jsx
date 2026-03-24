@@ -850,6 +850,7 @@ export default function HomePage({
       hapticLight();
       setShowCalSheet(false);
       setCalSelectedDay(null);
+      setShowListSheet(false);
       if (!ev?._id) return;
       const catKey =
         ev.category === "學術講座" ? "lecture"
