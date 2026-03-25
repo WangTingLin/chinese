@@ -2100,14 +2100,14 @@ export default function HomePage({
         />
         {/* 右側裝飾勳章 */}
         <div
-          className="absolute right-[-80px] sm:right-[-50px] md:right-[-30px] top-1/2 -translate-y-1/2 w-64 sm:w-72 md:w-80 aspect-square opacity-[0.18] pointer-events-none"
+          className="absolute right-[-80px] sm:right-[-50px] md:right-[-30px] top-1/2 -translate-y-1/2 w-64 sm:w-72 md:w-80 aspect-square opacity-[0.18] pointer-events-none float-anim"
           style={{ color: "var(--c-accent)" }}
         >
           <HeroMedallion />
         </div>
         {/* 左側較小勳章 */}
         <div
-          className="absolute left-[-70px] sm:left-[-45px] md:left-[-25px] top-1/2 -translate-y-1/2 w-44 sm:w-52 md:w-60 aspect-square opacity-[0.12] pointer-events-none"
+          className="absolute left-[-70px] sm:left-[-45px] md:left-[-25px] top-1/2 -translate-y-1/2 w-44 sm:w-52 md:w-60 aspect-square opacity-[0.12] pointer-events-none float-anim-2"
           style={{ color: "var(--c-accent)" }}
         >
           <HeroMedallion />

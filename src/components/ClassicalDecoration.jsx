@@ -224,22 +224,34 @@ export function HeroMedallion() {
       <circle cx="150" cy="150" r="148" fill="currentColor" fillOpacity="0.04" />
       <rect width="300" height="300" fill={`url(#${pid})`} clipPath={`url(#circ-${id})`} />
 
-      {/* 同心圓 */}
-      <circle cx="150" cy="150" r="148" fill="none" stroke="currentColor" strokeWidth="1.8" strokeOpacity="0.55" />
-      <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.3" />
-      <circle cx="150" cy="150" r="118" fill="none" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.45" />
-      <circle cx="150" cy="150" r="110" fill="none" stroke="currentColor" strokeWidth="0.4" strokeOpacity="0.25" />
+      {/* 最外旋轉環（順時針，極緩）*/}
+      <g style={{ transformOrigin: '150px 150px', animation: 'ornamentRotate 60s linear infinite' }}>
+        <circle cx="150" cy="150" r="148" fill="none" stroke="currentColor" strokeWidth="1.8" strokeOpacity="0.55" />
+        <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.3" strokeDasharray="6 10" />
+      </g>
+
+      {/* 中層逆旋轉環 */}
+      <g style={{ transformOrigin: '150px 150px', animation: 'ornamentRotateReverse 80s linear infinite' }}>
+        <circle cx="150" cy="150" r="118" fill="none" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.45" />
+        <circle cx="150" cy="150" r="110" fill="none" stroke="currentColor" strokeWidth="0.4" strokeOpacity="0.25" strokeDasharray="4 8" />
+      </g>
+
+      {/* 靜態內圈 */}
       <circle cx="150" cy="150" r="82"  fill="none" stroke="currentColor" strokeWidth="1"   strokeOpacity="0.4" />
       <circle cx="150" cy="150" r="52"  fill="none" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.5" />
       <circle cx="150" cy="150" r="44"  fill="none" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.28" />
 
-      {/* 外層大菱形框 */}
-      <path d="M150,8 L292,150 L150,292 L8,150 Z"
-        fill="none" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.32" />
+      {/* 外層大菱形框（緩慢旋轉）*/}
+      <g style={{ transformOrigin: '150px 150px', animation: 'ornamentRotate 120s linear infinite' }}>
+        <path d="M150,8 L292,150 L150,292 L8,150 Z"
+          fill="none" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.32" />
+      </g>
 
-      {/* 中層菱形框 */}
-      <path d="M150,68 L232,150 L150,232 L68,150 Z"
-        fill="none" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.22" />
+      {/* 中層菱形框（逆旋）*/}
+      <g style={{ transformOrigin: '150px 150px', animation: 'ornamentRotateReverse 90s linear infinite' }}>
+        <path d="M150,68 L232,150 L150,232 L68,150 Z"
+          fill="none" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.22" />
+      </g>
 
       {/* 8條輻射線（從內圈到外圈之間） */}
       {angles8.map((deg, i) => {

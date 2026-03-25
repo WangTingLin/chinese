@@ -342,10 +342,20 @@ const ThemedButton = ({ active, children, onClick, className = "" }) => (
 export const PageHeader = ({ title }) => (
   <div className="text-center space-y-4">
     <h2 className="text-3xl font-bold font-sans theme-heading">{title}</h2>
-    <div
-      className="w-16 h-1 mx-auto rounded-full"
-      style={{ background: "var(--c-accent)" }}
-    />
+    <div className="flex items-center justify-center gap-2">
+      <div
+        className="h-px rounded-full"
+        style={{ background: "var(--c-accent)", width: "2rem", opacity: 0.4, animation: "pageSlideRight 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both" }}
+      />
+      <div
+        className="h-1 rounded-full decor-shimmer"
+        style={{ background: "var(--c-accent)", width: "3rem", animation: "pageZoomIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.1s both" }}
+      />
+      <div
+        className="h-px rounded-full"
+        style={{ background: "var(--c-accent)", width: "2rem", opacity: 0.4, animation: "pageSlideLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both" }}
+      />
+    </div>
   </div>
 );
 

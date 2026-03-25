@@ -29,7 +29,7 @@ export default function BooksPage() {
                 const domain = getDomain(link.url);
                 return (
                   <a key={li} href={link.url} target="_blank" rel="noopener noreferrer"
-                    className="group flex items-center p-5 rounded-2xl glass-panel glass-card-hover hover:-translate-y-1 shadow-sm">
+                    className="group flex items-center p-5 rounded-2xl glass-panel glass-card-hover glow-hover hover:-translate-y-1 shadow-sm">
                     <div className="w-12 h-12 bg-white/80 rounded-xl flex items-center justify-center mr-4 shadow-sm border border-white/60 shrink-0 overflow-hidden text-[var(--c-primary)]">
                       <img 
                         src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`} 

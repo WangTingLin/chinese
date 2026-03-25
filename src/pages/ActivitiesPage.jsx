@@ -383,7 +383,7 @@ export default function ActivitiesPage({ isDarkMode }) {
             return (
               <article
                 key={ev._id}
-                className="rounded-3xl glass-panel overflow-hidden glass-card-hover border border-white/60 relative"
+                className="rounded-3xl glass-panel overflow-hidden glass-card-hover glow-hover border border-white/60 relative"
                 style={{
                   opacity: isPast ? 0.52 : 1,
                   filter: isPast ? "grayscale(45%)" : "none",
