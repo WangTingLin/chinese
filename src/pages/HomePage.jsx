@@ -357,6 +357,9 @@ export default function HomePage({
   const nextCatActivityRef = React.useRef(() => {});
   const prevCatActivityRef = React.useRef(() => {});
   const showListSheetRef   = React.useRef(false);
+  // Web Push 訂閱狀態（PWA 用）
+  const [pushSubscribed, setPushSubscribed] = React.useState(() => !!localStorage.getItem("csl_push_subscribed_v1"));
+  const [pushLoading, setPushLoading]       = React.useState(false);
   const displayListRef     = React.useRef([]);
 
   /* listPage 重設 */
@@ -646,6 +649,64 @@ export default function HomePage({
     if (!card) return;
     card.style.transition = transition;
     card.style.transform  = x === 0 ? "" : `translateX(${x}px)`;
+  };
+
+  /* ── Web Push 訂閱（PWA 版）── */
+  const VAPID_PUBLIC_KEY = "BGYrqcpJtlqVFd1rSWhLxLA2bUZX2P67ftgZQUHN_9ygRP8qBjlw3NE0c21WdbQfJYESwLJIdJ2GkpAUlnX-Q5k";
+
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  };
+
+  const subscribePush = async () => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      alert("您的瀏覽器不支援推播通知");
+      return;
+    }
+    setPushLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") { setPushLoading(false); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub.toJSON(), action: "subscribe" }),
+      });
+      localStorage.setItem("csl_push_subscribed_v1", "1");
+      setPushSubscribed(true);
+    } catch (e) {
+      console.error("訂閱失敗:", e);
+    }
+    setPushLoading(false);
+  };
+
+  const unsubscribePush = async () => {
+    setPushLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: sub.toJSON(), action: "unsubscribe" }),
+        });
+        await sub.unsubscribe();
+      }
+      localStorage.removeItem("csl_push_subscribed_v1");
+      setPushSubscribed(false);
+    } catch (e) {
+      console.error("取消訂閱失敗:", e);
+    }
+    setPushLoading(false);
   };
 
   /* ================= App 版（native）專屬首頁 ================= */
@@ -2264,12 +2325,38 @@ export default function HomePage({
               即將舉辦活動
             </div>
 
-            <button
-              onClick={() => setPage("activities")}
-              className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity mt-1 shrink-0"
-            >
-              查看全部 <Icon name="ChevronRight" size={16} />
-            </button>
+            <div className="flex items-center gap-2 mt-1 shrink-0">
+              {"Notification" in window && (
+                <button
+                  onClick={pushSubscribed ? unsubscribePush : subscribePush}
+                  disabled={pushLoading}
+                  title={pushSubscribed ? "取消活動通知訂閱" : "訂閱每日活動通知"}
+                  className="flex items-center gap-1 text-sm font-sans px-3 py-1 rounded-full border transition-all"
+                  style={{
+                    background: pushSubscribed
+                      ? (isDarkMode ? "rgba(251,191,36,0.15)" : "rgba(251,191,36,0.12)")
+                      : (isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"),
+                    color: pushSubscribed
+                      ? "#fbbf24"
+                      : (isDarkMode ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)"),
+                    borderColor: pushSubscribed
+                      ? "rgba(251,191,36,0.4)"
+                      : (isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)"),
+                    opacity: pushLoading ? 0.5 : 1,
+                    cursor: pushLoading ? "wait" : "pointer",
+                  }}
+                >
+                  <Icon name={pushSubscribed ? "Bell" : "BellOff"} size={13} />
+                  {pushLoading ? "處理中…" : pushSubscribed ? "通知已開啟" : "訂閱通知"}
+                </button>
+              )}
+              <button
+                onClick={() => setPage("activities")}
+                className="text-sm font-sans flex items-center gap-1 theme-text-secondary opacity-50 hover:opacity-100 transition-opacity"
+              >
+                查看全部 <Icon name="ChevronRight" size={16} />
+              </button>
+            </div>
           </div>
 
           {upcomingActivities.length === 0 ? (

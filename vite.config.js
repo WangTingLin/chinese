@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo.svg'],
       manifest: {
@@ -34,27 +37,8 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: { cacheName: 'gstatic-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 } },
-          },
-          {
-            urlPattern: /^https:\/\/.*\.apicdn\.sanity\.io\/.*/i,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'sanity-api-cache', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 } },
-          },
-        ],
       },
     }),
   ],
