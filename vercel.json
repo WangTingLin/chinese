@@ -12,11 +12,5 @@
       "source": "/api/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/push/cron",
-      "schedule": "0 1 * * *"
-    }
   ]
 }
