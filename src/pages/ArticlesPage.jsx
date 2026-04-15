@@ -95,12 +95,33 @@ const ArticleSkeleton = () => (
   </div>
 );
 
-export default function ArticlesPage({ isDarkMode, initialArticleId }) {
+const RECENTLY_KEY = "csl_recently_read";
+const MAX_RECENT = 5;
+
+export default function ArticlesPage({ isDarkMode, initialArticleId, bookmarks = new Set(), toggleBookmark = () => {} }) {
   const [expandedId, setExpandedId] = useState(initialArticleId || null);
   const [filterCat, setFilterCat] = useState("全部");
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const activeArticleRef = useRef(null);
+
+  /* 最近閱讀 */
+  const [recentIds, setRecentIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(RECENTLY_KEY) || '[]'); }
+    catch { return []; }
+  });
+  const addRecent = (id) => {
+    setRecentIds(prev => {
+      const next = [id, ...prev.filter(x => x !== id)].slice(0, MAX_RECENT);
+      localStorage.setItem(RECENTLY_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  /* 展開文章時記錄最近閱讀 */
+  useEffect(() => {
+    if (expandedId) addRecent(expandedId);
+  }, [expandedId]);
 
   useEffect(() => {
     client.fetch(`*[_type == "article" && category != "讀書會紀錄"] | order(date desc) {
@@ -158,7 +179,7 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
   const catColors = getCategoryColors(isDarkMode);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10 space-y-10">
+    <div className="w-full page-enter-right relative z-10 space-y-10">
       <PageHeader title="文章專欄" />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {[1, 2, 3, 4].map(i => <ArticleSkeleton key={i} />)}
@@ -166,7 +187,12 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
     </div>
   );
 
-  const filteredArticles = filterCat === "全部" ? articles : articles.filter(a => a.category === filterCat);
+  const filteredArticles = (() => {
+    if (filterCat === "全部") return articles;
+    if (filterCat === "已收藏") return articles.filter(a => bookmarks.has(a._id));
+    if (filterCat === "最近閱讀") return recentIds.map(id => articles.find(a => a._id === id)).filter(Boolean);
+    return articles.filter(a => a.category === filterCat);
+  })();
   const displayArticles = [...filteredArticles];
 
   const openArticle = displayArticles.find(a => a._id === expandedId);
@@ -178,13 +204,17 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
         <ReadingProgress targetRef={activeArticleRef} color={activeCatColor.color} isDarkMode={isDarkMode} />
       )}
       
-      <div className="w-full space-y-10 animate-fade-in relative z-10">
+      <div className="w-full space-y-10 page-enter-right stagger relative z-10">
         <PageHeader title="文章專欄" />
 
         <div className="flex flex-wrap gap-2 justify-center">
-          {categories.map(cat => {
+          {[...categories,
+            ...(bookmarks.size > 0 ? ["已收藏"] : []),
+            ...(recentIds.length > 0 ? ["最近閱讀"] : []),
+          ].map(cat => {
             const isActive = filterCat === cat;
             const cColor = catColors[cat];
+            const isSpecial = cat === "已收藏" || cat === "最近閱讀";
 
             return (
               <button
@@ -192,19 +222,22 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
                 onClick={() => setFilterCat(cat)}
                 className="px-4 py-1.5 rounded-full text-sm font-medium font-sans border spring-transition hover:scale-105 active:scale-95"
                 style={isActive
-                  ? { 
-                      background: cat === "全部" ? "var(--c-nav-active-bg)" : cColor?.color || "var(--c-primary)", 
-                      color: "#fff", 
-                      borderColor: cat === "全部" ? "var(--c-nav-active-border)" : cColor?.color || "var(--c-primary)", 
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)" 
+                  ? {
+                      background: isSpecial ? "var(--c-nav-active-bg)" : (cat === "全部" ? "var(--c-nav-active-bg)" : cColor?.color || "var(--c-primary)"),
+                      color: "#fff",
+                      borderColor: isSpecial ? "var(--c-nav-active-border)" : (cat === "全部" ? "var(--c-nav-active-border)" : cColor?.color || "var(--c-primary)"),
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
                     }
-                  : { 
-                      background: "rgba(var(--c-panel-rgb), 0.4)", 
-                      borderColor: "rgba(var(--c-border-rgb), 0.6)", 
-                      color: "var(--c-text-secondary)" 
+                  : {
+                      background: "rgba(var(--c-panel-rgb), 0.4)",
+                      borderColor: "rgba(var(--c-border-rgb), 0.6)",
+                      color: "var(--c-text-secondary)"
                     }}
               >
+                {cat === "已收藏" && <Icon name="BookmarkFill" size={12} className="inline mr-1 opacity-80" />}
+                {cat === "最近閱讀" && <Icon name="History" size={12} className="inline mr-1 opacity-80" />}
                 {CATEGORY_DISPLAY[cat] ?? cat}
+                {cat === "已收藏" && bookmarks.size > 0 && <span className="ml-1 opacity-70">({bookmarks.size})</span>}
               </button>
             )
           })}
@@ -241,6 +274,16 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
                         <span className="text-xs md:text-sm font-mono flex items-center gap-1.5 theme-text-secondary opacity-70">
                           <Icon name="Calendar" size={14} /> {a.date}
                         </span>
+                        {/* 書籤 */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleBookmark(a._id); }}
+                          title={bookmarks.has(a._id) ? "取消收藏" : "收藏文章"}
+                          aria-label={bookmarks.has(a._id) ? "取消收藏" : "收藏文章"}
+                          className="spring-transition hover:scale-110 active:scale-90"
+                          style={{ background: "none", border: "none", cursor: "pointer", padding: "0.2rem", color: bookmarks.has(a._id) ? "var(--c-accent)" : "var(--c-text-secondary)", opacity: bookmarks.has(a._id) ? 1 : 0.5, display: "flex" }}
+                        >
+                          <Icon name={bookmarks.has(a._id) ? "BookmarkFill" : "Bookmark"} size={16} />
+                        </button>
                       </div>
                     </div>
 
@@ -327,7 +370,7 @@ export default function ArticlesPage({ isDarkMode, initialArticleId }) {
                           })()}
 
                           {/* 左側：文章內容 */}
-                          <div className="flex-1 min-w-0 w-full space-y-6 font-serif text-[1.05rem] md:text-lg leading-loose content-justify theme-text">
+                          <div className="flex-1 min-w-0 w-full space-y-6 font-serif leading-loose content-justify theme-text" style={{ fontSize: "var(--fs-article, 1.05rem)" }}>
                             {(a.blocks || []).length === 0 ? (
                               <div className="text-center opacity-60 text-base py-10 bg-white/30 rounded-2xl border border-white/40">
                                 （此文尚未填入全文內容）

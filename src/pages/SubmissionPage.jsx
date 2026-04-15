@@ -6,7 +6,7 @@ import { Icon, PageHeader } from '../App';
 
 export default function SubmissionPage() {
   return (
-    <div className="w-full space-y-12 animate-fade-in relative z-10">
+    <div className="w-full space-y-12 page-enter-up stagger relative z-10">
       <PageHeader title="投稿須知" />
       <div className="p-6 md:p-12 rounded-3xl glass-panel leading-relaxed space-y-10 theme-text max-w-4xl mx-auto">
         <section>

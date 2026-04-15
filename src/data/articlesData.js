@@ -1895,11 +1895,12 @@ export const columnArticles = [
   // 如果還有其他文章，請繼續加在這裡...
 ];
 
-export const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書會紀錄", "文學創作"];
+export const FIXED_CATEGORIES = ["全部", "學術筆記", "讀書心得", "文學創作"];
 
 export const getCategoryColors = (isDark) => ({
   "學術筆記": { bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)", color: isDark ? "#93c5fd" : "#1e40af", border: isDark ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)" },
   "學術隨筆": { bg: isDark ? "rgba(59,130,246,0.2)" : "rgba(59,130,246,0.12)", color: isDark ? "#93c5fd" : "#1e40af", border: isDark ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.3)" },
+  "讀書心得": { bg: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)", color: isDark ? "#86efac" : "#166534", border: isDark ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)" },
   "讀書會紀錄": { bg: isDark ? "rgba(34,197,94,0.2)" : "rgba(34,197,94,0.12)", color: isDark ? "#86efac" : "#166534", border: isDark ? "rgba(34,197,94,0.4)" : "rgba(34,197,94,0.3)" },
   "文學創作": { bg: isDark ? "rgba(244,63,94,0.2)" : "rgba(244,63,94,0.12)", color: isDark ? "#fda4af" : "#9f1239", border: isDark ? "rgba(244,63,94,0.4)" : "rgba(244,63,94,0.3)" },
 });

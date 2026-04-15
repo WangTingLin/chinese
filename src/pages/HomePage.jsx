@@ -1,5 +1,6 @@
 // 檔案路徑：src/pages/HomePage.jsx
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 /* Sanity Image CDN 轉換 — 自動縮尺寸、轉 WebP */
 const sanityImg = (url, { w, h, q = 75, fm = "webp", fit } = {}) => {
@@ -17,6 +18,8 @@ const sanityImg = (url, { w, h, q = 75, fm = "webp", fit } = {}) => {
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { Icon } from "../App";
 import { getCategoryColors } from "../data/articlesData";
 import { NavCardPattern, HeroMedallion } from "../components/ClassicalDecoration";
@@ -30,10 +33,12 @@ export default function HomePage({
   isDarkMode,
   isNative = false,
   nativeCategory = "lecture",
+  setNativeCategory = null,
   articles = [],
   events = [],
   activities = [],
   loading = false,
+  onRefresh = null,
 }) {
   /* ================= 最新文章 ================= */
   const latestArticle =
@@ -152,6 +157,7 @@ export default function HomePage({
   const [filterDateFrom,  setFilterDateFrom]  = useState("");
   const [filterDateTo,    setFilterDateTo]    = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [showEventDetail, setShowEventDetail] = useState(false);
 
   /* 依偏好評分重排 workshop/submission（與 lecture 相同邏輯）*/
   const rankedWorkshopActivities = useMemo(() => {
@@ -170,9 +176,25 @@ export default function HomePage({
     });
   }, [submissionActivities, userPrefs]);
 
+  const rankedAllActivities = useMemo(() => {
+    if (!userPrefs || userPrefs.length === 0) return upcomingActivities;
+    return [...upcomingActivities].sort((a, b) => {
+      const diff = scoreActivity(b, userPrefs) - scoreActivity(a, userPrefs);
+      return diff !== 0 ? diff : parseEventDate(a.date) - parseEventDate(b.date);
+    });
+  }, [upcomingActivities, userPrefs]);
+
+  /* 從月曆跳轉：存放目標 index（繞過 nativeCategory effect 的 reset）*/
+  const pendingJumpRef = React.useRef(null);
+
   /* 切換 Tab 或篩選條件改變時，重置輪播到第一筆 */
   useEffect(() => {
-    setCurrentActivityIndex(0);
+    if (pendingJumpRef.current !== null) {
+      setCurrentActivityIndex(pendingJumpRef.current);
+      pendingJumpRef.current = null;
+    } else {
+      setCurrentActivityIndex(0);
+    }
   }, [nativeCategory]);
   useEffect(() => {
     setCurrentActivityIndex(0);
@@ -325,6 +347,14 @@ export default function HomePage({
   const [prefsSheetSelected, setPrefsSheetSelected] = React.useState([]);
   const [listPage, setListPage]                     = React.useState(1);
   const [calMenuEv, setCalMenuEv]                   = React.useState(null); // 行事曆選單目標活動
+  const [showCalSheet, setShowCalSheet]             = React.useState(false); // 月曆視圖
+  const [calSheetMonth, setCalSheetMonth]           = React.useState(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
+  const [scheduledIds, setScheduledIds]             = React.useState(() => { try { return JSON.parse(localStorage.getItem("csl_notif_ids_v1") || "{}"); } catch { return {}; } });
+  const [calSelectedDay, setCalSelectedDay]         = React.useState(null);
+  const [refreshing, setRefreshing]               = React.useState(false);
+  const [reminderOffset, setReminderOffset]       = React.useState(() => localStorage.getItem("csl_reminder_offset_v1") || "day1");
+  const [showReminderSheet, setShowReminderSheet] = React.useState(false);
+  const [reminderSheetEv, setReminderSheetEv]     = React.useState(null);
   const totalInCategoryRef = React.useRef(0);
   const nextCatActivityRef = React.useRef(() => {});
   const prevCatActivityRef = React.useRef(() => {});
@@ -630,9 +660,254 @@ export default function HomePage({
     ];
     const panelBg = "#1c1c1e";
 
+    /* ── Haptic helpers ── */
+    const hapticLight  = () => Haptics.impact({ style: ImpactStyle.Light  }).catch(() => {});
+    const hapticMedium = () => Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+
+    /* ── 開地圖（線上活動改開活動連結）── */
+    const ONLINE_KEYWORDS = ["線上","online","zoom","meet","teams","webex","youtube","youtu.be","http","https","視訊","遠距"];
+    const isOnlineLocation = (loc) => {
+      if (!loc) return false;
+      const lower = loc.toLowerCase();
+      return ONLINE_KEYWORDS.some(kw => lower.includes(kw));
+    };
+    const openLocation = (location, link) => {
+      if (!location) return;
+      hapticLight();
+      if (isOnlineLocation(location)) {
+        // 線上活動：開活動連結
+        const url = link || (location.startsWith("http") ? location : null);
+        if (url) window.open(url, "_blank");
+        return;
+      }
+      const q = encodeURIComponent(location);
+      const isIOS = Capacitor.getPlatform() === "ios";
+      window.open(
+        isIOS
+          ? `https://maps.apple.com/?q=${q}`
+          : `https://www.google.com/maps/search/?api=1&query=${q}`,
+        "_blank"
+      );
+    };
+
+    /* ── 本地通知 ── */
+    const NOTIF_KEY = "csl_notif_ids_v1";
+    const saveScheduledIds = (ids) => {
+      localStorage.setItem(NOTIF_KEY, JSON.stringify(ids));
+      setScheduledIds(ids);
+    };
+    const isReminderSet = (evId) => !!scheduledIds[evId];
+
+    const toggleReminder = async (ev) => {
+      hapticMedium();
+      try {
+        const perm = await LocalNotifications.requestPermissions();
+        if (perm.display !== "granted") return;
+
+        if (isReminderSet(ev._id)) {
+          // 取消提醒
+          const id = scheduledIds[ev._id];
+          await LocalNotifications.cancel({ notifications: [{ id }] }).catch(() => {});
+          const next = { ...scheduledIds };
+          delete next[ev._id];
+          saveScheduledIds(next);
+          return;
+        }
+
+        // 解析活動時間
+        const dateStr = ev.date?.trim() || "";
+        const firstPart = dateStr.split(/[~,～，]/)[0].trim();
+        const [datePart, timePart] = firstPart.split(" ");
+        if (!datePart) return;
+        const startTime = timePart ? timePart.split("-")[0] : "09:00";
+        const eventDate = new Date(`${datePart}T${startTime}:00`);
+        if (isNaN(eventDate)) return;
+
+        // 提前 1 天 09:00 提醒
+        const notifAt = new Date(eventDate);
+        notifAt.setDate(notifAt.getDate() - 1);
+        notifAt.setHours(9, 0, 0, 0);
+        if (notifAt <= new Date()) {
+          // 若提前時間已過，改為活動當天 09:00
+          notifAt.setDate(notifAt.getDate() + 1);
+          if (notifAt <= new Date()) return; // 也過了就不排
+        }
+
+        const id = Math.floor(Math.random() * 2_000_000_000);
+        await LocalNotifications.schedule({
+          notifications: [{
+            id,
+            title: "📅 明日活動提醒",
+            body: ev.title + (ev.location ? `\n📍 ${ev.location}` : ""),
+            schedule: { at: notifAt },
+            sound: "default",
+            smallIcon: "ic_notification",
+          }],
+        });
+        saveScheduledIds({ ...scheduledIds, [ev._id]: id });
+      } catch (e) {
+        console.error("通知排程失敗:", e);
+      }
+    };
 
 
+    /* ── 提醒時間選項 ── */
+    const REMINDER_OPTS = [
+      { id: "day3",  label: "前 3 天", desc: "活動前 3 天 09:00" },
+      { id: "day1",  label: "前一天",  desc: "活動前一天 09:00" },
+      { id: "hour2", label: "前 2 小時", desc: "活動開始前 2 小時" },
+      { id: "hour1", label: "前 1 小時", desc: "活動開始前 1 小時" },
+    ];
+    const saveReminderOffset = (id) => {
+      localStorage.setItem("csl_reminder_offset_v1", id);
+      setReminderOffset(id);
+    };
 
+    /* ── 計算提醒時間（依 reminderOffset）── */
+    const calcNotifAt = (ev, offset) => {
+      const dateStr = ev.date?.trim() || "";
+      const firstPart = dateStr.split(/[~,～，]/)[0].trim();
+      const [datePart, timePart] = firstPart.split(" ");
+      if (!datePart) return null;
+      const startTime = timePart ? timePart.split("-")[0] : "09:00";
+      const eventDate = new Date(`${datePart}T${startTime}:00`);
+      if (isNaN(eventDate)) return null;
+      const notifAt = new Date(eventDate);
+      if (offset === "day3") { notifAt.setDate(notifAt.getDate() - 3); notifAt.setHours(9, 0, 0, 0); }
+      else if (offset === "day1") { notifAt.setDate(notifAt.getDate() - 1); notifAt.setHours(9, 0, 0, 0); }
+      else if (offset === "hour2") { notifAt.setTime(notifAt.getTime() - 2 * 60 * 60 * 1000); }
+      else if (offset === "hour1") { notifAt.setTime(notifAt.getTime() - 60 * 60 * 1000); }
+      if (notifAt <= new Date()) return null;
+      return notifAt;
+    };
+
+    /* ── 修改 toggleReminder 改為先選時間 ── */
+    const openReminderSheet = (ev) => {
+      hapticLight();
+      if (isReminderSet(ev._id)) {
+        // 已設定 → 直接取消
+        toggleReminder(ev);
+      } else {
+        setReminderSheetEv(ev);
+        setShowReminderSheet(true);
+      }
+    };
+    const scheduleReminderWithOffset = async (ev, offset) => {
+      hapticMedium();
+      try {
+        const perm = await LocalNotifications.requestPermissions();
+        if (perm.display !== "granted") return;
+        const notifAt = calcNotifAt(ev, offset);
+        if (!notifAt) { setShowReminderSheet(false); return; }
+        const id = Math.floor(Math.random() * 2_000_000_000);
+        await LocalNotifications.schedule({
+          notifications: [{
+            id,
+            title: "📅 活動提醒",
+            body: ev.title + (ev.location ? `\n📍 ${ev.location}` : ""),
+            schedule: { at: notifAt },
+            sound: "default",
+            smallIcon: "ic_notification",
+          }],
+        });
+        saveScheduledIds({ ...scheduledIds, [ev._id]: id });
+        saveReminderOffset(offset);
+      } catch (e) { console.error("通知排程失敗:", e); }
+      setShowReminderSheet(false);
+    };
+
+    /* ── 活動倒數 ── */
+    const getCountdown = (dateStr) => {
+      if (!dateStr) return null;
+      const trimmed = dateStr.trim();
+      const firstPart = trimmed.split(/[~,～，]/)[0].trim();
+      const [datePart] = firstPart.split(" ");
+      if (!datePart) return null;
+      const parts = datePart.split("-").map(Number);
+      if (parts.length < 3 || parts.some(isNaN)) return null;
+      const [y, mo, d] = parts;
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const eventMidnight = new Date(y, mo - 1, d);
+      if (isNaN(eventMidnight)) return null;
+      const diffDays = Math.round((eventMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return null; // 已過
+      if (diffDays === 0) return { label: "今天", color: "#ef4444", urgent: true };
+      if (diffDays === 1) return { label: "明天", color: "#f97316", urgent: true };
+      if (diffDays <= 3) return { label: `還有 ${diffDays} 天`, color: "#fbbf24", urgent: true };
+      if (diffDays <= 7) return { label: `還有 ${diffDays} 天`, color: "rgba(255,255,255,0.45)", urgent: false };
+      return null;
+    };
+
+    /* ── 徵稿截止倒數（3天內紅色警示）── */
+    const getDeadlineWarning = (ev) => {
+      if (ev.category !== "徵稿資訊") return null;
+      const cnt = getCountdown(ev.date);
+      if (!cnt || !cnt.urgent) return null;
+      return cnt;
+    };
+
+    /* ── 從月曆跳轉到精選卡片 ── */
+    const jumpToCalendarActivity = (ev) => {
+      hapticLight();
+      setShowCalSheet(false);
+      setCalSelectedDay(null);
+      setShowListSheet(false);
+      if (!ev?._id) return;
+      const catKey =
+        ev.category === "學術講座" ? "lecture"
+        : (ev.category === "研討會／工作坊" || ev.category === "研討會/工作坊") ? "workshop"
+        : ev.category === "徵稿資訊" ? "submission"
+        : "all";
+      const getTargetList = (key) => {
+        if (sortByDate) {
+          if (key === "lecture") return lectureActivities;
+          if (key === "workshop") return workshopActivities;
+          if (key === "submission") return submissionActivities;
+          return upcomingActivities;
+        }
+        if (key === "lecture") return rankedLectureActivities;
+        if (key === "workshop") return rankedWorkshopActivities;
+        if (key === "submission") return rankedSubmissionActivities;
+        return rankedAllActivities;
+      };
+      const idx = Math.max(0, getTargetList(catKey).findIndex(a => a._id === ev._id));
+      if (catKey === nativeCategory) {
+        setCurrentActivityIndex(idx);
+      } else {
+        pendingJumpRef.current = idx;
+        setNativeCategory?.(catKey);
+      }
+    };
+
+    /* ── 批量提醒 ── */
+    const setBatchReminders = async (list) => {
+      hapticMedium();
+      try {
+        const perm = await LocalNotifications.requestPermissions();
+        if (perm.display !== "granted") return;
+        const newIds = { ...scheduledIds };
+        const toSchedule = [];
+        list.forEach(ev => {
+          if (isReminderSet(ev._id)) return;
+          const notifAt = calcNotifAt(ev, reminderOffset);
+          if (!notifAt) return;
+          const id = Math.floor(Math.random() * 2_000_000_000);
+          newIds[ev._id] = id;
+          toSchedule.push({
+            id, title: "📅 活動提醒",
+            body: ev.title,
+            schedule: { at: notifAt },
+            sound: "default",
+            smallIcon: "ic_notification",
+          });
+        });
+        if (toSchedule.length > 0) {
+          await LocalNotifications.schedule({ notifications: toSchedule });
+          saveScheduledIds(newIds);
+        }
+      } catch (e) { console.error("批量提醒失敗:", e); }
+    };
 
     /* ── 資料載入中：骨架畫面（splash 消失後萬一資料還未到）── */
     if (loading) {
@@ -760,6 +1035,7 @@ export default function HomePage({
 
     /* ── 目前分類對應的活動列表（依偏好或時間排序）── */
     const categoryList =
+      nativeCategory === "all"        ? (sortByDate ? upcomingActivities   : rankedAllActivities)        :
       nativeCategory === "lecture"    ? (sortByDate ? lectureActivities    : rankedLectureActivities)    :
       nativeCategory === "workshop"   ? (sortByDate ? workshopActivities   : rankedWorkshopActivities)   :
       (sortByDate ? submissionActivities : rankedSubmissionActivities);
@@ -920,8 +1196,9 @@ export default function HomePage({
               className="list-item-in"
               onClick={onSelect ? () => onSelect(ev) : undefined}
               style={{
-                padding: "1.1rem 1.25rem",
+                padding: "1.1rem 1.25rem 1.1rem 1.5rem",
                 borderBottom: i < list.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                borderLeft: `3px solid ${ev.category === "學術講座" ? "#60a5fa" : ev.category?.includes("研討") || ev.category?.includes("工作坊") ? "#4ade80" : ev.category === "徵稿資訊" ? "#fbbf24" : "#a78bfa"}`,
                 animationDelay: `${Math.min(i * 0.065, 0.45)}s`,
                 cursor: onSelect ? "pointer" : undefined,
               }}
@@ -945,6 +1222,14 @@ export default function HomePage({
                   <h3 style={{ color: "#fff", fontSize: "0.93rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.2rem", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {ev.title}
                   </h3>
+                  {/* 倒數標籤 */}
+                  {(() => {
+                    const cnt = getCountdown(ev.date);
+                    const dw = getDeadlineWarning(ev);
+                    const badge = dw || cnt;
+                    if (!badge) return null;
+                    return <span style={{ display: "inline-flex", fontSize: "0.68rem", fontWeight: 700, color: badge.color, background: `${badge.color}22`, border: `1px solid ${badge.color}44`, borderRadius: "0.4rem", padding: "0.1rem 0.45rem", marginBottom: "0.2rem" }}>{dw ? "⚠ " : ""}{badge.label}</span>;
+                  })()}
                   {ev.date     && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.1rem" }}>📅 {ev.date}</p>}
                   {ev.location && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.1rem" }}>📍 {ev.location}</p>}
                   {ev.speaker  && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "0.73rem", fontFamily: "'Noto Sans TC',sans-serif" }}>🎤 {ev.speaker}</p>}
@@ -980,6 +1265,11 @@ export default function HomePage({
                 >
                   <Icon name="Share" size={15} />
                 </button>
+                {isReminderSet(ev._id) && (
+                  <div style={{ flexShrink: 0, padding: "0.6rem 0.6rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#fbbf24" }}>
+                    <Icon name="Bell" size={13} />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -988,7 +1278,8 @@ export default function HomePage({
     );
 
     /* ── 分類名稱與列表標題 ── */
-    const catLabel = nativeCategory === "lecture" ? "學術講座" :
+    const catLabel = nativeCategory === "all"      ? "全部活動" :
+                     nativeCategory === "lecture"  ? "學術講座" :
                      nativeCategory === "workshop" ? "研討會／工作坊" : "徵稿資訊";
     const listHeader =
       sortByDate ? `全部${catLabel}（依時間）` :
@@ -1084,25 +1375,51 @@ export default function HomePage({
                 <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", lineHeight: 1.35, marginBottom: "0.5rem", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {currentActivity.title}
                 </h2>
+                {(() => {
+                  const cnt = getCountdown(currentActivity.date);
+                  const dw = getDeadlineWarning(currentActivity);
+                  if (!cnt && !dw) return null;
+                  const badge = dw || cnt;
+                  return (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.75rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", color: badge.color, background: `${badge.color}22`, border: `1px solid ${badge.color}55`, borderRadius: "0.5rem", padding: "0.2rem 0.6rem", marginBottom: "0.4rem" }}>
+                      {dw ? "⚠ 截止" : "⏰"} {badge.label}
+                    </span>
+                  );
+                })()}
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", color: "rgba(255,255,255,0.48)", fontSize: "0.82rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "1rem" }}>
                   {currentActivity.date     && <span>📅 {currentActivity.date}</span>}
-                  {currentActivity.location && <span>📍 {currentActivity.location}</span>}
+                  {currentActivity.location && (
+                    <button
+                      onClick={() => openLocation(currentActivity.location, currentActivity.link)}
+                      style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit", textAlign: "left", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.2)", textUnderlineOffset: "2px" }}
+                    >
+                      {isOnlineLocation(currentActivity.location) ? "💻" : "📍"} {currentActivity.location}
+                    </button>
+                  )}
                   {currentActivity.speaker  && <span>🎤 {currentActivity.speaker}</span>}
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.65rem" }}>
                   {currentActivity?.link && (
                     <a href={currentActivity.link} target="_blank" rel="noopener noreferrer"
                       className="native-btn"
+                      onClick={() => hapticLight()}
                       style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", background: "rgba(255,255,255,0.13)", color: "#fff", textDecoration: "none" }}
                     >
                       <Icon name="ExternalLink" size={17} /> 活動詳情
                     </a>
                   )}
-                  <button onClick={() => addToCalendar(currentActivity)}
+                  <button onClick={() => { hapticLight(); addToCalendar(currentActivity); }}
                     className="native-btn"
                     style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", background: "rgba(255,255,255,0.92)", color: "#1c1c1e", border: "none", cursor: "pointer" }}
                   >
                     <Icon name="Calendar" size={17} /> 加入行事曆
+                  </button>
+                  <button onClick={() => openReminderSheet(currentActivity)}
+                    className="native-btn"
+                    title={isReminderSet(currentActivity._id) ? "取消提醒" : "設定提醒"}
+                    style={{ flexShrink: 0, padding: "0.85rem 1rem", borderRadius: "1rem", fontWeight: 700, fontFamily: "'Noto Sans TC',sans-serif", fontSize: "0.93rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", background: isReminderSet(currentActivity._id) ? "rgba(251,191,36,0.22)" : "rgba(255,255,255,0.1)", color: isReminderSet(currentActivity._id) ? "#fbbf24" : "rgba(255,255,255,0.55)", border: `1px solid ${isReminderSet(currentActivity._id) ? "rgba(251,191,36,0.5)" : "rgba(255,255,255,0.12)"}`, cursor: "pointer" }}
+                  >
+                    <Icon name={isReminderSet(currentActivity._id) ? "BellOff" : "Bell"} size={17} />
                   </button>
                 </div>
               </div>
@@ -1112,11 +1429,12 @@ export default function HomePage({
               </p>
             )}
 
-            {/* 偏好設定 ＋ 時間排序 ＋ 搜尋篩選（三個小按鈕並排）*/}
+            {/* 底部操作列（三個按鈕）*/}
             <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.55rem" }}>
+              {/* 偏好設定 */}
               <button
                 className="native-btn"
-                onClick={() => { setPrefsSheetSelected(userPrefs || []); setShowPrefsSheet(true); }}
+                onClick={() => { hapticLight(); setPrefsSheetSelected(userPrefs || []); setShowPrefsSheet(true); }}
                 style={{
                   flex: 1, padding: "0.55rem 0.7rem", borderRadius: "0.85rem",
                   border: "1px solid rgba(255,255,255,0.12)",
@@ -1134,39 +1452,40 @@ export default function HomePage({
                     : "設定偏好"}
                 </span>
               </button>
+              {/* 月曆 */}
               <button
                 className="native-btn"
-                onClick={() => setSortByDate(s => !s)}
+                onClick={() => { hapticLight(); setCalSheetMonth({ y: new Date().getFullYear(), m: new Date().getMonth() }); setShowCalSheet(true); }}
                 style={{
                   flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
-                  border: `1px solid ${sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
-                  background: sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
-                  color: sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.4)",
                   fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
                   display: "flex", alignItems: "center", gap: "0.3rem",
                   cursor: "pointer",
                 }}
               >
-                <Icon name="Clock" size={13} />
-                時間
+                <Icon name="CalendarDays" size={13} />
+                月曆
               </button>
-              {/* 搜尋篩選按鈕（有篩選條件時高亮）*/}
+              {/* 篩選（有條件時高亮；長按切換時間排序）*/}
               <button
                 className="native-btn"
-                onClick={() => setShowFilterSheet(true)}
+                onClick={() => { hapticLight(); setShowFilterSheet(true); }}
                 style={{
                   flexShrink: 0, padding: "0.55rem 0.85rem", borderRadius: "0.85rem",
-                  border: `1px solid ${hasActiveFilter ? "rgba(251,191,36,0.7)" : "rgba(255,255,255,0.12)"}`,
-                  background: hasActiveFilter ? "rgba(251,191,36,0.14)" : "transparent",
-                  color: hasActiveFilter ? "#fbbf24" : "rgba(255,255,255,0.4)",
+                  border: `1px solid ${hasActiveFilter || sortByDate ? "rgba(251,191,36,0.7)" : "rgba(255,255,255,0.12)"}`,
+                  background: hasActiveFilter || sortByDate ? "rgba(251,191,36,0.14)" : "transparent",
+                  color: hasActiveFilter || sortByDate ? "#fbbf24" : "rgba(255,255,255,0.4)",
                   fontSize: "0.78rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600,
                   display: "flex", alignItems: "center", gap: "0.3rem",
                   cursor: "pointer", position: "relative",
                 }}
               >
                 <Icon name="Search" size={13} />
-                搜尋
-                {hasActiveFilter && (
+                篩選
+                {(hasActiveFilter || sortByDate) && (
                   <span style={{
                     position: "absolute", top: -4, right: -4,
                     width: 8, height: 8, borderRadius: "50%",
@@ -1311,6 +1630,41 @@ export default function HomePage({
                 />
               </div>
 
+              {/* 排序方式 */}
+              <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>
+                排序方式
+              </p>
+              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+                <button
+                  className="native-btn"
+                  onClick={() => { hapticLight(); setSortByDate(false); }}
+                  style={{
+                    flex: 1, padding: "0.6rem 0", borderRadius: "0.75rem",
+                    border: `1px solid ${!sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
+                    background: !sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
+                    color: !sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
+                    fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer",
+                  }}
+                >
+                  推薦排序
+                </button>
+                <button
+                  className="native-btn"
+                  onClick={() => { hapticLight(); setSortByDate(true); }}
+                  style={{
+                    flex: 1, padding: "0.6rem 0", borderRadius: "0.75rem",
+                    border: `1px solid ${sortByDate ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)"}`,
+                    background: sortByDate ? "rgba(255,255,255,0.14)" : "transparent",
+                    color: sortByDate ? "#fff" : "rgba(255,255,255,0.4)",
+                    fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem",
+                  }}
+                >
+                  <Icon name="Clock" size={13} />
+                  時間排序
+                </button>
+              </div>
+
               {/* 結果預覽 */}
               <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", marginBottom: "1.25rem" }}>
                 {filteredList.length > 0
@@ -1319,10 +1673,10 @@ export default function HomePage({
               </p>
 
               {/* 操作按鈕 */}
-              <div style={{ display: "flex", gap: "0.75rem" }}>
+              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
                 <button
                   className="native-btn"
-                  onClick={() => { setSearchQuery(""); setFilterDateFrom(""); setFilterDateTo(""); }}
+                  onClick={() => { setSearchQuery(""); setFilterDateFrom(""); setFilterDateTo(""); setSortByDate(false); }}
                   style={{
                     flex: 1, padding: "0.85rem 0", borderRadius: "1rem",
                     border: "1px solid rgba(255,255,255,0.15)", background: "transparent",
@@ -1345,6 +1699,21 @@ export default function HomePage({
                   {filteredList.length > 0 ? `顯示 ${filteredList.length} 筆結果` : "確認"}
                 </button>
               </div>
+              {/* 重新整理 */}
+              <button
+                className="native-btn"
+                onClick={() => { hapticLight(); setShowFilterSheet(false); if (onRefresh) { setRefreshing(true); onRefresh(); setTimeout(() => setRefreshing(false), 1500); } }}
+                style={{
+                  width: "100%", padding: "0.75rem 0", borderRadius: "1rem",
+                  border: "1px solid rgba(255,255,255,0.1)", background: "transparent",
+                  color: "rgba(255,255,255,0.35)", fontFamily: "'Noto Sans TC',sans-serif",
+                  fontWeight: 500, fontSize: "0.85rem", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem",
+                }}
+              >
+                <Icon name="History" size={14} />
+                重新整理資料
+              </button>
             </div>
           </div>
         )}
@@ -1410,8 +1779,12 @@ export default function HomePage({
                         )}
                       </>
                     : (
-                      <div style={{ textAlign: "center", padding: "4rem 2rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
-                        <p style={{ fontSize: "0.92rem" }}>目前沒有符合條件的活動</p>
+                      <div style={{ textAlign: "center", padding: "4rem 1.5rem", color: "rgba(255,255,255,0.28)", fontFamily: "'Noto Sans TC',sans-serif" }}>
+                        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔍</div>
+                        <p style={{ fontSize: "0.92rem", marginBottom: "0.5rem", color: "rgba(255,255,255,0.45)" }}>沒有符合條件的活動</p>
+                        <p style={{ fontSize: "0.78rem", lineHeight: 1.6 }}>
+                          試試調整搜尋關鍵字<br />或清除日期篩選條件
+                        </p>
                       </div>
                     )
                   }
@@ -1465,6 +1838,16 @@ export default function HomePage({
                   );
                 })}
               </div>
+              {/* 批量提醒 */}
+              <div style={{ paddingTop: "0.5rem", paddingBottom: "0.75rem", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "0.5rem" }}>
+                <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>
+                  一鍵提醒・{REMINDER_OPTS.find(o => o.id === reminderOffset)?.desc || "前一天 09:00"}
+                </p>
+                <button onClick={() => { setBatchReminders(displayList); setShowPrefsSheet(false); }}
+                  style={{ width: "100%", padding: "0.75rem", borderRadius: "0.85rem", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                  <Icon name="Bell" size={14} /> 對目前 {displayList.filter(ev => !isReminderSet(ev._id)).length} 個活動設提醒
+                </button>
+              </div>
               <div style={{ display: "flex", gap: "0.6rem", paddingTop: "1rem", flexShrink: 0 }}>
                 <button onClick={() => { savePrefs([]); setShowPrefsSheet(false); }}
                   style={{ flex: 1, padding: "0.85rem 0", borderRadius: "1rem", background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.88rem", cursor: "pointer" }}>
@@ -1475,6 +1858,35 @@ export default function HomePage({
                   {prefsSheetSelected.length > 0 ? `套用（${prefsSheetSelected.length} 項）` : "請選擇"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 提醒時間選擇 sheet ── */}
+        {showReminderSheet && reminderSheetEv && (
+          <div onClick={() => setShowReminderSheet(false)} style={{ position: "fixed", inset: 0, zIndex: 20001, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end" }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#2c2c2e", borderRadius: "1.4rem 1.4rem 0 0", padding: "0 1.25rem calc(env(safe-area-inset-bottom,0px) + 1.25rem)", animation: "sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1) both" }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 1rem" }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", textAlign: "center", marginBottom: "0.5rem" }}>
+                提醒時間
+              </p>
+              <p style={{ color: "#fff", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 700, textAlign: "center", marginBottom: "1.25rem", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {reminderSheetEv.title}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem", marginBottom: "0.75rem" }}>
+                {REMINDER_OPTS.map(opt => (
+                  <button key={opt.id} onClick={() => scheduleReminderWithOffset(reminderSheetEv, opt.id)}
+                    style={{ padding: "0.9rem 1.1rem", borderRadius: "1rem", background: opt.id === reminderOffset ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.07)", border: "none", color: opt.id === reminderOffset ? "#1c1c1e" : "#fff", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>{opt.label}</span>
+                    <span style={{ fontSize: "0.75rem", opacity: 0.55 }}>{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setShowReminderSheet(false)} style={{ width: "100%", padding: "0.75rem", borderRadius: "1rem", border: "none", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                取消
+              </button>
             </div>
           </div>
         )}
@@ -1544,12 +1956,340 @@ export default function HomePage({
             </div>
           </div>
         )}
+
+        {/* ── 月曆 sheet ── */}
+        {showCalSheet && (() => {
+          const { y, m } = calSheetMonth;
+          const monthLabel = `${y} 年 ${m + 1} 月`;
+          const firstDay = new Date(y, m, 1).getDay();
+          const daysInMonth = new Date(y, m + 1, 0).getDate();
+          const today = new Date();
+
+          const dayEventsMap = {};
+          upcomingActivities.forEach(ev => {
+            const ds = ev.date?.trim() || "";
+            const fp = ds.split(/[~,～，]/)[0].trim();
+            const dp = fp.split(" ")[0];
+            if (!dp) return;
+            try {
+              const d = new Date(dp + "T00:00:00");
+              if (d.getFullYear() === y && d.getMonth() === m) {
+                const day = d.getDate();
+                if (!dayEventsMap[day]) dayEventsMap[day] = [];
+                dayEventsMap[day].push(ev);
+              }
+            } catch {}
+          });
+
+          const weeks = [];
+          let cells = Array(firstDay).fill(null);
+          for (let d = 1; d <= daysInMonth; d++) {
+            cells.push(d);
+            if (cells.length === 7) { weeks.push(cells); cells = []; }
+          }
+          if (cells.length) { while (cells.length < 7) cells.push(null); weeks.push(cells); }
+
+          const prevMonth = () => { setCalSelectedDay(null); setCalSheetMonth(({ y, m }) => m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }); };
+          const nextMonth = () => { setCalSelectedDay(null); setCalSheetMonth(({ y, m }) => m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }); };
+
+          const catDot = (category) => {
+            if (category === "學術講座") return "#60a5fa";
+            if (category?.includes("工作坊") || category?.includes("研討")) return "#4ade80";
+            if (category === "徵稿資訊") return "#fbbf24";
+            return "#a78bfa";
+          };
+
+          return (
+            <div onClick={() => { setShowCalSheet(false); setCalSelectedDay(null); }} style={{ position: "fixed", inset: 0, zIndex: 20001, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "flex-end" }}>
+              <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#1c1c1e", borderRadius: "1.4rem 1.4rem 0 0", paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 1rem)", maxHeight: "88dvh", display: "flex", flexDirection: "column", animation: "slideUp 0.32s cubic-bezier(0.22,1,0.36,1)" }}>
+                <div style={{ display: "flex", justifyContent: "center", padding: "0.75rem 0 0.25rem" }}>
+                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.5rem 1.25rem 0.75rem" }}>
+                  <button onClick={prevMonth} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "1.4rem", cursor: "pointer", padding: "0.25rem 0.5rem" }}>‹</button>
+                  <span style={{ color: "#fff", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 700, fontSize: "1rem" }}>{monthLabel}</span>
+                  <button onClick={nextMonth} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "1.4rem", cursor: "pointer", padding: "0.25rem 0.5rem" }}>›</button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", padding: "0 1rem", marginBottom: "0.35rem" }}>
+                  {["日","一","二","三","四","五","六"].map(d => (
+                    <div key={d} style={{ textAlign: "center", fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", fontFamily: "'Noto Sans TC',sans-serif", padding: "0.2rem 0" }}>{d}</div>
+                  ))}
+                </div>
+                <div style={{ padding: "0 0.75rem", flex: 1, overflowY: "auto" }}>
+                  {weeks.map((week, wi) => (
+                    <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                      {week.map((day, di) => {
+                        if (!day) return <div key={di} />;
+                        const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === day;
+                        const evs = dayEventsMap[day] || [];
+                        const hasEvs = evs.length > 0;
+                        const isSelected = calSelectedDay === day;
+                        return (
+                          <button key={di} onClick={() => { hapticLight(); setCalSelectedDay(isSelected ? null : day); }}
+                            style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0.45rem 0.2rem", borderRadius: "0.65rem", border: "none", cursor: "pointer", minHeight: "2.6rem",
+                              background: isSelected ? "rgba(255,255,255,0.18)" : isToday ? "rgba(255,255,255,0.08)" : "transparent",
+                              outline: isToday && !isSelected ? "1.5px solid rgba(255,255,255,0.3)" : "none",
+                            }}>
+                            <span style={{ fontSize: "0.9rem", fontFamily: "'Noto Serif TC',serif", color: isSelected ? "#fff" : isToday ? "#fff" : "rgba(255,255,255,0.75)", fontWeight: isToday ? 700 : 400 }}>{day}</span>
+                            {hasEvs && (
+                              <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                                {evs.slice(0, 3).map((ev, i) => (
+                                  <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: catDot(ev.category) }} />
+                                ))}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+                {calSelectedDay && dayEventsMap[calSelectedDay] && (
+                  <div style={{ padding: "0.75rem 1.25rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif", marginBottom: "0.5rem" }}>{m + 1} 月 {calSelectedDay} 日</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "180px", overflowY: "auto" }}>
+                      {dayEventsMap[calSelectedDay].map(ev => (
+                        <button
+                          key={ev._id}
+                          onClick={() => jumpToCalendarActivity(ev)}
+                          style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start", background: "rgba(255,255,255,0.05)", borderRadius: "0.75rem", padding: "0.6rem 0.75rem", border: "none", width: "100%", cursor: "pointer", textAlign: "left" }}
+                        >
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: catDot(ev.category), marginTop: "0.3rem", flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ color: "#fff", fontSize: "0.85rem", fontFamily: "'Noto Sans TC',sans-serif", fontWeight: 600, lineHeight: 1.3, marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</p>
+                            {ev.date && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>📅 {ev.date}</p>}
+                            {ev.location && <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "0.72rem", fontFamily: "'Noto Sans TC',sans-serif" }}>{isOnlineLocation(ev.location) ? "💻" : "📍"} {ev.location}</p>}
+                          </div>
+                          <div style={{ flexShrink: 0, color: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center" }}>
+                            <Icon name="ChevronRight" size={14} />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => { setShowCalSheet(false); setCalSelectedDay(null); }} style={{ margin: "0.5rem 1.25rem", padding: "0.75rem", borderRadius: "1rem", border: "none", background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: "0.9rem", fontFamily: "'Noto Sans TC',sans-serif", cursor: "pointer" }}>
+                  關閉
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   }
 
+  /* ── 主打活動資料 ── */
+  const featuredSessions = [
+    {
+      label: "SESSION 1", title: "又被退了！論文投稿的甘苦談",
+      speakers: [
+        "王誠御／國立臺灣大學中國文學系博士候選人",
+        "嚴浩然／國立成功大學中國文學系博士候選人",
+        "楊卓剛／國立成功大學中國文學系博士生",
+      ],
+    },
+    {
+      label: "SESSION 2", title: "我看了什麼？審查委員的辛酸",
+      speakers: [
+        "鄭吉雄／香港教育大學文學與文化學系客席研究講座教授",
+        "蔡瑩瑩／臺北市立大學中語系助理教授",
+        "葉叡宸／國立臺灣大學中文系助理教授",
+        "吳佩熏／勤益科技大學通識中心助理教授",
+        "趙旻祐／韓國延世大學中文系助理教授",
+      ],
+    },
+  ];
+  const featuredAgenda = [
+    { time: "09:30 – 10:00", title: "報到時間", sub: null },
+    { time: "10:00 – 10:10", title: "開幕式", sub: "主辦：北市大儒學中心、臺師大國文系　協辦：中華孔孟學會" },
+  ];
+  const featuredGoals = [
+    { tag: "目標一", title: "成果展示與專家檢驗", body: "讀書會運作期間，成員論文已歷經多輪同儕審查與修訂，本工作坊進一步邀請與成員研究領域相關的教授專家擔任特約討論人，模擬正式學術研討會的發表與評論機制，讓成員論文在投稿前接受更高層次的學術檢驗，提升論文的完成度與投稿成功率。" },
+    { tag: "目標二", title: "經驗分享與學術增能", body: "安排已具投稿經驗的博士候選人分享論文架構規劃、投稿修稿流程及期刊選擇策略等實務經驗。此環節不僅面向讀書會成員，亦開放其他有興趣的研究生參與，期望將個人摸索所得的寶貴經驗轉化為可複製的學術寫作知能。" },
+    { tag: "目標三", title: "跨校學術對話與社群深化", body: "透過小型論壇的設置，以讀書會的協作學習實踐為討論基礎，探討跨校研究生如何在中文學科的不同次領域間建立有效的學術合作模式，並為後續學期的讀書會運作與擴展提供反思與規劃的契機。" },
+  ];
+  const d = isDarkMode;
+
   return (
     <div className="space-y-10 md:space-y-14 page-enter-zoom stagger relative z-10">
+
+      {/* ===================== 主打活動卡片 ===================== */}
+      <section
+        onClick={() => setShowEventDetail(true)}
+        style={{
+          display: "flex", flexDirection: "column",
+          background: d ? "rgba(18,35,26,0.72)" : "rgba(255,255,255,0.65)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderRadius: 18, overflow: "hidden",
+          boxShadow: d ? "0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)" : "0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.8)",
+          border: d ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(255,255,255,0.6)",
+          cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
+          fontFamily: "'Noto Serif TC', serif",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = d ? "0 16px 48px rgba(0,0,0,0.6)" : "0 16px 48px rgba(0,0,0,0.16)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = d ? "0 8px 32px rgba(0,0,0,0.45)" : "0 8px 32px rgba(0,0,0,0.10)"; }}
+      >
+        <div style={{ position: "relative", width: "100%", height: 360, overflow: "hidden", background: "#1a1a1a" }}>
+          <img src="/poster-roundtable.png" alt="圓桌論壇海報" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
+          <div style={{ position: "absolute", inset: 0, background: d ? "linear-gradient(to bottom,rgba(0,0,0,0) 40%,#12231a 100%)" : "linear-gradient(to bottom,rgba(255,255,255,0) 50%,#fff 100%)" }} />
+        </div>
+        <div style={{ padding: "12px 24px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <span style={{ background: d ? "rgba(255,255,255,0.10)" : "#f0f0f0", color: d ? "#c8e6c9" : "#555", fontSize: 11, padding: "3px 10px", borderRadius: 20, letterSpacing: 1 }}>✦ 主打活動</span>
+            <span style={{ background: "rgba(192,57,43,0.12)", color: "#c0392b", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: "1px solid rgba(192,57,43,0.25)" }}>線上 ＋ 實體</span>
+          </div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "#c0392b", borderRadius: 8, padding: "5px 14px", width: "fit-content" }}>
+            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: 1 }}>May. 14</span>
+            <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>10:00 ~ 12:00</span>
+          </div>
+          <div>
+            <div style={{ color: d ? "rgba(200,230,200,0.6)" : "#888", fontSize: 11, letterSpacing: 2, marginBottom: 3 }}>中文學科論文寫作增能</div>
+            <div style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 24, fontWeight: 800, lineHeight: 1.15, letterSpacing: 2 }}>圓桌論壇</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 2, flexWrap: "wrap", gap: 8 }}>
+            <div style={{ color: d ? "#c8d8c8" : "#333", fontSize: 13, display: "flex", gap: 14, flexWrap: "wrap" }}>
+              <span>📍 臺北市立大學 公誠樓 G412</span>
+              <span>🎥 Google Meet</span>
+            </div>
+            <span style={{ color: "#c0392b", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>查看詳情 →</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 詳情 Modal ─── */}
+      {showEventDetail && createPortal(
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setShowEventDetail(false); }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            background: "rgba(0,0,0,0.55)",
+            fontFamily: "'Noto Serif TC', serif",
+            animation: "feModalFadeIn 0.25s ease forwards",
+          }}
+        >
+          <style>{`
+            @keyframes feModalFadeIn { from { opacity:0; } to { opacity:1; } }
+            @keyframes feSheetUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+            #fe-modal-sheet::-webkit-scrollbar { display: none; }
+          `}</style>
+          <div id="fe-modal-sheet" style={{
+            width: "100%", maxWidth: 680, maxHeight: "90vh",
+            background: d ? "#1c1c1e" : "#fff",
+            borderRadius: "24px 24px 0 0",
+            overflowY: "auto",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            boxShadow: "0 -12px 60px rgba(0,0,0,0.3)",
+            animation: "feSheetUp 0.38s cubic-bezier(0.32,0.72,0,1) forwards",
+          }}>
+            {/* Header */}
+            <div style={{ position: "sticky", top: 0, zIndex: 2, background: d ? "#1c1c1e" : "#fff", borderBottom: `1px solid ${d ? "rgba(255,255,255,0.08)" : "#f0f0f0"}`, padding: "12px 20px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+                <div style={{ width: 36, height: 4, background: d ? "rgba(255,255,255,0.2)" : "#e0e0e0", borderRadius: 2 }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ color: d ? "rgba(200,200,200,0.6)" : "#888", fontSize: 11, letterSpacing: 2 }}>中文學科論文寫作增能</div>
+                  <div style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 17, fontWeight: 800, letterSpacing: 1 }}>圓桌論壇　活動計畫</div>
+                </div>
+                <button onClick={() => setShowEventDetail(false)} style={{ background: d ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%", width: 32, height: 32, fontSize: 15, cursor: "pointer", color: d ? "#fff" : "#333", flexShrink: 0 }}>✕</button>
+              </div>
+            </div>
+
+            {/* Poster */}
+            <div style={{ width: "100%", padding: "0 16px 8px", flexShrink: 0 }}>
+              <img src="/poster-roundtable.png" alt="圓桌論壇海報" style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "4px 24px 48px", display: "flex", flexDirection: "column", gap: 28 }}>
+
+              {/* 議程 */}
+              <section>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>議程</span>
+                  <span style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 12 }}>May 14　臺北市立大學 公誠樓 G412</span>
+                </div>
+                <div>
+                  {featuredAgenda.map((item, i) => (
+                    <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
+                      <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                      <div>
+                        <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600 }}>{item.title}</div>
+                        {item.sub && <div style={{ color: d ? "rgba(200,200,200,0.55)" : "#888", fontSize: 12, marginTop: 3 }}>{item.sub}</div>}
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", gap: 14, padding: "12px 0" }}>
+                    <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>10:10 – 11:40</div>
+                    <div style={{ flex: 1 }}>
+                      {featuredSessions.map((s, si) => (
+                        <div key={si} style={{ marginBottom: si < featuredSessions.length - 1 ? 18 : 0 }}>
+                          <div style={{ background: d ? "rgba(192,57,43,0.12)" : "#fff5f5", borderLeft: "3px solid #c0392b", borderRadius: "0 8px 8px 0", padding: "10px 14px", marginBottom: 8 }}>
+                            <div style={{ color: "#c0392b", fontSize: 10, letterSpacing: 2, marginBottom: 3, opacity: 0.8 }}>圓桌論壇（{si + 1}）</div>
+                            <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 700 }}>{s.title}</div>
+                          </div>
+                          <div style={{ paddingLeft: 4 }}>
+                            <div style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 10, letterSpacing: 1, marginBottom: 6 }}>{si === 0 ? "分享人" : "座談學者"}</div>
+                            {s.speakers.map((sp, pi) => (
+                              <div key={pi} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 5 }}>
+                                <span style={{ color: "#c0392b", fontSize: 10, marginTop: 3, flexShrink: 0 }}>▸</span>
+                                <span style={{ color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 1.6 }}>{sp}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* 計畫目的 */}
+              <section>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>一、計畫目的</span>
+                </div>
+                <p style={{ margin: 0, color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                  「中文學科論文寫作增能工作坊」為「中文學科論文寫作增能讀書會」之學期成果發表活動，並結合國立臺灣師範大學國文學系80週年系慶及臺北市立大學儒學中心支持之跨校研究生學術活動。本讀書會於114學年第2學期運作，由來自臺師大、臺大、成大、高師大、中山及復旦大學等校的約10位博碩士研究生組成，以同儕審查為核心機制，歷經4次專題會議，針對成員的學術論文進行深度討論與修訂。本工作坊旨在為學期的共學歷程提供一個總結性的發表平臺，預計邀請相關領域的教授專家擔任特約討論人，使成員論文在正式投稿前獲得更高層次的學術檢驗與回饋。
+                </p>
+                <p style={{ margin: "12px 0 0", color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                  同時，工作坊亦安排「經驗分享」與「小型論壇」環節，期望將讀書會累積的協作學習經驗——包含論文架構規劃、投稿修稿策略、期刊選擇等實務知識，向更廣泛的研究生社群傳遞，促成跨校、跨領域的學術對話，為中文學科研究生建立可持續的學術支持網絡。
+                </p>
+              </section>
+
+              {/* 計畫目標 */}
+              <section>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>二、計畫目標</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {featuredGoals.map((g, gi) => (
+                    <div key={gi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span style={{ background: "#c0392b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{g.tag}</span>
+                        <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{g.title}</span>
+                      </div>
+                      <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{g.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <a href="https://meet.google.com/fdh-crrz-mfb" target="_blank" rel="noreferrer"
+                style={{ display: "block", textAlign: "center", background: "#c0392b", color: "#fff", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, letterSpacing: 1, textDecoration: "none" }}>
+                加入 Google Meet →
+              </a>
+            </div>
+          </div>
+        </div>
+      , document.body)}
 
       {/* ===================== Hero ===================== */}
       <section className="relative rounded-3xl overflow-hidden p-6 sm:p-8 md:p-16 flex flex-col items-center text-center glass-panel shadow-sm">
@@ -1571,14 +2311,14 @@ export default function HomePage({
         />
         {/* 右側裝飾勳章 */}
         <div
-          className="absolute right-[-80px] sm:right-[-50px] md:right-[-30px] top-1/2 -translate-y-1/2 w-64 sm:w-72 md:w-80 aspect-square opacity-[0.18] pointer-events-none"
+          className="absolute right-[-80px] sm:right-[-50px] md:right-[-30px] top-1/2 -translate-y-1/2 w-64 sm:w-72 md:w-80 aspect-square opacity-[0.18] pointer-events-none float-anim"
           style={{ color: "var(--c-accent)" }}
         >
           <HeroMedallion />
         </div>
         {/* 左側較小勳章 */}
         <div
-          className="absolute left-[-70px] sm:left-[-45px] md:left-[-25px] top-1/2 -translate-y-1/2 w-44 sm:w-52 md:w-60 aspect-square opacity-[0.12] pointer-events-none"
+          className="absolute left-[-70px] sm:left-[-45px] md:left-[-25px] top-1/2 -translate-y-1/2 w-44 sm:w-52 md:w-60 aspect-square opacity-[0.12] pointer-events-none float-anim-2"
           style={{ color: "var(--c-accent)" }}
         >
           <HeroMedallion />
@@ -1641,6 +2381,7 @@ export default function HomePage({
           </div>
         </div>
       </section>
+
 
       {/* ===================== 快速導覽卡片 ===================== */}
       <section className="grid grid-cols-2 gap-4 md:gap-5">

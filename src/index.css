@@ -34,6 +34,29 @@ html.is-native * {
   100% { opacity: 1; transform: translateY(0); }
 }
 
+/* 頁面切換入場動畫 */
+@keyframes pageSlideUp    { 0%{opacity:0;transform:translateY(28px)}  100%{opacity:1;transform:none} }
+@keyframes pageSlideRight { 0%{opacity:0;transform:translateX(-24px)} 100%{opacity:1;transform:none} }
+@keyframes pageSlideLeft  { 0%{opacity:0;transform:translateX(24px)}  100%{opacity:1;transform:none} }
+@keyframes pageZoomIn     { 0%{opacity:0;transform:scale(0.97)}       100%{opacity:1;transform:none} }
+@keyframes pageBlurIn     { 0%{opacity:0;filter:blur(6px)}            100%{opacity:1;filter:none}    }
+
+.page-enter-up    { animation: pageSlideUp    0.42s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-right { animation: pageSlideRight 0.42s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-left  { animation: pageSlideLeft  0.42s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-zoom  { animation: pageZoomIn     0.38s cubic-bezier(0.22,1,0.36,1) both; }
+.page-enter-blur  { animation: pageBlurIn     0.45s ease-out both; }
+
+/* 子區塊交錯入場 */
+.stagger > *          { animation: pageSlideUp 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.stagger > *:nth-child(6) { animation-delay: 0.34s; }
+.stagger > *:nth-child(n+7) { animation-delay: 0.40s; }
+
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out both;
 }
@@ -106,3 +129,76 @@ html.is-native * {
   will-change: transform;
 }
 .marquee-inner:hover { animation-play-state: paused; }
+
+/* ===== 旋轉動畫（重新整理按鈕）===== */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ===== 裝飾紋樣動畫 ===== */
+
+/* 緩慢旋轉（用於 SVG 同心圓外環）*/
+@keyframes ornamentRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes ornamentRotateReverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* 浮動（用於 Hero 區塊裝飾元素）*/
+@keyframes floatBob {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+.float-anim   { animation: floatBob 5s ease-in-out infinite; }
+.float-anim-2 { animation: floatBob 7s ease-in-out infinite 1s; }
+
+/* 裝飾橫線掃光 */
+@keyframes shimmerSweep {
+  0%   { opacity: 0; transform: translateX(-100%); }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+.decor-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.decor-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--c-primary-rgb,120,80,40), 0.18) 50%, transparent 100%);
+  animation: shimmerSweep 4s ease-in-out infinite 1.5s;
+  pointer-events: none;
+}
+
+/* 滾動淡入（搭配 IntersectionObserver）*/
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes revealFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.reveal-up {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1);
+}
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* 加強卡片 hover 光暈 */
+.glow-hover {
+  transition: box-shadow 400ms ease;
+}
+.glow-hover:hover {
+  box-shadow: 0 0 0 1px rgba(var(--c-primary-rgb,120,80,40), 0.2),
+              0 12px 40px rgba(var(--c-primary-rgb,120,80,40), 0.1),
+              0 4px 12px rgba(0,0,0,0.08);
+}

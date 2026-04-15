@@ -57,14 +57,14 @@ export default function EventsPage({ isDarkMode }) {
   const inactiveTabClass = "text-[var(--c-text-secondary)] hover-bg-surface";
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
+    <div className="w-full page-enter-left relative z-10">
       <PageHeader title="研討進度" />
       <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
     </div>
   );
 
   return (
-    <div className="w-full space-y-8 animate-fade-in relative z-10">
+    <div className="w-full space-y-8 page-enter-left stagger relative z-10">
       <PageHeader title="研討進度" />
 
       <div className="flex justify-center mb-6 md:mb-10">

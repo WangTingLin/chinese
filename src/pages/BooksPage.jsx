@@ -13,7 +13,7 @@ const getDomain = (url) => {
 
 export default function BooksPage() {
   return (
-    <div className="space-y-16 animate-fade-in relative z-10">
+    <div className="space-y-16 page-enter-right stagger relative z-10">
       <PageHeader title="資源分享" />
       <div className="space-y-12 w-full">
         {resourceCategories.map((cat, idx) => (

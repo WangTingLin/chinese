@@ -1,12 +1,12 @@
 // 檔案路徑：src/pages/ActivitiesPage.jsx
 import React, { useMemo, useState, useEffect } from 'react';
 
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 import { client } from '../sanityClient';
 // 💡 從主程式匯入共用的介面元件
 import { Icon, PageHeader } from '../App';
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 const urlFor = (source) => builder.image(source);
 
 // ── 主辦單位縮寫對照表 ───────────────────────────────────────
@@ -64,6 +64,20 @@ export default function ActivitiesPage({ isDarkMode }) {
   const [searchText, setSearchText] = useState("");
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleShare = (ev) => {
+    const url = ev.link || 'https://chineselit.club/';
+    const shareData = { title: ev.title, text: `${ev.title}${ev.date ? `（${ev.date}）` : ''}`, url };
+    if (navigator.share) {
+      navigator.share(shareData).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopiedId(ev._id);
+        setTimeout(() => setCopiedId(null), 2000);
+      });
+    }
+  };
 
   useEffect(() => {
     client.fetch(`*[_type == "promoEvent"] | order(_createdAt desc) {
@@ -273,14 +287,14 @@ export default function ActivitiesPage({ isDarkMode }) {
   }, [filterCat, searchText, events]);
 
   if (loading) return (
-    <div className="w-full animate-fade-in relative z-10">
+    <div className="w-full page-enter-zoom relative z-10">
       <PageHeader title="近期活動" />
       <div className="flex justify-center py-24 theme-text-secondary font-sans opacity-50">載入中⋯⋯</div>
     </div>
   );
 
   return (
-    <div className="w-full space-y-12 animate-fade-in relative z-10">
+    <div className="w-full space-y-12 page-enter-zoom stagger relative z-10">
       <PageHeader title="近期活動" />
 
       <div className="space-y-5">
@@ -500,6 +514,18 @@ export default function ActivitiesPage({ isDarkMode }) {
                       查看詳情 <Icon name="ExternalLink" size={16} />
                     </a>
                   )}
+                  <button
+                    onClick={() => handleShare(ev)}
+                    className="w-full md:w-44 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-medium font-sans transition-all border hover:-translate-y-0.5"
+                    style={{
+                      background: copiedId === ev._id ? "rgba(34,197,94,0.15)" : "rgba(var(--c-panel-rgb), 0.5)",
+                      color: copiedId === ev._id ? "#16a34a" : "var(--c-text-secondary)",
+                      borderColor: copiedId === ev._id ? "rgba(34,197,94,0.4)" : "rgba(var(--c-border-rgb), 0.4)",
+                    }}
+                  >
+                    <Icon name={copiedId === ev._id ? "Check" : "Share"} size={15} />
+                    {copiedId === ev._id ? "已複製連結" : "分享活動"}
+                  </button>
                 </div>
                 </div>
               </article>
