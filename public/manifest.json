@@ -1,0 +1,26 @@
+{
+  "name": "中文研究室",
+  "short_name": "中文研究室",
+  "description": "學術活動、文章專欄、研討進度，以文會友，以友輔仁。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f3d3d",
+  "theme_color": "#1c1c1e",
+  "orientation": "portrait-primary",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "books"],
+  "screenshots": []
+}

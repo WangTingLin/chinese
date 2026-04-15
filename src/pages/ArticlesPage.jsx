@@ -258,7 +258,7 @@ export default function ArticlesPage({ isDarkMode, initialArticleId, bookmarks =
                 <article
                   key={a._id}
                   ref={open ? activeArticleRef : null}
-                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70 xl:col-span-2" : "glass-card-hover glow-hover"}`}
+                  className={`rounded-3xl glass-panel overflow-hidden spring-transition border border-white/60 ${open ? "shadow-2xl bg-white/70 xl:col-span-2" : "glass-card-hover"}`}
                 >
                   <div
                     className="p-5 md:p-8 relative"

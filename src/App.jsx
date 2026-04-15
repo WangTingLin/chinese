@@ -261,34 +261,6 @@ export const Icon = ({ name, size = 24, className = "" }) => {
         <path d="M12 7v5l4 2" />
       </>
     ),
-    Bell: (
-      <>
-        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-      </>
-    ),
-    BellOff: (
-      <>
-        <path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" />
-        <path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" />
-        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-        <line x1="2" y1="2" x2="22" y2="22" />
-      </>
-    ),
-    CalendarDays: (
-      <>
-        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-        <line x1="16" x2="16" y1="2" y2="6" />
-        <line x1="8" x2="8" y1="2" y2="6" />
-        <line x1="3" x2="21" y1="10" y2="10" />
-        <path d="M8 14h.01" />
-        <path d="M12 14h.01" />
-        <path d="M16 14h.01" />
-        <path d="M8 18h.01" />
-        <path d="M12 18h.01" />
-        <path d="M16 18h.01" />
-      </>
-    ),
   };
 
   return (
@@ -342,20 +314,10 @@ const ThemedButton = ({ active, children, onClick, className = "" }) => (
 export const PageHeader = ({ title }) => (
   <div className="text-center space-y-4">
     <h2 className="text-3xl font-bold font-sans theme-heading">{title}</h2>
-    <div className="flex items-center justify-center gap-2">
-      <div
-        className="h-px rounded-full"
-        style={{ background: "var(--c-accent)", width: "2rem", opacity: 0.4, animation: "pageSlideRight 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both" }}
-      />
-      <div
-        className="h-1 rounded-full decor-shimmer"
-        style={{ background: "var(--c-accent)", width: "3rem", animation: "pageZoomIn 0.5s cubic-bezier(0.22,1,0.36,1) 0.1s both" }}
-      />
-      <div
-        className="h-px rounded-full"
-        style={{ background: "var(--c-accent)", width: "2rem", opacity: 0.4, animation: "pageSlideLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.2s both" }}
-      />
-    </div>
+    <div
+      className="w-16 h-1 mx-auto rounded-full"
+      style={{ background: "var(--c-accent)" }}
+    />
   </div>
 );
 
@@ -587,7 +549,6 @@ export default function App() {
   const [launchOnboarding, setLaunchOnboarding] = useState(false);
   const [launchOnboardingExiting, setLaunchOnboardingExiting] = useState(false);
   const [launchOnboardingSelected, setLaunchOnboardingSelected] = useState([]);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   /* Native 啟動動畫：1.9s 顯示，再 500ms 淡出，共 2.4s */
   /* Native：body 加深色背景，防止 iOS overscroll 白邊 */
@@ -668,7 +629,7 @@ export default function App() {
       }
     };
     fetchAllData();
-  }, [refreshKey]);
+  }, []);
 
   const allNavItems = [
     { id: "home", label: "首頁", icon: <Icon name="Home" size={18} /> },
@@ -705,7 +666,6 @@ export default function App() {
   const _now = new Date();
   const _upcoming = activities.filter(a => _getEndDate(a.date) >= _now);
   const catCounts = {
-    all:        _upcoming.length,
     lecture:    _upcoming.filter(a => a.category === "學術講座").length,
     workshop:   _upcoming.filter(a => a.category === "研討會／工作坊" || a.category === "研討會/工作坊").length,
     submission: _upcoming.filter(a => a.category === "徵稿資訊").length,
@@ -725,7 +685,6 @@ const pageProps = {
   bookmarks,
   toggleBookmark,
   fontSizeLevel,
-  onRefresh: () => { setLoading(true); setRefreshKey(k => k + 1); },
 };
 
 
@@ -1145,18 +1104,12 @@ const pageProps = {
             {/* ── App 版：3 分類 Tab（置中）── */}
             {isAppMode ? (
               <>
-                {/* 分類 Tab（可橫向捲動）*/}
-                <div style={{
-                  display: "flex", gap: "0.4rem", alignItems: "center",
-                  overflowX: "auto", WebkitOverflowScrolling: "touch",
-                  scrollbarWidth: "none", msOverflowStyle: "none",
-                  padding: "0 0.25rem", margin: "0 auto", maxWidth: "100%",
-                }}>
+                {/* 3 分類 Tab */}
+                <div style={{ display: "flex", gap: "0.35rem", alignItems: "center", margin: "0 auto" }}>
                   {[
-                    { key: "all",        label: "全部",       accent: "rgba(255,255,255,0.9)", activeBg: "rgba(255,255,255,0.95)", activeColor: "#1c1c1e", inactiveBg: "rgba(255,255,255,0.14)", inactiveColor: "rgba(255,255,255,0.85)" },
-                    { key: "lecture",    label: "學術講座",   accent: "#60a5fa", activeBg: "#60a5fa", activeColor: "#0c1a2e", inactiveBg: "rgba(96,165,250,0.18)", inactiveColor: "#93c5fd" },
-                    { key: "workshop",   label: "研討會/工作坊", accent: "#4ade80", activeBg: "#4ade80", activeColor: "#052e16", inactiveBg: "rgba(74,222,128,0.18)", inactiveColor: "#86efac" },
-                    { key: "submission", label: "徵稿資訊",   accent: "#fbbf24", activeBg: "#fbbf24", activeColor: "#1c1108", inactiveBg: "rgba(251,191,36,0.18)", inactiveColor: "#fcd34d" },
+                    { key: "lecture",    label: "學術講座" },
+                    { key: "workshop",   label: "研討會/工作坊" },
+                    { key: "submission", label: "徵稿資訊" },
                   ].map(tab => {
                     const active = nativeCategory === tab.key;
                     const cnt = catCounts[tab.key];
@@ -1166,18 +1119,18 @@ const pageProps = {
                         onClick={() => setNativeCategory(tab.key)}
                         className="native-btn"
                         style={{
-                          flexShrink: 0,
-                          whiteSpace: "nowrap",
-                          padding: "0.32rem 0.75rem",
+                          padding: "0.3rem 0.65rem",
                           borderRadius: "9999px",
-                          fontSize: "0.73rem",
+                          fontSize: "0.72rem",
                           fontWeight: active ? 700 : 500,
                           fontFamily: "'Noto Sans TC', sans-serif",
                           cursor: "pointer",
-                          border: active ? "none" : `1px solid ${tab.accent}33`,
+                          border: "none",
                           transition: "all 220ms ease",
-                          background: active ? tab.activeBg : tab.inactiveBg,
-                          color: active ? tab.activeColor : tab.inactiveColor,
+                          background: active
+                            ? "rgba(255,255,255,0.95)"
+                            : "rgba(255,255,255,0.12)",
+                          color: active ? "#1c1c1e" : "rgba(255,255,255,0.8)",
                           backdropFilter: "blur(8px)",
                           WebkitBackdropFilter: "blur(8px)",
                           display: "flex", alignItems: "center", gap: "0.3rem",
@@ -1186,8 +1139,8 @@ const pageProps = {
                         {tab.label}
                         {cnt > 0 && (
                           <span style={{
-                            background: active ? "rgba(0,0,0,0.15)" : `${tab.accent}44`,
-                            color: active ? tab.activeColor : tab.inactiveColor,
+                            background: active ? "rgba(28,28,30,0.15)" : "rgba(255,255,255,0.22)",
+                            color: active ? "#1c1c1e" : "#fff",
                             fontSize: "0.6rem", fontWeight: 700,
                             padding: "1px 5px", borderRadius: 9999,
                             lineHeight: 1.4,
