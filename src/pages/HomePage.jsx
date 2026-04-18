@@ -2242,22 +2242,25 @@ export default function HomePage({
             {/* Tab 切換 */}
             <div style={{ display: "flex", gap: 8, padding: "4px 20px 16px" }}>
               {[
-                { key: "forum",    label: "圓桌論壇", sub: "上午場次" },
-                { key: "workshop", label: "論文發表工作坊", sub: "下午場次" },
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setEventTab(tab.key)}
-                  style={{
-                    flex: 1, border: "none", borderRadius: 12, padding: "10px 8px", cursor: "pointer",
-                    background: eventTab === tab.key ? "#c0392b" : d ? "rgba(255,255,255,0.07)" : "#f5f5f5",
-                    transition: "background 0.18s",
-                  }}
-                >
-                  <div style={{ color: eventTab === tab.key ? "rgba(255,255,255,0.65)" : d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 2 }}>{tab.sub}</div>
-                  <div style={{ color: eventTab === tab.key ? "#fff" : d ? "#e0e0d0" : "#1a1a1a", fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>{tab.label}</div>
-                </button>
-              ))}
+                { key: "forum",    label: "圓桌論壇",     sub: "上午場次", activeColor: "#c0392b" },
+                { key: "workshop", label: "論文發表工作坊", sub: "下午場次", activeColor: "#2563eb" },
+              ].map(tab => {
+                const isActive = eventTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setEventTab(tab.key)}
+                    style={{
+                      flex: 1, border: "none", borderRadius: 12, padding: "10px 8px", cursor: "pointer",
+                      background: isActive ? tab.activeColor : d ? "rgba(255,255,255,0.07)" : "#f5f5f5",
+                      transition: "background 0.18s",
+                    }}
+                  >
+                    <div style={{ color: isActive ? "rgba(255,255,255,0.65)" : d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 2 }}>{tab.sub}</div>
+                    <div style={{ color: isActive ? "#fff" : d ? "#e0e0d0" : "#1a1a1a", fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>{tab.label}</div>
+                  </button>
+                );
+              })}
             </div>
 
             {/* ── 圓桌論壇 分頁 ── */}
