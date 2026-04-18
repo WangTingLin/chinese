@@ -2149,7 +2149,7 @@ export default function HomePage({
         onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = d ? "0 8px 32px rgba(0,0,0,0.45)" : "0 8px 32px rgba(0,0,0,0.10)"; }}
       >
         <div style={{ position: "relative", width: "100%", height: 360, overflow: "hidden", background: "#1a1a1a" }}>
-          <img src="/工作坊海報（橫）.png" alt="工作坊海報" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
+          <img src="/workshop-poster.png" alt="工作坊海報" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
           <div style={{ position: "absolute", inset: 0, background: d ? "linear-gradient(to bottom,rgba(0,0,0,0) 40%,#12231a 100%)" : "linear-gradient(to bottom,rgba(255,255,255,0) 50%,#fff 100%)" }} />
         </div>
         <div style={{ padding: "12px 24px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2218,7 +2218,7 @@ export default function HomePage({
 
             {/* Poster */}
             <div style={{ width: "100%", padding: "0 16px 8px", flexShrink: 0 }}>
-              <img src="/工作坊海報（橫）.png" alt="工作坊海報" style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
+              <img src="/workshop-poster.png" alt="工作坊海報" style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
             </div>
 
             {/* Body */}
