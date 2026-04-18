@@ -2384,7 +2384,7 @@ export default function HomePage({
                 {/* 議程 */}
                 <section>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <div style={{ width: 4, height: 24, background: "#2563eb", borderRadius: 2 }} />
                     <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>議程</span>
                     <span style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 12 }}>May 14 下午　13:30 – 16:20</span>
                   </div>
@@ -2394,20 +2394,20 @@ export default function HomePage({
                       if (item.type === "papers") {
                         return (
                           <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
-                            <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                            <div style={{ minWidth: 108, color: "#2563eb", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
                             <div style={{ flex: 1 }}>
                               <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{item.title}</div>
                               <div style={{ color: d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 10 }}>📍 國立臺灣師範大學 勤6樓EMI教室　　★ 線上</div>
                               {featuredPapers.map((p, pi) => (
                                 <div key={pi} style={{ marginBottom: pi < featuredPapers.length - 1 ? 14 : 0, background: d ? "rgba(255,255,255,0.04)" : "#fafafa", borderRadius: 8, padding: "10px 12px" }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-                                    <span style={{ background: "#c0392b", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>發表</span>
-                                    <span style={{ color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 12 }}>{p.presenter}</span>
+                                    <span style={{ background: "#2563eb", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>發表</span>
+                                    <span style={{ color: d ? "rgba(220,220,200,0.85)" : "#333", fontSize: 12 }}>{p.presenter}</span>
                                   </div>
-                                  <div style={{ color: d ? "#e0d8c8" : "#1a1a1a", fontSize: 13, fontWeight: 600, lineHeight: 1.5, marginBottom: 6 }}>{p.title}</div>
+                                  <div style={{ color: d ? "#e0e8f8" : "#1a1a1a", fontSize: 13, fontWeight: 600, lineHeight: 1.5, marginBottom: 6 }}>{p.title}</div>
                                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                    <span style={{ background: d ? "rgba(192,57,43,0.2)" : "#f5e8e8", color: d ? "#ffb0a0" : "#a03020", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>討論人</span>
-                                    <span style={{ color: d ? "rgba(200,190,175,0.8)" : "#555", fontSize: 12 }}>{p.discussant}</span>
+                                    <span style={{ background: d ? "rgba(37,99,235,0.25)" : "#dbeafe", color: d ? "#93c5fd" : "#1e40af", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>討論人</span>
+                                    <span style={{ color: d ? "rgba(200,200,220,0.8)" : "#555", fontSize: 12 }}>{p.discussant}</span>
                                   </div>
                                 </div>
                               ))}
@@ -2417,7 +2417,7 @@ export default function HomePage({
                       }
                       return (
                         <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
-                          <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                          <div style={{ minWidth: 108, color: "#2563eb", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
                           <div>
                             <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600 }}>{item.title}</div>
                             {item.sub && <div style={{ color: d ? "rgba(200,200,200,0.55)" : "#888", fontSize: 12, marginTop: 3 }}>{item.sub}</div>}
@@ -2431,13 +2431,13 @@ export default function HomePage({
                 {/* 計畫目的 */}
                 <section>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <div style={{ width: 4, height: 24, background: "#2563eb", borderRadius: 2 }} />
                     <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>一、計畫目的</span>
                   </div>
-                  <p style={{ margin: 0, color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                  <p style={{ margin: 0, color: d ? "rgba(210,220,240,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
                     「中文學科論文寫作增能工作坊」為「中文學科論文寫作增能讀書會」之學期成果發表活動，並結合國立臺灣師範大學國文學系80週年系慶及臺北市立大學儒學中心支持之跨校研究生學術活動。本讀書會於114學年第2學期運作，由來自臺師大、臺大、成大、高師大、中山及復旦大學等校的約10位博碩士研究生組成，以同儕審查為核心機制，歷經4次專題會議，針對成員的學術論文進行深度討論與修訂。本工作坊旨在為學期的共學歷程提供一個總結性的發表平臺，預計邀請相關領域的教授專家擔任特約討論人，使成員論文在正式投稿前獲得更高層次的學術檢驗與回饋。
                   </p>
-                  <p style={{ margin: "12px 0 0", color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                  <p style={{ margin: "12px 0 0", color: d ? "rgba(210,220,240,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
                     同時，工作坊亦安排「經驗分享」與「小型論壇」環節，期望將讀書會累積的協作學習經驗——包含論文架構規劃、投稿修稿策略、期刊選擇等實務知識，向更廣泛的研究生社群傳遞，促成跨校、跨領域的學術對話，為中文學科研究生建立可持續的學術支持網絡。
                   </p>
                 </section>
@@ -2445,17 +2445,17 @@ export default function HomePage({
                 {/* 計畫目標 */}
                 <section>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <div style={{ width: 4, height: 24, background: "#2563eb", borderRadius: 2 }} />
                     <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>二、計畫目標</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {workshopGoals.map((g, gi) => (
-                      <div key={gi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                      <div key={gi} style={{ background: d ? "rgba(37,99,235,0.08)" : "#eff6ff", borderRadius: 12, padding: "14px 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                          <span style={{ background: "#c0392b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{g.tag}</span>
+                          <span style={{ background: "#2563eb", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{g.tag}</span>
                           <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{g.title}</span>
                         </div>
-                        <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{g.body}</p>
+                        <p style={{ margin: 0, color: d ? "rgba(190,205,235,0.85)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{g.body}</p>
                       </div>
                     ))}
                   </div>
@@ -2464,21 +2464,26 @@ export default function HomePage({
                 {/* 預期效益 */}
                 <section>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <div style={{ width: 4, height: 24, background: "#2563eb", borderRadius: 2 }} />
                     <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>三、預期效益</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {workshopOutcomes.map((o, oi) => (
-                      <div key={oi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                      <div key={oi} style={{ background: d ? "rgba(37,99,235,0.08)" : "#eff6ff", borderRadius: 12, padding: "14px 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                          <span style={{ background: d ? "rgba(192,57,43,0.6)" : "#e8d5d5", color: d ? "#ffd0c8" : "#7a2020", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{o.tag}</span>
+                          <span style={{ background: d ? "rgba(37,99,235,0.6)" : "#dbeafe", color: d ? "#bfdbfe" : "#1e40af", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{o.tag}</span>
                           <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{o.title}</span>
                         </div>
-                        <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{o.body}</p>
+                        <p style={{ margin: 0, color: d ? "rgba(190,205,235,0.85)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{o.body}</p>
                       </div>
                     ))}
                   </div>
                 </section>
+
+                <a href="https://meet.google.com/fdh-crrz-mfb" target="_blank" rel="noreferrer"
+                  style={{ display: "block", textAlign: "center", background: "#2563eb", color: "#fff", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, letterSpacing: 1, textDecoration: "none" }}>
+                  加入 Google Meet →
+                </a>
               </div>
             )}
           </div>
