@@ -158,6 +158,7 @@ export default function HomePage({
   const [filterDateTo,    setFilterDateTo]    = useState("");
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [showEventDetail, setShowEventDetail] = useState(false);
+  const [eventTab, setEventTab] = useState("forum"); // "forum" | "workshop"
 
   /* 依偏好評分重排 workshop/submission（與 lecture 相同邏輯）*/
   const rankedWorkshopActivities = useMemo(() => {
@@ -2108,20 +2109,34 @@ export default function HomePage({
     { presenter: "夏卓浩（復旦哲學）★", title: "「政教二科」視域下孫詒讓《周禮》觀研探", discussant: "林素英 教授／臺師大國文" },
     { presenter: "林昕嬡（成大中文）", title: "《孝經》書名翻譯研究——從pietas、filial piety到family reverence的詮釋轉譯現象", discussant: "潘鳳娟 教授／臺師大東亞" },
   ];
-  const featuredAgenda = [
+  /* ── 圓桌論壇（上午）議程 ── */
+  const forumAgenda = [
     { time: "09:30 – 10:00", title: "報到時間", sub: null },
     { time: "10:00 – 10:10", title: "開幕式", sub: "主持：蔡瑩瑩主任（北市大儒學中心）" },
     { time: "10:10 – 11:40", title: "圓桌論壇", type: "sessions" },
+  ];
+  const forumGoals = [
+    { tag: "目標一", title: "雙向視角的學術發表機制揭示", body: "學術論文的投稿與審查長期被視為「黑箱」歷程，研究生往往只能透過個人摸索逐步累積經驗。本論壇透過「投稿者經驗分享」與「審查者視角揭示」兩場圓桌論壇的對照設計，讓參與者得以同時聽見發表端的實戰歷程與審查端的判斷邏輯，將原本隱性的學術發表知識公開化、結構化，縮短研究生從「完成論文」到「成功發表」之間的學習曲線。" },
+    { tag: "目標二", title: "讀書會協作經驗的對外延伸", body: "讀書會運作期間，成員論文已歷經多輪同儕審查與修訂，部分成員亦累積實際投稿與修稿經驗。本論壇邀請其中三位博士生擔任分享人，將讀書會內部的協作學習成果轉化為可向外傳遞的實務知識，使本次活動不僅是讀書會的階段性總結，亦為更廣泛的研究生社群提供可參照的學習資源。" },
+    { tag: "目標三", title: "跨校學術對話與社群深化", body: "本論壇邀集來自臺、港、韓三地的學者專家擔任座談人，並開放其他有興趣的研究生參與，期能以讀書會的協作學習實踐為討論基礎，探討跨校、跨地域研究生如何在中文學科的不同次領域間建立有效的學術合作模式，並為後續學期的讀書會運作與擴展提供反思與規劃的契機。" },
+  ];
+  const forumOutcomes = [
+    { tag: "成效一", title: "公開化學術發表的隱性知識", body: "透過投稿者與審查者雙向視角的圓桌對話，使學術論文從撰寫、投稿、回應審查到最終刊登的完整歷程具體呈現於參與者面前。預期參與者得以掌握期刊審稿的常見評估標準、退稿與修改要求的應對策略，以及不同期刊定位與投稿選擇的判斷依據，將原本仰賴個人摸索的隱性知識轉化為可學習、可複製的實務能力。" },
+    { tag: "成效二", title: "強化讀書會成員的學術發表動能", body: "讀書會三位分享人於整理投稿經驗的過程中，必須對自身研究歷程進行反思性梳理；其餘成員亦可透過聆聽座談學者揭示的審查視角，重新檢視自身論文的修訂方向。預期讀書會全體成員於本論壇結束後，能對手中論文的投稿策略形成更明確的規劃，提升學期內外的論文發表成效。" },
+    { tag: "成效三", title: "形成可延續的跨校學術合作模式", body: "藉由跨校、跨地域學者與研究生的同場交流，歸納讀書會一年來的協作學習經驗，探索中文學科研究生學術社群的可持續運作方式，為後續學期的讀書會擴展與深化奠定基礎。" },
+  ];
+  /* ── 論文發表工作坊（下午）議程 ── */
+  const workshopAgenda = [
     { time: "11:40 – 13:30", title: "午餐時間", sub: null },
     { time: "13:30 – 16:00", title: "論文發表工作坊", type: "papers" },
     { time: "16:00 – 16:20", title: "閉幕式", sub: "主持：徐國能主任（臺師大國文系）" },
   ];
-  const featuredGoals = [
+  const workshopGoals = [
     { tag: "目標一", title: "成果展示與專家檢驗", body: "讀書會運作期間，成員論文已歷經多輪同儕審查與修訂，本工作坊進一步邀請與成員研究領域相關的教授專家擔任特約討論人，模擬正式學術研討會的發表與評論機制，讓成員論文在投稿前接受更高層次的學術檢驗，提升論文的完成度與投稿成功率。" },
     { tag: "目標二", title: "經驗分享與學術增能", body: "安排已具投稿經驗的博士候選人分享論文架構規劃、投稿修稿流程及期刊選擇策略等實務經驗。此環節不僅面向讀書會成員，亦開放其他有興趣的研究生參與，期望將個人摸索所得的寶貴經驗轉化為可複製的學術寫作知能。" },
     { tag: "目標三", title: "跨校學術對話與社群深化", body: "透過小型論壇的設置，以讀書會的協作學習實踐為討論基礎，探討跨校研究生如何在中文學科的不同次領域間建立有效的學術合作模式，並為後續學期的讀書會運作與擴展提供反思與規劃的契機。" },
   ];
-  const featuredOutcomes = [
+  const workshopOutcomes = [
     { tag: "成效一", title: "提升論文投稿品質", body: "讀書會成員在工作坊中接受特約討論人的專業建議，能夠針對論文的論述架構、論證邏輯與文獻引用進行深度修訂，提升論文整體完成度。預期成員在工作坊後能將修改意見具體落實於論文修訂，提高後續期刊投稿的接受率。" },
     { tag: "成效二", title: "培養學術發表實務能力", body: "透過論文發表工作坊的模擬演練，成員得以實際體驗學術研討會的發表與回應機制；經驗分享環節則幫助與會研究生習得投稿修稿策略等實務知能，縮短個人摸索的學習曲線，建立可複製的學術寫作工作流程。" },
     { tag: "成效三", title: "形成可延續的跨校學術合作模式", body: "藉由跨校、跨地域成員的同場共學，歸納讀書會一年來的協作學習經驗，探索中文學科研究生學術社群的可持續運作方式，為後續學期的讀書會擴展與深化奠定基礎。" },
@@ -2221,141 +2236,248 @@ export default function HomePage({
               <img src="/workshop-poster.png" alt="工作坊海報" style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
             </div>
 
-            {/* Body */}
-            <div style={{ padding: "4px 24px 48px", display: "flex", flexDirection: "column", gap: 28 }}>
-
-              {/* 議程 */}
-              <section>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
-                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>議程</span>
-                  <span style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 12 }}>May 14　全日</span>
-                </div>
-                <div>
-                  {featuredAgenda.map((item, i) => {
-                    const isLast = i === featuredAgenda.length - 1;
-                    if (item.type === "sessions") {
-                      return (
-                        <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
-                          <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{item.title}</div>
-                            <div style={{ color: d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 6 }}>📍 臺北市立大學 公誠樓4樓G417室</div>
-                            {featuredSessions.map((s, si) => (
-                              <div key={si} style={{ marginBottom: si < featuredSessions.length - 1 ? 16 : 0 }}>
-                                <div style={{ background: d ? "rgba(192,57,43,0.12)" : "#fff5f5", borderLeft: "3px solid #c0392b", borderRadius: "0 8px 8px 0", padding: "10px 14px", marginBottom: 8 }}>
-                                  <div style={{ color: "#c0392b", fontSize: 10, letterSpacing: 2, marginBottom: 3, opacity: 0.8 }}>圓桌論壇（{si + 1}）</div>
-                                  <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 700 }}>{s.title}</div>
-                                </div>
-                                <div style={{ paddingLeft: 4 }}>
-                                  <div style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 10, letterSpacing: 1, marginBottom: 6 }}>{s.role}</div>
-                                  {s.speakers.map((sp, pi) => (
-                                    <div key={pi} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 5 }}>
-                                      <span style={{ color: "#c0392b", fontSize: 10, marginTop: 3, flexShrink: 0 }}>▸</span>
-                                      <span style={{ color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 1.6 }}>{sp}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                    if (item.type === "papers") {
-                      return (
-                        <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
-                          <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{item.title}</div>
-                            <div style={{ color: d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 6 }}>📍 國立臺灣師範大學 勤6樓EMI教室　　★ 線上</div>
-                            {featuredPapers.map((p, pi) => (
-                              <div key={pi} style={{ marginBottom: pi < featuredPapers.length - 1 ? 14 : 0, background: d ? "rgba(255,255,255,0.04)" : "#fafafa", borderRadius: 8, padding: "10px 12px" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-                                  <span style={{ background: "#c0392b", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>發表</span>
-                                  <span style={{ color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 12 }}>{p.presenter}</span>
-                                </div>
-                                <div style={{ color: d ? "#e0d8c8" : "#1a1a1a", fontSize: 13, fontWeight: 600, lineHeight: 1.5, marginBottom: 6 }}>{p.title}</div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                  <span style={{ background: d ? "rgba(192,57,43,0.2)" : "#f5e8e8", color: d ? "#ffb0a0" : "#a03020", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>討論人</span>
-                                  <span style={{ color: d ? "rgba(200,190,175,0.8)" : "#555", fontSize: 12 }}>{p.discussant}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                    return (
-                      <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
-                        <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
-                        <div>
-                          <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600 }}>{item.title}</div>
-                          {item.sub && <div style={{ color: d ? "rgba(200,200,200,0.55)" : "#888", fontSize: 12, marginTop: 3 }}>{item.sub}</div>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-
-              {/* 計畫目的 */}
-              <section>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
-                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>一、計畫目的</span>
-                </div>
-                <p style={{ margin: 0, color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
-                  「中文學科論文寫作增能工作坊」為「中文學科論文寫作增能讀書會」之學期成果發表活動，並結合國立臺灣師範大學國文學系80週年系慶及臺北市立大學儒學中心支持之跨校研究生學術活動。本讀書會於114學年第2學期運作，由來自臺師大、臺大、成大、高師大、中山及復旦大學等校的約10位博碩士研究生組成，以同儕審查為核心機制，歷經4次專題會議，針對成員的學術論文進行深度討論與修訂。本工作坊旨在為學期的共學歷程提供一個總結性的發表平臺，預計邀請相關領域的教授專家擔任特約討論人，使成員論文在正式投稿前獲得更高層次的學術檢驗與回饋。
-                </p>
-                <p style={{ margin: "12px 0 0", color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
-                  同時，工作坊亦安排「經驗分享」與「小型論壇」環節，期望將讀書會累積的協作學習經驗——包含論文架構規劃、投稿修稿策略、期刊選擇等實務知識，向更廣泛的研究生社群傳遞，促成跨校、跨領域的學術對話，為中文學科研究生建立可持續的學術支持網絡。
-                </p>
-              </section>
-
-              {/* 計畫目標 */}
-              <section>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
-                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>二、計畫目標</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {featuredGoals.map((g, gi) => (
-                    <div key={gi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ background: "#c0392b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{g.tag}</span>
-                        <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{g.title}</span>
-                      </div>
-                      <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{g.body}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* 預期成效 */}
-              <section>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
-                  <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>三、預期效益</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {featuredOutcomes.map((o, oi) => (
-                    <div key={oi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                        <span style={{ background: d ? "rgba(192,57,43,0.6)" : "#e8d5d5", color: d ? "#ffd0c8" : "#7a2020", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{o.tag}</span>
-                        <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{o.title}</span>
-                      </div>
-                      <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{o.body}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <a href="https://meet.google.com/fdh-crrz-mfb" target="_blank" rel="noreferrer"
-                style={{ display: "block", textAlign: "center", background: "#c0392b", color: "#fff", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, letterSpacing: 1, textDecoration: "none" }}>
-                加入 Google Meet →
-              </a>
+            {/* Tab 切換 */}
+            <div style={{ display: "flex", gap: 8, padding: "4px 20px 16px" }}>
+              {[
+                { key: "forum",    label: "圓桌論壇", sub: "上午場次" },
+                { key: "workshop", label: "論文發表工作坊", sub: "下午場次" },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setEventTab(tab.key)}
+                  style={{
+                    flex: 1, border: "none", borderRadius: 12, padding: "10px 8px", cursor: "pointer",
+                    background: eventTab === tab.key ? "#c0392b" : d ? "rgba(255,255,255,0.07)" : "#f5f5f5",
+                    transition: "background 0.18s",
+                  }}
+                >
+                  <div style={{ color: eventTab === tab.key ? "rgba(255,255,255,0.65)" : d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 2 }}>{tab.sub}</div>
+                  <div style={{ color: eventTab === tab.key ? "#fff" : d ? "#e0e0d0" : "#1a1a1a", fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>{tab.label}</div>
+                </button>
+              ))}
             </div>
+
+            {/* ── 圓桌論壇 分頁 ── */}
+            {eventTab === "forum" && (
+              <div style={{ padding: "0 24px 48px", display: "flex", flexDirection: "column", gap: 28 }}>
+
+                {/* 議程 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>議程</span>
+                    <span style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 12 }}>May 14 上午　09:30 – 11:40</span>
+                  </div>
+                  <div>
+                    {forumAgenda.map((item, i) => {
+                      const isLast = i === forumAgenda.length - 1;
+                      if (item.type === "sessions") {
+                        return (
+                          <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0" }}>
+                            <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{item.title}</div>
+                              <div style={{ color: d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 10 }}>📍 臺北市立大學 公誠樓4樓G417室</div>
+                              {featuredSessions.map((s, si) => (
+                                <div key={si} style={{ marginBottom: si < featuredSessions.length - 1 ? 16 : 0 }}>
+                                  <div style={{ background: d ? "rgba(192,57,43,0.12)" : "#fff5f5", borderLeft: "3px solid #c0392b", borderRadius: "0 8px 8px 0", padding: "10px 14px", marginBottom: 8 }}>
+                                    <div style={{ color: "#c0392b", fontSize: 10, letterSpacing: 2, marginBottom: 3, opacity: 0.8 }}>圓桌論壇（{si + 1}）</div>
+                                    <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 700 }}>{s.title}</div>
+                                  </div>
+                                  <div style={{ paddingLeft: 4 }}>
+                                    <div style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 10, letterSpacing: 1, marginBottom: 6 }}>{s.role}</div>
+                                    {s.speakers.map((sp, pi) => (
+                                      <div key={pi} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 5 }}>
+                                        <span style={{ color: "#c0392b", fontSize: 10, marginTop: 3, flexShrink: 0 }}>▸</span>
+                                        <span style={{ color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 1.6 }}>{sp}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
+                          <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                          <div>
+                            <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600 }}>{item.title}</div>
+                            {item.sub && <div style={{ color: d ? "rgba(200,200,200,0.55)" : "#888", fontSize: 12, marginTop: 3 }}>{item.sub}</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* 計畫目的 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>一、計畫目的</span>
+                  </div>
+                  <p style={{ margin: 0, color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                    「中文學科論文寫作增能圓桌論壇」為「中文學科論文寫作增能讀書會」之學期成果交流活動，並結合國立臺灣師範大學國文學系80週年系慶及臺北市立大學儒學中心支持之跨校研究生學術活動。本讀書會於114學年第2學期運作，由來自臺師大、臺大、成大、高師大、中山及復旦大學等校的約10位博碩士研究生組成，以同儕審查為核心機制，歷經4次專題會議，針對成員的學術論文進行深度討論與修訂。
+                  </p>
+                  <p style={{ margin: "12px 0 0", color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                    有別於一般以論文宣讀為主的學術研討會，本論壇將讀書會學期間累積的投稿與修稿經驗，轉化為「投稿者」與「審查者」雙向對話的公開交流平臺。第一場圓桌論壇邀請讀書會中已具實質投稿經驗的博士生，分享論文從撰寫、投稿到回應審查意見的完整歷程；第二場圓桌論壇則邀請長期擔任期刊審稿人或編輯委員的學者專家，從審查端揭示審稿過程中常見的判斷標準與評估邏輯。透過此種雙向視角的對照，期能使參與者具體理解學術發表機制的運作實況，將個別摸索的經驗轉化為可複製、可傳承的學術寫作知能。
+                  </p>
+                  <p style={{ margin: "12px 0 0", color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                    同時，本論壇亦期望以讀書會的協作學習實踐為基礎，向更廣泛的研究生社群傳遞論文架構規劃、投稿修稿策略、期刊選擇等實務知識，促成跨校、跨領域的學術對話，為中文學科研究生建立可持續的學術支持網絡。
+                  </p>
+                </section>
+
+                {/* 計畫目標 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>二、計畫目標</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {forumGoals.map((g, gi) => (
+                      <div key={gi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ background: "#c0392b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{g.tag}</span>
+                          <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{g.title}</span>
+                        </div>
+                        <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{g.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* 預期成效 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>三、預期成效</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {forumOutcomes.map((o, oi) => (
+                      <div key={oi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ background: d ? "rgba(192,57,43,0.6)" : "#e8d5d5", color: d ? "#ffd0c8" : "#7a2020", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{o.tag}</span>
+                          <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{o.title}</span>
+                        </div>
+                        <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{o.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <a href="https://meet.google.com/fdh-crrz-mfb" target="_blank" rel="noreferrer"
+                  style={{ display: "block", textAlign: "center", background: "#c0392b", color: "#fff", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, letterSpacing: 1, textDecoration: "none" }}>
+                  加入 Google Meet →
+                </a>
+              </div>
+            )}
+
+            {/* ── 論文發表工作坊 分頁 ── */}
+            {eventTab === "workshop" && (
+              <div style={{ padding: "0 24px 48px", display: "flex", flexDirection: "column", gap: 28 }}>
+
+                {/* 議程 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>議程</span>
+                    <span style={{ color: d ? "rgba(200,200,200,0.5)" : "#888", fontSize: 12 }}>May 14 下午　13:30 – 16:20</span>
+                  </div>
+                  <div>
+                    {workshopAgenda.map((item, i) => {
+                      const isLast = i === workshopAgenda.length - 1;
+                      if (item.type === "papers") {
+                        return (
+                          <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
+                            <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600, marginBottom: 10 }}>{item.title}</div>
+                              <div style={{ color: d ? "rgba(200,200,200,0.45)" : "#aaa", fontSize: 10, marginBottom: 10 }}>📍 國立臺灣師範大學 勤6樓EMI教室　　★ 線上</div>
+                              {featuredPapers.map((p, pi) => (
+                                <div key={pi} style={{ marginBottom: pi < featuredPapers.length - 1 ? 14 : 0, background: d ? "rgba(255,255,255,0.04)" : "#fafafa", borderRadius: 8, padding: "10px 12px" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                                    <span style={{ background: "#c0392b", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>發表</span>
+                                    <span style={{ color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 12 }}>{p.presenter}</span>
+                                  </div>
+                                  <div style={{ color: d ? "#e0d8c8" : "#1a1a1a", fontSize: 13, fontWeight: 600, lineHeight: 1.5, marginBottom: 6 }}>{p.title}</div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                    <span style={{ background: d ? "rgba(192,57,43,0.2)" : "#f5e8e8", color: d ? "#ffb0a0" : "#a03020", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>討論人</span>
+                                    <span style={{ color: d ? "rgba(200,190,175,0.8)" : "#555", fontSize: 12 }}>{p.discussant}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={i} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${d ? "rgba(255,255,255,0.07)" : "#f0f0f0"}` }}>
+                          <div style={{ minWidth: 108, color: "#c0392b", fontSize: 12, fontWeight: 600, paddingTop: 2 }}>{item.time}</div>
+                          <div>
+                            <div style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 14, fontWeight: 600 }}>{item.title}</div>
+                            {item.sub && <div style={{ color: d ? "rgba(200,200,200,0.55)" : "#888", fontSize: 12, marginTop: 3 }}>{item.sub}</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* 計畫目的 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>一、計畫目的</span>
+                  </div>
+                  <p style={{ margin: 0, color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                    「中文學科論文寫作增能工作坊」為「中文學科論文寫作增能讀書會」之學期成果發表活動，並結合國立臺灣師範大學國文學系80週年系慶及臺北市立大學儒學中心支持之跨校研究生學術活動。本讀書會於114學年第2學期運作，由來自臺師大、臺大、成大、高師大、中山及復旦大學等校的約10位博碩士研究生組成，以同儕審查為核心機制，歷經4次專題會議，針對成員的學術論文進行深度討論與修訂。本工作坊旨在為學期的共學歷程提供一個總結性的發表平臺，預計邀請相關領域的教授專家擔任特約討論人，使成員論文在正式投稿前獲得更高層次的學術檢驗與回饋。
+                  </p>
+                  <p style={{ margin: "12px 0 0", color: d ? "rgba(220,210,190,0.85)" : "#333", fontSize: 13, lineHeight: 2, textAlign: "justify" }}>
+                    同時，工作坊亦安排「經驗分享」與「小型論壇」環節，期望將讀書會累積的協作學習經驗——包含論文架構規劃、投稿修稿策略、期刊選擇等實務知識，向更廣泛的研究生社群傳遞，促成跨校、跨領域的學術對話，為中文學科研究生建立可持續的學術支持網絡。
+                  </p>
+                </section>
+
+                {/* 計畫目標 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>二、計畫目標</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {workshopGoals.map((g, gi) => (
+                      <div key={gi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ background: "#c0392b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{g.tag}</span>
+                          <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{g.title}</span>
+                        </div>
+                        <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{g.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* 預期效益 */}
+                <section>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 4, height: 24, background: "#c0392b", borderRadius: 2 }} />
+                    <span style={{ color: d ? "#f0f0e8" : "#1a1a1a", fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>三、預期效益</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {workshopOutcomes.map((o, oi) => (
+                      <div key={oi} style={{ background: d ? "rgba(255,255,255,0.05)" : "#fafafa", borderRadius: 12, padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ background: d ? "rgba(192,57,43,0.6)" : "#e8d5d5", color: d ? "#ffd0c8" : "#7a2020", fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 20 }}>{o.tag}</span>
+                          <span style={{ color: d ? "#e8e8d8" : "#1a1a1a", fontSize: 13, fontWeight: 700 }}>{o.title}</span>
+                        </div>
+                        <p style={{ margin: 0, color: d ? "rgba(200,190,175,0.8)" : "#444", fontSize: 12, lineHeight: 1.9, textAlign: "justify" }}>{o.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            )}
           </div>
         </div>
       , document.body)}
