@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>議程｜中文學科論文寫作增能計畫 May.14</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #c0392b;
+      --red-light: #fff5f5;
+      --red-mid: rgba(192,57,43,0.12);
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --blue-mid: rgba(37,99,235,0.1);
+      --text: #1a1a1a;
+      --sub: #666;
+      --muted: #999;
+      --border: #ebebeb;
+      --bg: #f9f8f6;
+      --card: #ffffff;
+      --serif: 'Noto Serif TC', serif;
+      --sans: 'Noto Sans TC', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--serif);
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    /* ── Hero banner ── */
+    .hero {
+      background: linear-gradient(135deg, #1a0a08 0%, #2d1010 40%, #1a0a1a 100%);
+      padding: 48px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('/banner.png') center/cover no-repeat;
+      opacity: 0.22;
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
+    .hero-label {
+      display: inline-block;
+      color: rgba(255,255,255,0.55);
+      font-family: var(--sans);
+      font-size: 11px;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+    .hero-title {
+      color: #fff;
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 900;
+      letter-spacing: 3px;
+      line-height: 1.3;
+      margin-bottom: 18px;
+    }
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-pill {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.85);
+      font-family: var(--sans);
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: 20px;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Section header ── */
+    .session-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 32px 0 20px;
+    }
+    .session-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      flex-shrink: 0;
+      font-family: var(--sans);
+    }
+    .session-badge-am { background: var(--red); }
+    .session-badge-pm { background: var(--blue); }
+    .session-badge .time-label { color: rgba(255,255,255,0.7); font-size: 9px; letter-spacing: 1px; }
+    .session-badge .time-val   { color: #fff; font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+    .session-title { font-size: 20px; font-weight: 900; letter-spacing: 2px; line-height: 1.3; }
+    .session-location {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 3px;
+    }
+
+    /* ── Timeline ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .tl-row {
+      display: flex;
+      gap: 0;
+      position: relative;
+    }
+    .tl-time-col {
+      width: 88px;
+      flex-shrink: 0;
+      padding: 16px 16px 16px 0;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      line-height: 1.4;
+      padding-top: 18px;
+    }
+    .tl-time-col.am { color: var(--red); }
+    .tl-time-col.pm { color: var(--blue); }
+    .tl-line-col {
+      width: 2px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .tl-line-col::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      width: 2px;
+    }
+    .tl-line-col.am::before { background: linear-gradient(to bottom, var(--red-mid), var(--red-mid)); }
+    .tl-line-col.pm::before { background: linear-gradient(to bottom, var(--blue-mid), var(--blue-mid)); }
+    .tl-dot {
+      position: absolute;
+      top: 20px;
+      left: -4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    .tl-dot.am { background: var(--red); }
+    .tl-dot.pm { background: var(--blue); }
+    .tl-content { flex: 1; padding: 14px 0 14px 20px; }
+
+    .tl-item-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    .tl-item-sub {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    /* ── Session cards (圓桌論壇) ── */
+    .session-cards { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+    .session-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .session-card-header {
+      padding: 12px 16px 10px;
+      border-left: 4px solid;
+    }
+    .session-card-header.am {
+      background: var(--red-light);
+      border-color: var(--red);
+    }
+    .session-card-header.pm {
+      background: var(--blue-light);
+      border-color: var(--blue);
+    }
+    .session-card-label {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    .session-card-label.am { color: var(--red); }
+    .session-card-label.pm { color: var(--blue); }
+    .session-card-title { font-size: 15px; font-weight: 800; color: var(--text); }
+    .session-card-body { background: var(--card); padding: 12px 16px; }
+    .role-label {
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .speaker-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .speaker-bullet {
+      font-size: 10px;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .speaker-bullet.am { color: var(--red); }
+    .speaker-bullet.pm { color: var(--blue); }
+    .speaker-name {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .speaker-name .online {
+      display: inline-block;
+      background: var(--blue-mid);
+      color: var(--blue);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    /* ── Paper cards ── */
+    .paper-cards { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+    .paper-card {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+    }
+    .paper-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .paper-tag {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .paper-tag.presenter { background: var(--blue); color: #fff; }
+    .paper-tag.discussant { background: var(--blue-light); color: #1e40af; }
+    .paper-presenter {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--sub);
+    }
+    .paper-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .paper-discussant {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .paper-discussant-name {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    /* ── Divider ── */
+    .day-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0 4px;
+    }
+    .day-divider::before, .day-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .day-divider span {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+
+    /* ── Lunch banner ── */
+    .lunch-banner {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0;
+    }
+    .lunch-icon { font-size: 22px; }
+    .lunch-text { font-family: var(--sans); font-size: 13px; color: var(--sub); }
+    .lunch-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Meet button ── */
+    .meet-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      margin-top: 10px;
+    }
+    .meet-btn.am { background: var(--red); }
+    .meet-btn.pm { background: var(--blue); }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 40px 24px 20px;
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .org-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    @media (max-width: 480px) {
+      .tl-time-col { width: 72px; font-size: 10px; }
+      .session-title { font-size: 17px; }
+      .hero-title { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-label">中文學科論文寫作增能計畫</div>
+      <h1 class="hero-title">圓桌論壇<br>＋論文發表工作坊</h1>
+      <div class="hero-meta">
+        <span class="hero-pill">📅 2025年5月14日（三）</span>
+        <span class="hero-pill">09:30 – 16:20</span>
+        <span class="hero-pill">線上 ＋ 實體</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ════════════════════════════════
+         上午場次 ─ 圓桌論壇
+    ════════════════════════════════ -->
+    <div class="session-header">
+      <div class="session-badge session-badge-am">
+        <span class="time-label">上午</span>
+        <span class="time-val">AM</span>
+      </div>
+      <div>
+        <div class="session-title">圓桌論壇</div>
+        <div class="session-location">📍 臺北市立大學 公誠樓4樓G417室</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+
+      <!-- 報到 -->
+      <div class="tl-row">
+        <div class="tl-time-col am">09:30<br>10:00</div>
+        <div class="tl-line-col am"><div class="tl-dot am"></div></div>
+        <div class="tl-content">
+          <div class="tl-item-title">報到時間</div>
+        </div>
+      </div>
+
+      <!-- 開幕式 -->
+      <div class="tl-row">
+        <div class="tl-time-col am">10:00<br>10:10</div>
+        <div class="tl-line-col am"><div class="tl-dot am"></div></div>
+        <div class="tl-content">
+          <div class="tl-item-title">開幕式</div>
+          <div class="tl-item-sub">主持：蔡瑩瑩主任（臺北市立大學儒學中心）</div>
+        </div>
+      </div>
+
+      <!-- 圓桌論壇 -->
+      <div class="tl-row">
+        <div class="tl-time-col am">10:10<br>11:40</div>
+        <div class="tl-line-col am"><div class="tl-dot am"></div></div>
+        <div class="tl-content">
+          <div class="tl-item-title">圓桌論壇</div>
+          <div class="session-cards">
+
+            <!-- 圓桌論壇（一） -->
+            <div class="session-card">
+              <div class="session-card-header am">
+                <div class="session-card-label am">圓桌論壇（一）</div>
+                <div class="session-card-title">又被退了！論文投稿的甘苦談</div>
+              </div>
+              <div class="session-card-body">
+                <div class="role-label">分享人</div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">王誠御／國立臺灣大學中國文學系博士候選人</span>
+                </div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">嚴浩然／國立成功大學中國文學系博士候選人</span>
+                </div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">楊卓剛／國立成功大學中國文學系博士生</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 圓桌論壇（二） -->
+            <div class="session-card">
+              <div class="session-card-header am">
+                <div class="session-card-label am">圓桌論壇（二）</div>
+                <div class="session-card-title">我看了什麼？審查委員的辛酸</div>
+              </div>
+              <div class="session-card-body">
+                <div class="role-label">座談學者</div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">鄭吉雄／香港教育大學文學與文化學系講座教授</span>
+                </div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">葉叡宸／國立臺灣大學中文系助理教授</span>
+                </div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">蔡瑩瑩／臺北市立大學中語系助理教授</span>
+                </div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">吳佩熏／國立勤益科技大學基礎通識教育中心助理教授</span>
+                </div>
+                <div class="speaker-row">
+                  <span class="speaker-bullet am">▸</span>
+                  <span class="speaker-name">趙旻祐／韓國延世大學中文系助理教授</span>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /session-cards -->
+          <a href="https://meet.google.com/fdh-crrz-mfb" target="_blank" class="meet-btn am">
+            🎥 加入 Google Meet
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /timeline am -->
+
+    <!-- 午休分隔 -->
+    <div style="padding: 28px 0 16px;">
+      <div class="lunch-banner">
+        <div class="lunch-icon">🍱</div>
+        <div>
+          <div class="lunch-text">午餐時間</div>
+          <div class="lunch-time">11:40 – 13:30</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════
+         下午場次 ─ 論文發表工作坊
+    ════════════════════════════════ -->
+    <div class="session-header" style="padding-top: 8px;">
+      <div class="session-badge session-badge-pm">
+        <span class="time-label">下午</span>
+        <span class="time-val">PM</span>
+      </div>
+      <div>
+        <div class="session-title">論文發表工作坊</div>
+        <div class="session-location">📍 國立臺灣師範大學 勤6樓EMI教室　　★ 線上</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+
+      <!-- 論文發表 -->
+      <div class="tl-row">
+        <div class="tl-time-col pm">13:30<br>16:00</div>
+        <div class="tl-line-col pm"><div class="tl-dot pm"></div></div>
+        <div class="tl-content">
+          <div class="tl-item-title">論文發表工作坊</div>
+          <div class="paper-cards">
+
+            <div class="paper-card">
+              <div class="paper-meta">
+                <span class="paper-tag presenter">發表</span>
+                <span class="paper-presenter">陳皓渝（高師大國文）</span>
+              </div>
+              <div class="paper-title">佛教咒語詞 hūṃ 之中古漢語音譯分析</div>
+              <div class="paper-discussant">
+                <span class="paper-tag discussant">討論人</span>
+                <span class="paper-discussant-name">吳瑞文 教授／中研院</span>
+              </div>
+            </div>
+
+            <div class="paper-card">
+              <div class="paper-meta">
+                <span class="paper-tag presenter">發表</span>
+                <span class="paper-presenter">李宗祐（臺師大國文）<span class="online">★ 線上</span></span>
+              </div>
+              <div class="paper-title">解構聖王與安頓性命──《莊子》外、雜篇「至德之世」中的士人實踐之道</div>
+              <div class="paper-discussant">
+                <span class="paper-tag discussant">討論人</span>
+                <span class="paper-discussant-name">吳肇嘉 教授<span class="online">★ 線上</span>／北市大中語</span>
+              </div>
+            </div>
+
+            <div class="paper-card">
+              <div class="paper-meta">
+                <span class="paper-tag presenter">發表</span>
+                <span class="paper-presenter">夏卓浩（復旦哲學）<span class="online">★ 線上</span></span>
+              </div>
+              <div class="paper-title">「政教二科」視域下孫詒讓《周禮》觀研探</div>
+              <div class="paper-discussant">
+                <span class="paper-tag discussant">討論人</span>
+                <span class="paper-discussant-name">林素英 教授／臺師大國文</span>
+              </div>
+            </div>
+
+            <div class="paper-card">
+              <div class="paper-meta">
+                <span class="paper-tag presenter">發表</span>
+                <span class="paper-presenter">林昕嬡（成大中文）</span>
+              </div>
+              <div class="paper-title">《孝經》書名翻譯研究——從 pietas、filial piety 到 family reverence 的詮釋轉譯現象</div>
+              <div class="paper-discussant">
+                <span class="paper-tag discussant">討論人</span>
+                <span class="paper-discussant-name">潘鳳娟 教授／臺師大東亞</span>
+              </div>
+            </div>
+
+          </div><!-- /paper-cards -->
+          <a href="https://meet.google.com/fdh-crrz-mfb" target="_blank" class="meet-btn pm">
+            🎥 加入 Google Meet
+          </a>
+        </div>
+      </div>
+
+      <!-- 閉幕式 -->
+      <div class="tl-row">
+        <div class="tl-time-col pm">16:00<br>16:20</div>
+        <div class="tl-line-col pm"><div class="tl-dot pm"></div></div>
+        <div class="tl-content">
+          <div class="tl-item-title">閉幕式</div>
+          <div class="tl-item-sub">主持：徐國能主任（國立臺灣師範大學國文學系）</div>
+        </div>
+      </div>
+
+    </div><!-- /timeline pm -->
+
+    <!-- 主辦單位 -->
+    <div style="padding-top: 48px;">
+      <div class="day-divider"><span>主辦單位</span></div>
+      <div class="org-row" style="margin-top: 14px;">
+        <span>國立臺灣師範大學國文學系</span>
+        <span>臺北市立大學中國語文學系</span>
+      </div>
+      <div class="day-divider" style="margin-top: 12px;"><span>協辦單位</span></div>
+      <div class="org-row" style="margin-top: 14px;">
+        <span>臺北市立大學儒學中心</span>
+        <span>中華孔孟學會</span>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <div class="footer">
+    中文學科論文寫作增能計畫　2025
+  </div>
+
+</body>
+</html>
