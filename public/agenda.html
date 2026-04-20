@@ -38,7 +38,7 @@
     /* ── Hero banner ── */
     .hero {
       background: linear-gradient(135deg, #1a0a08 0%, #2d1010 40%, #1a0a1a 100%);
-      padding: 48px 24px 40px;
+      padding: 52px 24px 44px;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -47,30 +47,54 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: url('/banner.png') center/cover no-repeat;
-      opacity: 0.22;
+      background: url('/reg-banner.png') center/cover no-repeat;
+      opacity: 0.35;
     }
     .hero-inner { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
     .hero-label {
       display: inline-block;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.65);
       font-family: var(--sans);
-      font-size: 11px;
+      font-size: 13px;
       letter-spacing: 3px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .hero-title {
       color: #fff;
-      font-size: clamp(22px, 5vw, 32px);
+      font-size: clamp(26px, 6vw, 38px);
       font-weight: 900;
       letter-spacing: 3px;
       line-height: 1.3;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+    }
+    .hero-date {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 10px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 14px;
+      padding: 10px 24px;
+      margin-bottom: 16px;
+    }
+    .hero-date-main {
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    .hero-date-time {
+      color: rgba(255,255,255,0.75);
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
     }
     .hero-meta {
       display: flex;
       justify-content: center;
-      gap: 16px;
+      gap: 10px;
       flex-wrap: wrap;
     }
     .hero-pill {
@@ -78,8 +102,8 @@
       border: 1px solid rgba(255,255,255,0.2);
       color: rgba(255,255,255,0.85);
       font-family: var(--sans);
-      font-size: 12px;
-      padding: 5px 14px;
+      font-size: 13px;
+      padding: 5px 16px;
       border-radius: 20px;
     }
 
@@ -163,7 +187,7 @@
     .tl-content { flex: 1; padding: 14px 0 14px 20px; }
 
     .tl-item-title {
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 700;
       color: var(--text);
       margin-bottom: 4px;
@@ -171,7 +195,7 @@
     }
     .tl-item-sub {
       font-family: var(--sans);
-      font-size: 12px;
+      font-size: 13px;
       color: var(--sub);
     }
 
@@ -203,11 +227,11 @@
     }
     .session-card-label.am { color: var(--red); }
     .session-card-label.pm { color: var(--blue); }
-    .session-card-title { font-size: 15px; font-weight: 800; color: var(--text); }
-    .session-card-body { background: var(--card); padding: 12px 16px; }
+    .session-card-title { font-size: 16px; font-weight: 800; color: var(--text); }
+    .session-card-body { background: var(--card); padding: 14px 16px; }
     .role-label {
       font-family: var(--sans);
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 2px;
       color: var(--muted);
       margin-bottom: 10px;
@@ -216,10 +240,10 @@
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 9px;
     }
     .speaker-bullet {
-      font-size: 10px;
+      font-size: 11px;
       margin-top: 4px;
       flex-shrink: 0;
     }
@@ -227,7 +251,7 @@
     .speaker-bullet.pm { color: var(--blue); }
     .speaker-name {
       font-family: var(--sans);
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text);
       line-height: 1.6;
     }
@@ -269,11 +293,11 @@
     .paper-tag.discussant { background: var(--blue-light); color: #1e40af; }
     .paper-presenter {
       font-family: var(--sans);
-      font-size: 12px;
+      font-size: 13px;
       color: var(--sub);
     }
     .paper-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       color: var(--text);
       line-height: 1.6;
@@ -286,7 +310,7 @@
     }
     .paper-discussant-name {
       font-family: var(--sans);
-      font-size: 12px;
+      font-size: 13px;
       color: var(--sub);
     }
 
@@ -376,10 +400,13 @@
     <div class="hero-inner">
       <div class="hero-label">中文學科論文寫作增能計畫</div>
       <h1 class="hero-title">圓桌論壇<br>＋論文發表工作坊</h1>
+      <div class="hero-date">
+        <span class="hero-date-main">2025 年 5 月 14 日（三）</span>
+        <span class="hero-date-time">09:30 – 16:20</span>
+      </div>
       <div class="hero-meta">
-        <span class="hero-pill">📅 2025年5月14日（三）</span>
-        <span class="hero-pill">09:30 – 16:20</span>
-        <span class="hero-pill">線上 ＋ 實體</span>
+        <span class="hero-pill">📍 臺北市立大學 × 國立臺灣師範大學</span>
+        <span class="hero-pill">🎥 線上 ＋ 實體</span>
       </div>
     </div>
   </div>
@@ -396,7 +423,7 @@
       </div>
       <div>
         <div class="session-title">圓桌論壇</div>
-        <div class="session-location">📍 臺北市立大學 公誠樓4樓G417室</div>
+        <div class="session-location">📍 臺北市立大學 公誠樓4樓G412室</div>
       </div>
     </div>
 
@@ -525,6 +552,10 @@
         <div class="tl-line-col pm"><div class="tl-dot pm"></div></div>
         <div class="tl-content">
           <div class="tl-item-title">論文發表工作坊</div>
+          <div style="margin: 8px 0 16px; display:flex; align-items:flex-start; gap:8px;">
+            <span style="background:var(--blue); color:#fff; font-family:var(--sans); font-size:10px; font-weight:700; padding:2px 10px; border-radius:12px; flex-shrink:0; margin-top:2px;">主持人</span>
+            <span style="font-family:var(--sans); font-size:14px; color:var(--text); line-height:1.6;">金培懿 教授<br><span style="font-size:12px; color:var(--sub);">國立臺灣師範大學國文學系特聘教授、中華孔孟學會秘書長</span></span>
+          </div>
           <div class="paper-cards">
 
             <div class="paper-card">
@@ -599,11 +630,10 @@
       <div class="day-divider"><span>主辦單位</span></div>
       <div class="org-row" style="margin-top: 14px;">
         <span>國立臺灣師範大學國文學系</span>
-        <span>臺北市立大學中國語文學系</span>
+        <span>臺北市立大學儒學中心</span>
       </div>
       <div class="day-divider" style="margin-top: 12px;"><span>協辦單位</span></div>
       <div class="org-row" style="margin-top: 14px;">
-        <span>臺北市立大學儒學中心</span>
         <span>中華孔孟學會</span>
       </div>
     </div>
