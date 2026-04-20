@@ -644,5 +644,322 @@
     中文學科論文寫作增能計畫　2025
   </div>
 
+  <!-- ════════════════════════════
+       議事規則 浮動按鈕
+  ════════════════════════════ -->
+  <button id="rules-btn" onclick="document.getElementById('rules-modal').style.display='flex'" aria-label="議事規則">
+    <span style="font-size:18px;">📋</span>
+    <span>議事規則</span>
+  </button>
+
+  <!-- ════════════════════════════
+       議事規則 Modal
+  ════════════════════════════ -->
+  <div id="rules-modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+    <div id="rules-sheet">
+      <div id="rules-header">
+        <div style="display:flex;justify-content:center;margin-bottom:10px;">
+          <div style="width:36px;height:4px;background:rgba(0,0,0,0.15);border-radius:2px;"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-family:var(--sans);font-size:11px;color:#999;letter-spacing:2px;margin-bottom:3px;">中文學科論文寫作增能計畫</div>
+            <div style="font-family:var(--serif);font-size:18px;font-weight:900;color:#1a1a1a;letter-spacing:1px;">議事規則</div>
+          </div>
+          <button onclick="document.getElementById('rules-modal').style.display='none'" style="background:rgba(0,0,0,0.07);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:#333;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+      </div>
+
+      <div id="rules-body">
+
+        <!-- 一般注意事項 -->
+        <div class="rules-notice">
+          <div class="rules-notice-row">📌 請參照會議時程，準時進出會場／線上會議室。</div>
+          <div class="rules-notice-row">📵 實體會議進行期間，請將手機關閉或設定為靜音。</div>
+          <div class="rules-notice-row">🎙️ 線上會議請將麥克風關閉，發言時再開啟。</div>
+        </div>
+
+        <!-- 圓桌論壇 -->
+        <div class="rules-section">
+          <div class="rules-section-header am">
+            <div class="rules-section-tag am">圓桌論壇</div>
+            <div class="rules-section-title">05/14　10:10 – 11:40</div>
+          </div>
+
+          <div class="rules-time-block">
+            <div class="rules-time-label">時間編制　90 分鐘／場次</div>
+            <div class="rules-time-bars">
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">主持人介紹</div>
+                <div class="rules-bar-track"><div class="rules-bar-fill am" style="width:5.5%"></div></div>
+                <div class="rules-bar-num am">5 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">特邀分享<span class="rules-bar-sub">（1人各8分）</span></div>
+                <div class="rules-bar-track"><div class="rules-bar-fill am" style="width:26.6%"></div></div>
+                <div class="rules-bar-num am">24 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">座談時間</div>
+                <div class="rules-bar-track"><div class="rules-bar-fill am" style="width:62.2%"></div></div>
+                <div class="rules-bar-num am">56 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">主持人總結</div>
+                <div class="rules-bar-track"><div class="rules-bar-fill am" style="width:5.5%"></div></div>
+                <div class="rules-bar-num am">5 分</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rules-notes">
+            <div class="rules-note">
+              <div class="rules-note-title am">分享人注意</div>
+              <p>口頭報告時間為 <strong>8 分鐘</strong>，<span class="rules-bell">🔔 7分鐘時一短鈴</span>，<span class="rules-bell">🔔 8分鐘時一長鈴</span>，提醒結束分享。</p>
+            </div>
+            <div class="rules-note">
+              <div class="rules-note-title am">座談規則</div>
+              <p>由主持人帶領座談學者及與會人員進行座談。與會人員發言請先告知<strong>姓名、服務單位及職稱</strong>。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 論文發表工作坊 -->
+        <div class="rules-section">
+          <div class="rules-section-header pm">
+            <div class="rules-section-tag pm">論文發表工作坊</div>
+            <div class="rules-section-title">05/14　13:30 – 16:00</div>
+          </div>
+
+          <div class="rules-time-block">
+            <div class="rules-time-label">時間編制　150 分鐘／場次</div>
+            <div class="rules-time-bars">
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">主持人介紹</div>
+                <div class="rules-bar-track"><div class="rules-bar-fill pm" style="width:3.3%"></div></div>
+                <div class="rules-bar-num pm">5 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">論文發表<span class="rules-bar-sub">（1人各15分）</span></div>
+                <div class="rules-bar-track"><div class="rules-bar-fill pm" style="width:40%"></div></div>
+                <div class="rules-bar-num pm">60 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">特約討論<span class="rules-bar-sub">（1人各15分）</span></div>
+                <div class="rules-bar-track"><div class="rules-bar-fill pm" style="width:40%"></div></div>
+                <div class="rules-bar-num pm">60 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">綜合討論</div>
+                <div class="rules-bar-track"><div class="rules-bar-fill pm" style="width:13.3%"></div></div>
+                <div class="rules-bar-num pm">20 分</div>
+              </div>
+              <div class="rules-bar-row">
+                <div class="rules-bar-label">主持人總結</div>
+                <div class="rules-bar-track"><div class="rules-bar-fill pm" style="width:3.3%"></div></div>
+                <div class="rules-bar-num pm">5 分</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rules-notes">
+            <div class="rules-note">
+              <div class="rules-note-title pm">論文發表人注意</div>
+              <p>口頭報告時間為 <strong>15 分鐘</strong>，<span class="rules-bell">🔔 14分鐘時一短鈴</span>，<span class="rules-bell">🔔 15分鐘時一長鈴</span>，提醒結束發表。</p>
+            </div>
+            <div class="rules-note">
+              <div class="rules-note-title pm">特約討論人注意</div>
+              <p>口頭講評時間為 <strong>15 分鐘</strong>，<span class="rules-bell">🔔 14分鐘時一短鈴</span>，<span class="rules-bell">🔔 15分鐘時一長鈴</span>，提醒結束講評。</p>
+            </div>
+            <div class="rules-note">
+              <div class="rules-note-title pm">綜合討論規則</div>
+              <p>開放 20 分鐘由主持人帶領綜合討論，每位發言<strong>最多 2 分鐘</strong>（一長鈴提醒）。發言請先告知<strong>姓名、服務單位及職稱</strong>。</p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /rules-body -->
+    </div><!-- /rules-sheet -->
+  </div><!-- /rules-modal -->
+
+  <style>
+    /* ── 浮動按鈕 ── */
+    #rules-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      padding: 12px 20px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+      z-index: 100;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    #rules-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(0,0,0,0.3); }
+
+    /* ── Modal overlay ── */
+    #rules-modal {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.5);
+      align-items: flex-end;
+      justify-content: center;
+      animation: rmFadeIn 0.2s ease;
+    }
+    @keyframes rmFadeIn { from { opacity:0; } to { opacity:1; } }
+
+    /* ── Sheet ── */
+    #rules-sheet {
+      width: 100%;
+      max-width: 680px;
+      max-height: 88vh;
+      background: #f9f8f6;
+      border-radius: 24px 24px 0 0;
+      overflow-y: auto;
+      scrollbar-width: none;
+      box-shadow: 0 -12px 60px rgba(0,0,0,0.25);
+      animation: rmSheetUp 0.35s cubic-bezier(0.32,0.72,0,1) forwards;
+    }
+    #rules-sheet::-webkit-scrollbar { display: none; }
+    @keyframes rmSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    /* ── Header ── */
+    #rules-header {
+      position: sticky; top: 0; z-index: 2;
+      background: #f9f8f6;
+      border-bottom: 1px solid #ebebeb;
+      padding: 14px 20px;
+    }
+
+    /* ── Body ── */
+    #rules-body { padding: 20px 20px 48px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── General notices ── */
+    .rules-notice {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      border: 1px solid #ebebeb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .rules-notice-row {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* ── Section ── */
+    .rules-section {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #ebebeb;
+      overflow: hidden;
+    }
+    .rules-section-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rules-section-header.am { background: #fff5f5; border-bottom: 1px solid rgba(192,57,43,0.15); }
+    .rules-section-header.pm { background: #eff6ff; border-bottom: 1px solid rgba(37,99,235,0.15); }
+    .rules-section-tag {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 12px;
+      border-radius: 14px;
+      letter-spacing: 1px;
+    }
+    .rules-section-tag.am { background: var(--red); color: #fff; }
+    .rules-section-tag.pm { background: var(--blue); color: #fff; }
+    .rules-section-title {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: #555;
+      font-weight: 600;
+    }
+
+    /* ── Time block ── */
+    .rules-time-block { padding: 16px 18px; border-bottom: 1px solid #f0f0f0; }
+    .rules-time-label {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: #999;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .rules-time-bars { display: flex; flex-direction: column; gap: 9px; }
+    .rules-bar-row { display: flex; align-items: center; gap: 10px; }
+    .rules-bar-label {
+      width: 120px;
+      flex-shrink: 0;
+      font-family: var(--sans);
+      font-size: 12px;
+      color: #444;
+    }
+    .rules-bar-sub { color: #aaa; font-size: 10px; }
+    .rules-bar-track {
+      flex: 1;
+      height: 7px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .rules-bar-fill { height: 100%; border-radius: 4px; min-width: 4px; }
+    .rules-bar-fill.am { background: var(--red); }
+    .rules-bar-fill.pm { background: var(--blue); }
+    .rules-bar-num {
+      width: 36px;
+      flex-shrink: 0;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      text-align: right;
+    }
+    .rules-bar-num.am { color: var(--red); }
+    .rules-bar-num.pm { color: var(--blue); }
+
+    /* ── Notes ── */
+    .rules-notes { padding: 14px 18px; display: flex; flex-direction: column; gap: 14px; }
+    .rules-note {}
+    .rules-note-title {
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+    .rules-note-title.am { color: var(--red); }
+    .rules-note-title.pm { color: var(--blue); }
+    .rules-note p {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: #333;
+      line-height: 1.9;
+    }
+    .rules-bell {
+      display: inline-block;
+      background: #f5f5f5;
+      border-radius: 6px;
+      padding: 1px 7px;
+      font-size: 12px;
+      color: #555;
+      margin: 0 2px;
+    }
+  </style>
+
 </body>
 </html>
